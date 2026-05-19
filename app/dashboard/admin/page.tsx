@@ -30,7 +30,7 @@ export default async function AdminPage() {
   if (!temAcessoAdmin) {
     redirect('/dashboard/aluno')
   }
-   <Analytics />
+  
   // Lista dos módulos mantendo o padrão solicitado
   const modulos = [
     { nome: 'Cadastro Central', icon: '📇', link: '/dashboard/admin/cadastro', desc: 'Gerencie alunos e dados', ativo: true, permissoes: ['Administrador', 'Administrativo', 'Professor'] },
@@ -63,6 +63,8 @@ export default async function AdminPage() {
           <h1 className="text-3xl font-black text-gray-800 tracking-tight">Painel de Gestão IBV</h1>
           <p className="text-gray-500 mt-1">Selecione o módulo administrativo que deseja acessar.</p>
         </div>
+
+         <Analytics />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {modulosFiltrados.map((modulo) => (
