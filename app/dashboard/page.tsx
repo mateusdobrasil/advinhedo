@@ -1,6 +1,7 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { Analytics } from "@vercel/analytics/next"
 
 export default async function DashboardPage() {
   const supabase = createServerComponentClient({ cookies })

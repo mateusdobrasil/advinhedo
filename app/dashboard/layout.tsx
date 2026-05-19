@@ -2,6 +2,7 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { Analytics } from "@vercel/analytics/next"
 import BotaoSair from '../components/BotaoSair'
 
 export default async function DashboardLayout({
