@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link' // 👈 Import necessário
 import { realizarLogin } from '../actions/auth'
 
 export default function LoginPage() {
@@ -11,12 +12,14 @@ export default function LoginPage() {
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
         
-        {/* Logo / Título */}
+        {/* Logo / Título com Link para a página principal */}
         <div className="text-center mb-8">
-          <div className="bg-indigo-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg">
-            🎓
-          </div>
-          <h1 className="text-2xl font-black text-gray-800">Instituto Bíblico</h1>
+          <Link href="/" className="block group">
+            <div className="bg-indigo-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg group-hover:bg-indigo-700 transition">
+              🎓
+            </div>
+            <h1 className="text-2xl font-black text-gray-800 group-hover:text-indigo-600 transition">Instituto Bíblico</h1>
+          </Link>
           <p className="text-gray-500 text-sm mt-1">Faça login para acessar o seu portal</p>
         </div>
 
@@ -37,7 +40,6 @@ export default function LoginPage() {
               setErro(resposta.erro)
               setCarregando(false)
             }
-            // Se der certo, a Server Action fará o redirect automaticamente
           }} 
           className="space-y-5"
         >
