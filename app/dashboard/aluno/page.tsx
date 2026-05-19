@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { Analytics } from "@vercel/analytics/next"
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -57,6 +58,8 @@ export default async function AlunoDashboardPage() {
           </h1>
           <p className="text-gray-500">Bem-vindo ao seu portal de estudos.</p>
         </header>
+        
+        <Analytics />
         
         {/* ATALHOS RÁPIDOS */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
