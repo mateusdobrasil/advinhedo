@@ -66,13 +66,24 @@ export default async function MateriasPage() {
               Gerencie as disciplinas e vínculos com os cursos ativos do IBV.
             </p>
           </div>
-          <Link 
-            href="/dashboard/admin" 
-            className="text-sm bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition shadow-sm"
-          >
-            Voltar ao Hub
-          </Link>
+
+          {/* Botões (Lado Direito) */}
+          <div className="flex flex-col items-end gap-3 w-full sm:w-auto">
+            
+            {/* 1º Botão: Voltar (Em cima) */}
+            <Link 
+              href="/dashboard/admin" 
+              className="text-sm bg-white border border-gray-200 text-gray-700 px-5 py-2 rounded-xl font-bold hover:bg-gray-50 transition shadow-sm w-max"
+            >
+              Voltar ao Hub
+            </Link>
+
+            {/* 2º Botão: Criador de Matéria (Embaixo, alinhado à direita) */}
+            <CriadorMateria cursos={cursosAtivos || []} />
+            
+          </div>
         </div>
+        {/* ========================================== */}          
 
         {/* LISTAGEM DE MATÉRIAS */}
         <div className="grid grid-cols-1 gap-4">
@@ -123,12 +134,6 @@ export default async function MateriasPage() {
             </div>
           )}
         </div>
-
-        {/* BOTÃO PARA CADASTRAR NOVA MATÉRIA */}
-        <div className="mt-8">
-          <CriadorMateria cursos={cursosAtivos || []} />
-        </div>
-
       </div>
     </div>
   )
