@@ -73,7 +73,10 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
     frequenciasExistentes = freqs || []
   }
 
+  // Cálculos matemáticos corrigidos
+  const totalMatriculados = alunos.length
   const totalPresentes = frequenciasExistentes.filter(f => f.presente === true).length
+  const totalAusentes = Math.max(0, totalMatriculados - totalPresentes)
   const totalBiblias = frequenciasExistentes.filter(f => f.trouxe_biblia === true).length
   const totalRevistas = frequenciasExistentes.filter(f => f.trouxe_revista === true).length
 
@@ -138,10 +141,20 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
             </div>
 
             {/* Cards do Fechamento (Grid responsiva melhorada) */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-7 gap-3 sm:gap-4">
+              <div className="bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-100 flex flex-col">
+                <span className="text-[9px] sm:text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 truncate">Matriculados</span>
+                {/* 👇 Correção Aplicada Aqui */}
+                <span className="text-xl sm:text-2xl font-black text-gray-800">{totalMatriculados}</span>
+              </div>
               <div className="bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-100 flex flex-col">
                 <span className="text-[9px] sm:text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 truncate">Alunos Presentes</span>
                 <span className="text-xl sm:text-2xl font-black text-gray-800">{totalPresentes}</span>
+              </div>
+              <div className="bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-100 flex flex-col">
+                <span className="text-[9px] sm:text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 truncate">Ausentes</span>
+                {/* 👇 Correção Aplicada Aqui */}
+                <span className="text-xl sm:text-2xl font-black text-gray-800">{totalAusentes}</span>
               </div>
               <div className="bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-100 flex flex-col">
                 <span className="text-[9px] sm:text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 truncate">Bíblias (Total)</span>
