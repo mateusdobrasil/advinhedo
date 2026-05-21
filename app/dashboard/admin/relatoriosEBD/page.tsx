@@ -4,7 +4,7 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import BotaoExportarEBD from '../../../components/BotaoExportarEBD'
+import BotaoExportarEBD from '@/app/components/BotaoExportarEBD' // Ajuste o caminho se necessário
 
 interface PageProps {
   searchParams: any
@@ -34,37 +34,54 @@ export default async function RelatoriosEBDPage({ searchParams }: PageProps) {
   // 2. LÓGICA DO RELATÓRIO DA EBD (Filtros e Rankings)
   // =================================================================
   const resolvedSearch = await searchParams
-  const periodo = resolvedSearch?.periodo || 'dia'
+  const periodo = resolvedSearch?.periodo || 'diario'
   
-  // Define a data base (Hoje, ajustado para o fuso local)
+  // Define os valores padrão baseados no dia de hoje
   const hoje = new Date()
   const dataPadrao = new Date(hoje.getTime() - (hoje.getTimezoneOffset() * 60000)).toISOString().split('T')[0]
+  const anoAtual = hoje.getFullYear().toString()
+  const trimestreAtual = Math.ceil((hoje.getMonth() + 1) / 3).toString()
+
+  // Captura os valores da URL
   const dataFiltro = resolvedSearch?.data || dataPadrao
-  const dataFormatada = new Date(dataFiltro + 'T12:00:00').toLocaleDateString('pt-BR')
+  const anoFiltro = resolvedSearch?.ano || anoAtual
+  const trimestreFiltro = resolvedSearch?.trimestre || trimestreAtual
 
   // Calcula o Range de Datas baseado no filtro selecionado
-  let start = dataFiltro
-  let end = dataFiltro
-  const year = new Date(dataFiltro).getFullYear()
+  let start = ''
+  let end = ''
+  let labelPeriodo = ''
 
-  if (periodo === 'ano') {
-    start = `${year}-01-01`
-    end = `${year}-12-31`
-  } else if (periodo === 'semestre') {
-    const month = new Date(dataFiltro).getMonth() + 1
-    if (month <= 6) {
-      start = `${year}-01-01`
-      end = `${year}-06-30`
-    } else {
-      start = `${year}-07-01`
-      end = `${year}-12-31`
-    }
+  if (periodo === 'anual') {
+    start = `${anoFiltro}-01-01`
+    end = `${anoFiltro}-12-31`
+    labelPeriodo = `Ano Base: ${anoFiltro}`
+  } else if (periodo === 'trimestre') {
+    if (trimestreFiltro === '1') { start = `${anoFiltro}-01-01`; end = `${anoFiltro}-03-31` }
+    else if (trimestreFiltro === '2') { start = `${anoFiltro}-04-01`; end = `${anoFiltro}-06-30` }
+    else if (trimestreFiltro === '3') { start = `${anoFiltro}-07-01`; end = `${anoFiltro}-09-30` }
+    else if (trimestreFiltro === '4') { start = `${anoFiltro}-10-01`; end = `${anoFiltro}-12-31` }
+    labelPeriodo = `${trimestreFiltro}º Trimestre de ${anoFiltro}`
+  } else {
+    // Diário
+    start = dataFiltro
+    end = dataFiltro
+    labelPeriodo = `Data: ${new Date(dataFiltro + 'T12:00:00').toLocaleDateString('pt-BR')}`
   }
 
   // Busca todas as frequências no período selecionado
   const { data: frequencias } = await supabase
     .from('frequencia_ebd')
-    .select('turma_id, data_aula, presente, trouxe_biblia, trouxe_revista, visitantes, oferta, turmas (nome)')
+    .select(`
+      turma_id, 
+      data_aula, 
+      presente, 
+      trouxe_biblia, 
+      trouxe_revista, 
+      visitantes, 
+      oferta, 
+      turmas:turma_id (nome) 
+    `)
     .gte('data_aula', start)
     .lte('data_aula', end)
 
@@ -72,12 +89,22 @@ export default async function RelatoriosEBDPage({ searchParams }: PageProps) {
   const turmasMap: Record<string, any> = {}
 
   if (frequencias) {
-    frequencias.forEach(f => {
+    frequencias.forEach((f: any) => {
       const tId = f.turma_id
+      
+      let nomeDaTurma = 'Turma Desconhecida'
+      if (f.turmas) {
+         if (Array.isArray(f.turmas) && f.turmas.length > 0) {
+            nomeDaTurma = f.turmas[0].nome
+         } else if (f.turmas.nome) {
+            nomeDaTurma = f.turmas.nome
+         }
+      }
+
       if (!turmasMap[tId]) {
         turmasMap[tId] = { 
           id: tId, 
-          nome: f.turmas?.[0]?.nome || 'Turma Desconhecida', 
+          nome: nomeDaTurma, 
           presentes: 0, 
           biblias: 0, 
           revistas: 0, 
@@ -175,16 +202,51 @@ export default async function RelatoriosEBDPage({ searchParams }: PageProps) {
             
             {/* BARRA DE FILTRO E EXPORTAÇÃO */}
             <div className="flex flex-wrap items-center gap-2">
+              
               <form method="GET" className="flex flex-wrap items-center gap-2 bg-gray-50 p-2 rounded-xl border border-gray-200">
-                <select name="periodo" defaultValue={periodo} className="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg px-3 py-2 font-medium focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                  <option value="dia">Por Dia Específico</option>
-                  <option value="semestre">Por Semestre</option>
-                  <option value="ano">Por Ano Inteiro</option>
+                
+                <select name="periodo" id="periodoSelect" defaultValue={periodo} className="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg px-3 py-2 font-medium focus:ring-indigo-500 focus:border-indigo-500 outline-none cursor-pointer">
+                  <option value="diario">Diário (Dia Específico)</option>
+                  <option value="trimestre">Trimestral (Trimestre/Ano)</option>
+                  <option value="anual">Anual (Ano Fechado)</option>
                 </select>
-                <input type="date" name="data" defaultValue={dataFiltro} className="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg px-3 py-2 font-medium focus:ring-indigo-500 outline-none" />
+
+                {/* BLOCO: DIÁRIO */}
+                <div id="blocoDiario" style={{ display: periodo === 'diario' ? 'block' : 'none' }}>
+                  <input type="date" name="data" defaultValue={dataFiltro} className="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg px-3 py-2 font-medium focus:ring-indigo-500 outline-none" />
+                </div>
+
+                {/* BLOCO: TRIMESTRE */}
+                <div id="blocoTrimestre" style={{ display: periodo === 'trimestre' ? 'block' : 'none' }}>
+                  <select name="trimestre" defaultValue={trimestreFiltro} className="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg px-3 py-2 font-medium focus:ring-indigo-500 outline-none cursor-pointer">
+                    <option value="1">1º Trimestre (Jan-Mar)</option>
+                    <option value="2">2º Trimestre (Abr-Jun)</option>
+                    <option value="3">3º Trimestre (Jul-Set)</option>
+                    <option value="4">4º Trimestre (Out-Dez)</option>
+                  </select>
+                </div>
+
+                {/* BLOCO: ANO (Aparece no Trimestre e no Anual) */}
+                <div id="blocoAno" style={{ display: (periodo === 'trimestre' || periodo === 'anual') ? 'block' : 'none' }}>
+                  <input type="number" name="ano" defaultValue={anoFiltro} min="2020" max="2100" className="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg px-3 py-2 font-medium focus:ring-indigo-500 outline-none w-24" placeholder="Ex: 2024" />
+                </div>
+
                 <button type="submit" className="bg-indigo-600 text-white px-5 py-2 rounded-lg font-bold text-sm hover:bg-indigo-700 transition">
-                  Filtrar Dados
+                  Filtrar
                 </button>
+
+                {/* Script nativo para alternar as caixinhas sem precisar recarregar a tela */}
+                <script dangerouslySetInnerHTML={{__html: `
+                  const select = document.getElementById('periodoSelect');
+                  if(select) {
+                    select.addEventListener('change', function() {
+                      const val = this.value;
+                      document.getElementById('blocoDiario').style.display = val === 'diario' ? 'block' : 'none';
+                      document.getElementById('blocoTrimestre').style.display = val === 'trimestre' ? 'block' : 'none';
+                      document.getElementById('blocoAno').style.display = (val === 'trimestre' || val === 'anual') ? 'block' : 'none';
+                    });
+                  }
+                `}} />
               </form>
               
               {/* COMPONENTE DE EXPORTAÇÃO PPTX */}
@@ -197,15 +259,17 @@ export default async function RelatoriosEBDPage({ searchParams }: PageProps) {
                   visitantes: totalGeralVisitantes,
                   oferta: totalGeralOferta
                 }}
-                periodoLabel={periodo === 'dia' ? `Data: ${dataFormatada}` : `Relatório ${periodo.toUpperCase()}`}
+                periodoLabel={labelPeriodo}
               />
             </div>
           </div>
 
+          {/* ... MANTÉM O RESTANTE DA TABELA E DOS CARDS INTACTOS ... */}
+
           {listaEBD.length > 0 ? (
             <>
               {/* RESUMO GERAL DA ESCOLA NO PERÍODO */}
-              <h3 className="text-xs uppercase font-bold text-gray-400 tracking-wider mb-4">📊 Resumo Geral da EBD (Todas as Salas)</h3>
+              <h3 className="text-xs uppercase font-bold text-gray-400 tracking-wider mb-4">📊 Resumo Geral do Período ({labelPeriodo})</h3>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-10 pb-8 border-b border-dashed border-gray-200">
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-center">
                   <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">Total Presentes</p>
@@ -302,7 +366,7 @@ export default async function RelatoriosEBDPage({ searchParams }: PageProps) {
             <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
               <span className="text-3xl mb-2 block">📅</span>
               <p className="text-gray-500 font-medium">Nenhum dado de EBD registrado para este período.</p>
-              <p className="text-xs text-gray-400 mt-1">Selecione outra data ou verifique se as chamadas foram salvas.</p>
+              <p className="text-xs text-gray-400 mt-1">Verifique as datas ou confirme se as chamadas foram salvas pela liderança.</p>
             </div>
           )}
         </div>
