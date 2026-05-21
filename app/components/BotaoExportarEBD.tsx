@@ -23,10 +23,10 @@ export default function BotaoExportarEBD({ data, resumoGeral, periodoLabel }: Ex
       return
     }
 
+    setGerando(true)
+
     try {
-      setGerando(true)
-      
-      // Enviar dados para a API do servidor para gerar o PPTX
+      // Chamar a API do servidor para gerar o PPTX
       const response = await fetch('/api/exportar-relatorio-ebd', {
         method: 'POST',
         headers: {
@@ -43,10 +43,10 @@ export default function BotaoExportarEBD({ data, resumoGeral, periodoLabel }: Ex
         throw new Error('Erro ao gerar apresentação')
       }
 
-      // Receber o arquivo PPTX como blob
+      // Receber o arquivo como blob
       const blob = await response.blob()
       
-      // Criar um link para download
+      // Criar link para download
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
@@ -55,7 +55,7 @@ export default function BotaoExportarEBD({ data, resumoGeral, periodoLabel }: Ex
       link.click()
       document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
-      
+
       setGerando(false)
     } catch (error) {
       console.error('Erro ao exportar:', error)
@@ -68,9 +68,19 @@ export default function BotaoExportarEBD({ data, resumoGeral, periodoLabel }: Ex
     <button 
       onClick={gerarPPTX}
       disabled={gerando}
-      className="bg-indigo-900 text-white px-5 py-2 rounded-lg font-bold text-sm hover:bg-indigo-800 transition flex items-center gap-2 shadow-md disabled:opacity-50"
+      className="group bg-indigo-900 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-800 transition-all flex items-center gap-3 shadow-lg hover:shadow-indigo-200 active:scale-95 disabled:opacity-50"
     >
-      {gerando ? "⏳ Gerando Apresentação..." : "📊 Exportar PPTX (Slides)"}
+      {gerando ? (
+        <>
+          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+          Gerando Slides...
+        </>
+      ) : (
+        <>
+          <span className="text-lg group-hover:rotate-12 transition-transform">📊</span>
+          Exportar Relatório
+        </>
+      )}
     </button>
   )
 }
