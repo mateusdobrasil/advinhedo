@@ -2,9 +2,11 @@
 
 import { useState } from "react"
 
+// Verifique se o seu componente BotaoExportarEBD.tsx tem essa estrutura:
 interface ExportProps {
   data?: any[]
   resumoGeral?: {
+    totalMatriculados: number // 👈 Adicione esta linha se não existir
     presentes: number
     biblias: number
     revistas: number

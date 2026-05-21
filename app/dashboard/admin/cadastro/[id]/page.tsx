@@ -44,7 +44,13 @@ export default async function DetalhesCadastroPage({ params }: PageProps) {
   if (error || !perfil) notFound()
 
   // 4. Busca a lista de Polos para passar para o Editor
-  const { data: polos } = await supabase.from('polos').select('id, nome').order('nome')
+  const { data: polos } = await supabase.from('polos').select('id, nome, cidade, tipo').order('nome')
+
+  // 👇 IDENTIFICADOR DE POLO 👇
+  // Relaciona o polo_id do usuário com o nome do polo no banco.
+  // Mantém a compatibilidade com cadastros antigos usando "perfil.polo" como backup.
+  const poloVinculado = polos?.find(p => p.id === perfil.polo_id)
+  const nomeExibicaoPolo = poloVinculado ? poloVinculado.nome : (perfil.polo || 'Sem polo definido')
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 p-6">
@@ -92,7 +98,9 @@ export default async function DetalhesCadastroPage({ params }: PageProps) {
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Polo Vinculado</label>
-              <p className="text-gray-800 font-medium bg-gray-50 p-3 rounded-lg border border-gray-100">{perfil.polo || 'Sem polo definido'}</p>
+              <p className="text-gray-800 font-medium bg-gray-50 p-3 rounded-lg border border-gray-100">
+                {nomeExibicaoPolo}
+              </p>
             </div>
 
             <div>

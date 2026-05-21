@@ -44,13 +44,12 @@ export async function cadastrarAluno(formData: FormData) {
     .upsert({
       id: userId,
       tipo_usuario: 'ALUNO', // Padronizado conforme a sua tabela
-      polo: 'IBV',           // Padronizado conforme a sua tabela
+      polo_id: limparTexto(formData.get('polo_id')), // ID do Polo selecionado dinamicamente
       email: email,
       nome_completo: nome,
       
-      // CORREÇÃO: Utilizando 'telefone' em vez de 'celular'
+      // Dados Pessoais
       telefone: limparTexto(formData.get('telefone')), 
-      
       data_nascimento: limparData(formData.get('data_nascimento')),
       sexo: limparTexto(formData.get('sexo')),
       estado_civil: limparTexto(formData.get('estado_civil')),
@@ -61,18 +60,22 @@ export async function cadastrarAluno(formData: FormData) {
       estado_nascimento: limparTexto(formData.get('estado_nascimento')),
       profissao: limparTexto(formData.get('profissao')),
       
+      // Endereço (Adicionado o campo 'estado' que estava faltando)
       endereco: limparTexto(formData.get('endereco')),
       complemento: limparTexto(formData.get('complemento')),
       bairro: limparTexto(formData.get('bairro')),
       cidade: limparTexto(formData.get('cidade')),
+      estado: limparTexto(formData.get('estado')), // 👈 CORREÇÃO: Mapeado para preencher a coluna 'estado'
       cep: limparTexto(formData.get('cep')),
       
+      // Formação Escolar e Teológica
       escolaridade: limparTexto(formData.get('escolaridade')),
       qual_curso: limparTexto(formData.get('qual_curso')),
       possui_teologia: limparTexto(formData.get('possui_teologia')),
       qual_teologia: limparTexto(formData.get('qual_teologia')),
       onde_teologia: limparTexto(formData.get('onde_teologia')),
       
+      // Histórico Eclesiástico
       igreja: limparTexto(formData.get('igreja')),
       local_igreja: limparTexto(formData.get('local_igreja')),
       pastor: limparTexto(formData.get('pastor')),
@@ -90,18 +93,14 @@ export async function cadastrarAluno(formData: FormData) {
     throw new Error(`Conta criada, mas houve um erro ao salvar os detalhes: ${perfilError.message}`)
   }
 
-  // 👇 O ESPIÃO DA AUDITORIA (Novo Cadastro) 👇
+  // Gravação na tabela de Auditoria
   const { error: auditError } = await supabase.from('auditoria').insert({
-    usuario_id: userId, // O ID do novo aluno
-    usuario_nome: nome, // O nome do novo aluno
+    usuario_id: userId, 
+    usuario_nome: nome, 
     acao: 'NOVO CADASTRO',
     tabela_afetada: 'perfis',
     detalhes: `O aluno ${nome} realizou o auto-cadastro pelo portal público.`
   })
 
   if (auditError) console.error("❌ ERRO AO GRAVAR AUDITORIA:", auditError.message)
-  // 👆 FIM DO ESPIÃO 👆
-
-  // A função termina com sucesso e permite que o Client Component (formulário) 
-  // faça o redirecionamento suave para a raiz usando o router.push('/')
 }

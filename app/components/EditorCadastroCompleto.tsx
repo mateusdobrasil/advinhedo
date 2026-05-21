@@ -55,16 +55,18 @@ export default function EditorCadastroCompleto({ usuario, polos }: EditorCadastr
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Polo Vinculado</label>
-                    <select name="polo" defaultValue={usuario.polo || ''} className="w-full border p-2 rounded-md bg-gray-50">
+                    {/* 👇 CORRIGIDO: name alterado para polo_id e value para p.id */}
+                    <select name="polo_id" defaultValue={usuario.polo_id || ''} className="w-full border p-2 rounded-md bg-gray-50">
                       <option value="">Selecione um polo...</option>
-                      {polos.map((p) => <option key={p.id} value={p.nome}>{p.nome}</option>)}
+                      {polos.map((p) => <option key={p.id} 
+                        value={p.id}>{p.nome}{p.tipo ? ` - ${p.tipo}` : ''} {p.cidade ? `(${p.cidade})` : ''}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Nível de Acesso (Cargo)</label>
                     <select name="tipo_usuario" defaultValue={usuario.tipo_usuario || 'aluno'} className="w-full border p-2 rounded-md bg-gray-50">
                       <option value="aluno">🎓 Aluno</option>
-                      <option value="professor">👨‍🏫 Professor</option>
+                      <option value="professor">👨‍🏫 Administrativo</option>
                       <option value="administrador">⚙️ Administrador</option>
                     </select>
                   </div>
@@ -84,7 +86,11 @@ export default function EditorCadastroCompleto({ usuario, polos }: EditorCadastr
                       <option value="">Selecione...</option><option value="Masculino">Masculino</option><option value="Feminino">Feminino</option>
                     </select>
                   </div>
-                  <div><label className="block text-sm text-gray-700 mb-1">Estado Civil</label><input type="text" name="estado_civil" defaultValue={usuario.estado_civil} className="w-full border p-2 rounded-md" /></div>
+                  <div><label className="block text-sm text-gray-700 mb-1">Estado Civil</label>
+                    <select name="estado_civil" defaultValue={usuario.estado_civil} className="w-full border p-2 rounded-md">
+                      <option value="">Selecione...</option><option value="Solteiro(a)">Solteiro(a)</option><option value="Casado(a)">Casado(a)</option><option value="Divorciado(a)">Divorciado(a)</option><option value="Viúvo(a)">Viúvo(a)</option>
+                    </select>
+                  </div>
 
                   <div><label className="block text-sm text-gray-700 mb-1">CPF</label><input type="text" name="cpf" defaultValue={usuario.cpf} className="w-full border p-2 rounded-md" /></div>
                   <div><label className="block text-sm text-gray-700 mb-1">RG</label><input type="text" name="rg" defaultValue={usuario.rg} className="w-full border p-2 rounded-md" /></div>
@@ -103,8 +109,10 @@ export default function EditorCadastroCompleto({ usuario, polos }: EditorCadastr
                   <div className="md:col-span-3"><label className="block text-sm text-gray-700 mb-1">Endereço (Rua, Número)</label><input type="text" name="endereco" defaultValue={usuario.endereco} className="w-full border p-2 rounded-md" /></div>
                   <div><label className="block text-sm text-gray-700 mb-1">Complemento</label><input type="text" name="complemento" defaultValue={usuario.complemento} className="w-full border p-2 rounded-md" /></div>
                   
-                  <div className="md:col-span-2"><label className="block text-sm text-gray-700 mb-1">Bairro</label><input type="text" name="bairro" defaultValue={usuario.bairro} className="w-full border p-2 rounded-md" /></div>
+                  <div className="md:col-span-1"><label className="block text-sm text-gray-700 mb-1">Bairro</label><input type="text" name="bairro" defaultValue={usuario.bairro} className="w-full border p-2 rounded-md" /></div>
                   <div><label className="block text-sm text-gray-700 mb-1">Cidade</label><input type="text" name="cidade" defaultValue={usuario.cidade} className="w-full border p-2 rounded-md" /></div>
+                  {/* 👇 Campo de Estado (UF) incluído */}
+                  <div><label className="block text-sm text-gray-700 mb-1">Estado (UF)</label><input type="text" name="estado" defaultValue={usuario.estado} maxLength={2} className="w-full border p-2 rounded-md uppercase" /></div>
                   <div><label className="block text-sm text-gray-700 mb-1">CEP</label><input type="text" name="cep" defaultValue={usuario.cep} className="w-full border p-2 rounded-md" /></div>
                 </div>
               </section>
@@ -113,11 +121,15 @@ export default function EditorCadastroCompleto({ usuario, polos }: EditorCadastr
               <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                 <h3 className="text-lg font-bold text-blue-800 border-b pb-2 mb-4">3. Perfil Acadêmico</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div><label className="block text-sm text-gray-700 mb-1">Escolaridade</label><input type="text" name="escolaridade" defaultValue={usuario.escolaridade} className="w-full border p-2 rounded-md" /></div>
+                  <div><label className="block text-sm text-gray-700 mb-1">Escolaridade Secular</label>
+                    <select name="escolaridade" defaultValue={usuario.escolaridade} className="w-full border p-2 rounded-md bg-white">
+                      <option value="">Selecione...</option><option value="Ensino Fundamental">Ensino Fundamental</option><option value="Ensino Médio">Ensino Médio</option><option value="Ensino Superior">Ensino Superior</option><option value="Pós-graduação">Pós-graduação</option>
+                    </select>
+                  </div>
                   <div><label className="block text-sm text-gray-700 mb-1">Qual Curso? (Se superior)</label><input type="text" name="qual_curso" defaultValue={usuario.qual_curso} className="w-full border p-2 rounded-md" /></div>
                   
                   <div><label className="block text-sm text-gray-700 mb-1">Já possui curso de Teologia?</label>
-                    <select name="possui_teologia" defaultValue={usuario.possui_teologia || 'Não'} className="w-full border p-2 rounded-md"><option value="Não">Não</option><option value="Sim">Sim</option></select>
+                    <select name="possui_teologia" defaultValue={usuario.possui_teologia || 'Não'} className="w-full border p-2 rounded-md bg-white"><option value="Não">Não</option><option value="Sim">Sim</option></select>
                   </div>
                   <div><label className="block text-sm text-gray-700 mb-1">Se sim, qual?</label><input type="text" name="qual_teologia" defaultValue={usuario.qual_teologia} className="w-full border p-2 rounded-md" /></div>
                   <div className="md:col-span-2"><label className="block text-sm text-gray-700 mb-1">Onde cursou?</label><input type="text" name="onde_teologia" defaultValue={usuario.onde_teologia} className="w-full border p-2 rounded-md" /></div>
@@ -135,7 +147,7 @@ export default function EditorCadastroCompleto({ usuario, polos }: EditorCadastr
                   <div><label className="block text-sm text-gray-700 mb-1">Departamento de atuação</label><input type="text" name="departamento" defaultValue={usuario.departamento} className="w-full border p-2 rounded-md" /></div>
 
                   <div><label className="block text-sm text-gray-700 mb-1">Possui Cargo?</label>
-                    <select name="possui_cargo" defaultValue={usuario.possui_cargo || 'Não'} className="w-full border p-2 rounded-md"><option value="Não">Não</option><option value="Sim">Sim</option></select>
+                    <select name="possui_cargo" defaultValue={usuario.possui_cargo || 'Não'} className="w-full border p-2 rounded-md bg-white"><option value="Não">Não</option><option value="Sim">Sim</option></select>
                   </div>
                   <div><label className="block text-sm text-gray-700 mb-1">Qual Cargo?</label><input type="text" name="qual_cargo" defaultValue={usuario.qual_cargo} className="w-full border p-2 rounded-md" /></div>
                   
