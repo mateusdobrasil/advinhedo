@@ -19,10 +19,18 @@ export default function FormChamadaEBD({
   const [isPending, startTransition] = useTransition() // 👈 Gerenciador de carregamento automático
   const [mensagem, setMensagem] = useState({ texto: '', tipo: '' })
 
-  // Captura os valores do banco para a data selecionada
-  const registroBase = frequenciasExistentes.length > 0 ? frequenciasExistentes[0] : null
-  const visitantesAtuais = registroBase?.visitantes || 0
-  const ofertaAtual = registroBase?.oferta || 0
+  // 👇 LÓGICA CORRIGIDA: Soma todos os visitantes e ofertas da data
+  let visitantesAtuais = 0
+  let ofertaAtual = 0
+
+  frequenciasExistentes.forEach(registro => {
+    if (registro.visitantes) {
+      visitantesAtuais += Number(registro.visitantes)
+    }
+    if (registro.oferta) {
+      ofertaAtual += Number(registro.oferta)
+    }
+  })
 
   // ⚡ MUDANÇA DE DATA SEGURA: O startTransition avisa o React quando o Next.js terminar de buscar os dados
   const lidarComMudancaDeData = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,7 +111,7 @@ export default function FormChamadaEBD({
                 type="number" 
                 name="oferta"
                 key={`ofe-${dataSelecionada}`} 
-                defaultValue={ofertaAtual}
+                defaultValue={ofertaAtual.toFixed(2)} // Formata para 2 casas decimais no input
                 step="0.01"
                 min="0"
                 disabled={isPending}
@@ -130,7 +138,6 @@ export default function FormChamadaEBD({
                   {alunos.map((aluno) => {
                     const reg = frequenciasExistentes.find(f => f.aluno_id === aluno.aluno_id)
                     
-                    // CORREÇÃO: Se não houver registro no banco, o padrão agora é FALSE (tudo desmarcado)
                     const presente = reg ? reg.presente : false 
                     const biblia = reg ? reg.trouxe_biblia : false
                     const revista = reg ? reg.trouxe_revista : false

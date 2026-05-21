@@ -5,7 +5,7 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
 import CriadorMatricula from '../../../../components/CriadorMatricula'
-import MatriculaPorTurma from '../../../../components/MatriculaPorTurma' // 👈 Importação do novo botão
+import MatriculaPorTurma from '../../../../components/MatriculaPorTurma'
 import FormChamadaEBD from '../../../../components/FormChamadaEBD'
 import BotaoImprimir from '../../../../components/BotaoImprimir'
 
@@ -61,7 +61,7 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
   const { data: todosOsAlunos } = await supabase.from('perfis').select('id, nome_completo, cpf').ilike('tipo_usuario', '%aluno%').order('nome_completo')
   const { data: cursosRegras } = await supabase.from('cursos').select('nome, valor_mensalidade')
 
-  // 5. LÓGICA DO RESUMO DIÁRIO
+  // 5. LÓGICA DO RESUMO DIÁRIO (CORRIGIDA)
   let frequenciasExistentes: any[] = []
   if (turma.is_ebd) {
     const { data: freqs } = await supabase
@@ -73,12 +73,23 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
     frequenciasExistentes = freqs || []
   }
 
-  const registroBase = frequenciasExistentes.length > 0 ? frequenciasExistentes[0] : null
+  // Contadores de Presença e Materiais da Aula
   const totalPresentes = frequenciasExistentes.filter(f => f.presente === true).length
   const totalBiblias = frequenciasExistentes.filter(f => f.trouxe_biblia === true).length
-  const totalRevistas = alunos.filter(a => a.revista_entregue).length
-  const visitantesDia = registroBase ? Number(registroBase.visitantes || 0) : 0
-  const ofertaDia = registroBase ? Number(registroBase.oferta || 0) : 0
+  const totalRevistas = frequenciasExistentes.filter(f => f.trouxe_revista === true).length
+
+  // Somadores (Varre todas as linhas para não perder dados)
+  let visitantesDia = 0
+  let ofertaDia = 0
+
+  frequenciasExistentes.forEach(registro => {
+    if (registro.visitantes) {
+      visitantesDia += Number(registro.visitantes)
+    }
+    if (registro.oferta) {
+      ofertaDia += Number(registro.oferta)
+    }
+  })
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 p-6">
@@ -171,7 +182,6 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
           <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <h2 className="text-lg font-bold text-gray-800">Manutenção de Alunos ({alunos?.length || 0})</h2>
             <div className="flex flex-wrap gap-2 w-full md:w-auto">
-              {/* 👇 Aqui estão os botões lado a lado 👇 */}
               <MatriculaPorTurma 
                 turmas={todasAsTurmas || []} 
                 turmaDestinoId={turma.id} 

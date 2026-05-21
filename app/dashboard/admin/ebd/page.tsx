@@ -115,13 +115,20 @@ export default async function TurmasEBDPage() {
                   </div>
 
                   <div className="border-t border-gray-100 pt-4 flex gap-2 items-center">
-                    {/* A rota redireciona para a tela de Detalhes da Turma que já criamos */}
+                    {/* Botão de acessar a classe */}
                     <Link 
                       href={`/dashboard/admin/ebd/${turma.id}`}
                       className="flex-1 bg-orange-50 text-orange-700 py-2 rounded-lg text-sm font-bold text-center hover:bg-orange-100 transition border border-orange-100"
                     >
                       Acessar Diário de Classe
                     </Link>
+                    
+                    {/* 👇 O componente importado atuando como botão de Editar 👇 */}
+                    <CriadorTurma 
+                      turma={turma} 
+                      cursosDisponiveis={cursosAtivos || []} 
+                      ebdSalasConfig={ebdSalasConfig || []} 
+                    />
                   </div>
                 </div>
               )
