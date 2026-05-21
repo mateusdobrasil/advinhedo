@@ -227,4 +227,4 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
       </div>
     </div>
   )
-}
+} 
