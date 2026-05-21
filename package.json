@@ -11,7 +11,9 @@
     "sync:android": "next build && npx cap sync android",
     "sync:ios": "next build && npx cap sync ios",
     "open:android": "npx cap open android",
-    "open:ios": "npx cap open ios"
+    "open:ios": "npx cap open ios",
+    "install:debug": "node -e \"require('child_process').execSync('powershell -ExecutionPolicy Bypass -File install-debug.ps1', {stdio: 'inherit'})\"",
+    "test:android": "npm run build:mobile && npm run install:debug"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.4",
