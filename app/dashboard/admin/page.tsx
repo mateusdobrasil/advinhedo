@@ -56,7 +56,7 @@ export default async function AdminPage() {
     { nome: 'Diário de Classe', icon: '✅', link: '/dashboard/admin/diario', desc: 'Notas e presenças', ativo: true, permissoes: ['Administrador', 'Administrativo', 'Professor'] },
     { nome: 'Mural de Avisos', icon: '📢', link: '/dashboard/admin/avisos', desc: 'Publique recados globais', ativo: true, permissoes: ['Administrador', 'Administrativo', 'Professor'] },
     { nome: 'Turmas', icon: '🏫', link: '/dashboard/admin/turmas', desc: 'Organize as salas', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
-    { nome: 'Matrículas', icon: '📝', link: '/dashboard/admin/matriculas', desc: 'Aprovações e inscrições', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
+    { nome: 'Matrículas', icon: '📝', link: '/dashboard/admin/matriculas', desc: 'Aprovações e inscrições', ativo: true, permissoes: ['Administrador', 'Administrativo'], isEBD: true },
     { nome: 'Cursos', icon: '🏛️', link: '/dashboard/admin/cursos', desc: 'Grade curricular', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
     { nome: 'Matérias', icon: '📚', link: '/dashboard/admin/materias', desc: 'Disciplinas e conteúdos', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
     
