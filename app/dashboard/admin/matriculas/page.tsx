@@ -8,7 +8,11 @@ import CriadorMatricula from '../../../components/CriadorMatricula'
 import BotaoStatusMatricula from '../../../components/BotaoStatusMatricula'
 import MatriculaEmLote from '../../../components/MatriculaEmLote'
 
-export default async function MatriculasPage() {
+interface PageProps {
+  searchParams: any
+}
+
+export default async function MatriculasPage({ searchParams }: PageProps) {
   const supabase = createServerComponentClient({ cookies })
 
   // 1. Verificação de Sessão
@@ -32,7 +36,13 @@ export default async function MatriculasPage() {
     redirect('/dashboard') // Se não tiver permissão, redireciona para fora do admin
   }
 
-  // 4. Busca todas as matrículas para a tabela
+  // =================================================================
+  // 4. LÓGICA DO FILTRO DE BUSCA (Search Params)
+  // =================================================================
+  const resolvedSearch = await searchParams
+  const busca = resolvedSearch?.q || ''
+
+  // Busca TODAS as matrículas com os relacionamentos
   const { data: dadosMatriculas } = await supabase
     .from('matriculas')
     .select(`
@@ -45,7 +55,26 @@ export default async function MatriculasPage() {
     `)
     .order('created_at', { ascending: false })
 
+  // Filtra em memória (JS) para lidar facilmente com relacionamentos de tabelas diferentes
+  let matriculasFiltradas = dadosMatriculas || []
+  if (busca) {
+    const termo = busca.toLowerCase()
+    matriculasFiltradas = matriculasFiltradas.filter((mat: any) => {
+      const nomeAluno = mat.perfis?.nome_completo?.toLowerCase() || ''
+      const nomeTurma = mat.turmas?.nome?.toLowerCase() || ''
+      const curso = mat.turmas?.curso?.toLowerCase() || ''
+      const status = mat.status?.toLowerCase() || ''
+
+      return nomeAluno.includes(termo) || 
+             nomeTurma.includes(termo) || 
+             curso.includes(termo) || 
+             status.includes(termo)
+    })
+  }
+
+  // =================================================================
   // 5. Buscas para alimentar os botões de Nova Matrícula e Lote
+  // =================================================================
   const { data: todasAsTurmas } = await supabase
     .from('turmas')
     .select('id, nome, curso')
@@ -67,28 +96,50 @@ export default async function MatriculasPage() {
       <div className="max-w-6xl mx-auto">
         
         {/* CABEÇALHO */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">📄 Gestão de Matrículas</h1>
-            <p className="text-gray-500 text-sm">Controle as inscrições e status dos alunos na instituição.</p>
+            <p className="text-gray-500 text-sm mt-1">Controle as inscrições e status dos alunos na instituição.</p>
           </div>
-          <Link href="/dashboard/admin" className="text-sm bg-white border border-gray-200 px-4 py-2 rounded-lg font-medium shadow-sm hover:bg-gray-50 transition">
-            Voltar
+          <Link href="/dashboard/admin" className="text-sm bg-white border border-gray-200 px-4 py-2 rounded-lg font-medium shadow-sm hover:bg-gray-50 transition whitespace-nowrap">
+            Voltar ao Hub
           </Link>
         </div>
 
-        {/* BOTÕES DE MATRÍCULA */}
-        <div className="mb-8 flex justify-end gap-2">
-          <MatriculaEmLote 
-            alunos={todosOsAlunos || []} 
-            turmas={todasAsTurmas || []}
-            cursosRegras={cursosRegras || []} 
-          />
-          <CriadorMatricula 
-            alunos={todosOsAlunos || []} 
-            turmas={todasAsTurmas || []}
-            cursosRegras={cursosRegras || []} 
-          />
+        {/* BARRA DE AÇÕES (FILTRO E BOTÕES) */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+          <form method="GET" className="flex flex-col sm:flex-row gap-3 w-full lg:max-w-lg bg-white p-2 rounded-xl shadow-sm border border-gray-200">
+            <input
+              type="text"
+              name="q"
+              defaultValue={busca}
+              placeholder="Buscar por aluno, turma, curso ou status..."
+              className="flex-1 bg-gray-50 border border-gray-100 text-gray-700 text-sm rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none"
+            />
+            <div className="flex gap-2">
+              <button type="submit" className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-indigo-700 transition">
+                Buscar
+              </button>
+              {busca && (
+                <Link href="/dashboard/admin/matriculas" className="flex items-center justify-center bg-gray-100 text-gray-500 px-4 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-200 hover:text-gray-700 transition">
+                  Limpar
+                </Link>
+              )}
+            </div>
+          </form>
+          
+          <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-2 justify-end">
+            <MatriculaEmLote 
+              alunos={todosOsAlunos || []} 
+              turmas={todasAsTurmas || []}
+              cursosRegras={cursosRegras || []} 
+            />
+            <CriadorMatricula 
+              alunos={todosOsAlunos || []} 
+              turmas={todasAsTurmas || []}
+              cursosRegras={cursosRegras || []} 
+            />
+          </div>
         </div>
 
         {/* TABELA GERAL DE MATRÍCULAS */}
@@ -97,16 +148,16 @@ export default async function MatriculasPage() {
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-50 text-gray-500">
                 <tr>
-                  <th className="px-6 py-3 font-medium">Data</th>
-                  <th className="px-6 py-3 font-medium">Aluno</th>
-                  <th className="px-6 py-3 font-medium">Turma</th>
-                  <th className="px-6 py-3 font-medium text-center">Status</th>
-                  <th className="px-6 py-3 font-medium text-right">Ações</th>
+                  <th className="px-6 py-4 font-medium uppercase tracking-wider text-[10px]">Data</th>
+                  <th className="px-6 py-4 font-medium uppercase tracking-wider text-[10px]">Aluno</th>
+                  <th className="px-6 py-4 font-medium uppercase tracking-wider text-[10px]">Turma / Curso</th>
+                  <th className="px-6 py-4 font-medium uppercase tracking-wider text-[10px] text-center">Status</th>
+                  <th className="px-6 py-4 font-medium uppercase tracking-wider text-[10px] text-right">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {dadosMatriculas && dadosMatriculas.length > 0 ? (
-                  dadosMatriculas.map((mat: any) => (
+                {matriculasFiltradas.length > 0 ? (
+                  matriculasFiltradas.map((mat: any) => (
                     <tr key={mat.id} className="hover:bg-gray-50 transition">
                       <td className="px-6 py-4 text-gray-500">
                         {new Date(mat.created_at).toLocaleDateString('pt-BR')}
@@ -134,8 +185,10 @@ export default async function MatriculasPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-gray-400 italic">
-                      Nenhuma matrícula encontrada no sistema.
+                    <td colSpan={5} className="px-6 py-16 text-center">
+                      <div className="text-4xl mb-3">🔍</div>
+                      <p className="text-gray-600 font-bold text-lg">Nenhuma matrícula encontrada</p>
+                      <p className="text-gray-400 text-sm mt-1">Tente pesquisar com outros termos ou limpe o filtro.</p>
                     </td>
                   </tr>
                 )}

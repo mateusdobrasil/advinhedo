@@ -31,6 +31,9 @@ export default async function TurmasEBDPage() {
     redirect('/dashboard') // Se não tiver permissão, redireciona para fora do admin
   }
 
+  // 👇 NOVA LÓGICA: Variável que define quem pode criar e editar turmas
+  const podeEditar = tipo.includes('administrador') || tipo.includes('administrativo')
+
   // 4. Busca APENAS as turmas da EBD (is_ebd = true sem aspas)
   const { data: turmas, error } = await supabase
     .from('turmas')
@@ -74,13 +77,15 @@ export default async function TurmasEBDPage() {
           </Link>
         </div>
 
-        {/* BOTÃO CADASTRAR NOVA TURMA */}
-        <div className="mb-8 flex justify-end">
-          <CriadorTurma 
-            cursosDisponiveis={cursosAtivos || []} 
-            ebdSalasConfig={ebdSalasConfig || []} 
-          />
-        </div>
+        {/* BOTÃO CADASTRAR NOVA TURMA - Visível apenas para Admin e Administrativo */}
+        {podeEditar && (
+          <div className="mb-8 flex justify-end">
+            <CriadorTurma 
+              cursosDisponiveis={cursosAtivos || []} 
+              ebdSalasConfig={ebdSalasConfig || []} 
+            />
+          </div>
+        )}
 
         {/* GRID DE SALAS DA EBD */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -123,12 +128,14 @@ export default async function TurmasEBDPage() {
                       Acessar Diário de Classe
                     </Link>
                     
-                    {/* 👇 O componente importado atuando como botão de Editar 👇 */}
-                    <CriadorTurma 
-                      turma={turma} 
-                      cursosDisponiveis={cursosAtivos || []} 
-                      ebdSalasConfig={ebdSalasConfig || []} 
-                    />
+                    {/* O componente importado atuando como botão de Editar - Visível apenas para Admin e Administrativo */}
+                    {podeEditar && (
+                      <CriadorTurma 
+                        turma={turma} 
+                        cursosDisponiveis={cursosAtivos || []} 
+                        ebdSalasConfig={ebdSalasConfig || []} 
+                      />
+                    )}
                   </div>
                 </div>
               )

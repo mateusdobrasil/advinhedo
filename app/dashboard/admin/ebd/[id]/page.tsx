@@ -26,6 +26,9 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
   const temAcesso = tipo.includes('administrador') || tipo.includes('administrativo') || tipo.includes('professor')
   if (!temAcesso) redirect('/dashboard')
 
+  // 👇 NOVA LÓGICA: Variável que define quem pode matricular alunos
+  const podeEditar = tipo.includes('administrador') || tipo.includes('administrativo')
+
   const resolvedParams = await params
   const id = resolvedParams.id
   
@@ -144,7 +147,6 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
             <div className="grid grid-cols-2 lg:grid-cols-7 gap-3 sm:gap-4">
               <div className="bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-100 flex flex-col">
                 <span className="text-[9px] sm:text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-1 truncate">Matriculados</span>
-                {/* 👇 Correção Aplicada Aqui */}
                 <span className="text-xl sm:text-[20px] font-black text-gray-800">{totalMatriculados}</span>
               </div>
               <div className="bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-100 flex flex-col">
@@ -153,7 +155,6 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
               </div>
               <div className="bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-100 flex flex-col">
                 <span className="text-[9px] sm:text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-1 truncate">Ausentes</span>
-                {/* 👇 Correção Aplicada Aqui */}
                 <span className="text-xl sm:text-[20px] font-black text-gray-800">{totalAusentes}</span>
               </div>
               <div className="bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-100 flex flex-col">
@@ -194,23 +195,25 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
           <div className="p-5 sm:p-6 border-b border-gray-100 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <h2 className="text-lg font-bold text-gray-800">Manutenção de Alunos ({alunos?.length || 0})</h2>
             
-            {/* Container dos botões de matrícula 100% no celular */}
-            <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
-              <div className="w-full sm:w-auto">
-                <MatriculaPorTurma 
-                  turmas={todasAsTurmas || []} 
-                  turmaDestinoId={turma.id} 
-                />
+            {/* 👇 Container exibido APENAS para quem tem permissão 👇 */}
+            {podeEditar && (
+              <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+                <div className="w-full sm:w-auto">
+                  <MatriculaPorTurma 
+                    turmas={todasAsTurmas || []} 
+                    turmaDestinoId={turma.id} 
+                  />
+                </div>
+                <div className="w-full sm:w-auto">
+                  <CriadorMatricula 
+                    alunos={todosOsAlunos || []} 
+                    turmas={todasAsTurmas || []} 
+                    cursosRegras={cursosRegras || []} 
+                    turmaIdPadrao={turma.id} 
+                  />
+                </div>
               </div>
-              <div className="w-full sm:w-auto">
-                <CriadorMatricula 
-                  alunos={todosOsAlunos || []} 
-                  turmas={todasAsTurmas || []} 
-                  cursosRegras={cursosRegras || []} 
-                  turmaIdPadrao={turma.id} 
-                />
-              </div>
-            </div>
+            )}
           </div>
 
           <div className="overflow-x-auto">
