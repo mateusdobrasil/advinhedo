@@ -1,12 +1,37 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { criarUsuario } from '../actions/usuarios'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 export default function CriadorUsuario() {
   const [aberto, setAberto] = useState(false)
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
+
+  // Estados para os polos
+  const [polos, setPolos] = useState<any[]>([])
+  const [carregandoPolos, setCarregandoPolos] = useState(true)
+
+  // Busca os polos no banco apenas quando o modal é aberto
+  useEffect(() => {
+    if (!aberto) return;
+
+    const fetchPolos = async () => {
+      setCarregandoPolos(true)
+      const supabase = createClientComponentClient()
+      const { data, error } = await supabase
+        .from('polos')
+        .select('id, nome, cidade, tipo')
+        .order('nome')
+        
+      if (data) setPolos(data)
+      if (error) console.error("Erro ao buscar polos:", error)
+      setCarregandoPolos(false)
+    }
+
+    fetchPolos()
+  }, [aberto])
 
   if (!aberto) {
     return (
@@ -16,62 +41,65 @@ export default function CriadorUsuario() {
     )
   }
 
+  const handleSubmit = async (formData: FormData) => {
+    setCarregando(true)
+    setErro('')
+    
+    // Injetar o NOME do polo dinamicamente no formData antes de enviar para a action
+    const poloId = formData.get('polo_id')
+    const poloSelecionado = polos.find(p => p.id === poloId)
+    
+    if (poloSelecionado) {
+      formData.append('polo', poloSelecionado.nome)
+    }
+
+    try {
+      await criarUsuario(formData)
+      setAberto(false)
+    } catch (e: any) {
+      setErro(e.message)
+    } finally {
+      setCarregando(false)
+    }
+  }
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[100]">
       <div className="bg-white rounded-xl p-6 w-full max-w-lg shadow-xl">
         <h3 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Cadastrar no Sistema</h3>
         
         {erro && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4">{erro}</div>}
 
-        <form action={async (formData) => {
-          setCarregando(true)
-          setErro('')
-          try {
-            await criarUsuario(formData)
-            setAberto(false)
-          } catch (e: any) {
-            setErro(e.message)
-          } finally {
-            setCarregando(false)
-          }
-        }} className="space-y-4">
+        <form action={handleSubmit} className="space-y-4">
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo *</label>
-            <input type="text" name="nome_completo" required placeholder="Ex: João da Silva" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500" />
+            <input type="text" name="nome_completo" required placeholder="Ex: João da Silva" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">E-mail *</label>
-              <input type="email" name="email" required placeholder="joao@email.com" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500" />
+              <input type="email" name="email" required placeholder="joao@email.com" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">CPF</label>
-              <input type="text" name="cpf" placeholder="000.000.000-00" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500" />
+              <input type="text" name="cpf" placeholder="000.000.000-00" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nível de Acesso *</label>
-              <select name="tipo_usuario" required className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                <option value="aluno">Aluno</option>
-                <option value="professor">Professor</option>
-                <option value="cadastro">Cadastro (Recepção)</option>
-                <option value="tesoureiro">Tesoureiro</option>
-                <option value="secretario">Secretário</option>
-                <option value="administrador">Administrador Geral</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Polo de Estudo *</label>
-              <select name="polo" required className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                <option value="IBV">IBV</option>
-                <option value="IBUC">IBUC</option>
-                <option value="EBD">EBD</option>
-              </select>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Polo de Estudo *</label>
+            <select name="polo_id" required defaultValue="" disabled={carregandoPolos} className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed">
+              <option value="" disabled>
+                {carregandoPolos ? 'Carregando polos...' : 'Selecione o polo...'}
+              </option>
+              {polos.map(polo => (
+                <option key={polo.id} value={polo.id}>
+                  {polo.nome} {polo.tipo ? `- ${polo.tipo}` : ''} {polo.cidade ? `(${polo.cidade})` : ''}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-gray-100">
