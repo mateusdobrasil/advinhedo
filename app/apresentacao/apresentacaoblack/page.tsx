@@ -57,7 +57,7 @@ export default function TelaApresentacaoBlack() {
 
     const intervalo = setInterval(() => {
       carregarDados(cookieEvento);
-    }, 5000);
+    }, 3000);
 
     return () => clearInterval(intervalo);
   }, [router, supabase, carregarDados]);

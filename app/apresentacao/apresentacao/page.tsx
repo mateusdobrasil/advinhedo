@@ -62,7 +62,7 @@ export default function TelaApresentacao() {
     // Loop infinito que atualiza silenciosamente a cada 5 segundos
     const intervalo = setInterval(() => {
       carregarDados(cookieEvento);
-    }, 5000);
+    }, 3000);
 
     return () => clearInterval(intervalo);
   }, [router, supabase, carregarDados]);
