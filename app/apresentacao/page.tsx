@@ -6,7 +6,7 @@ export default function ApresentacaoDashboard() {
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
       
       <div className="text-center mb-10 flex flex-col items-center">
-        {/* Logo adicionada aqui, centralizada acima do título */}
+        {/* Logo centralizada acima do título */}
         <img 
           src={logo.src} 
           alt="Logo AD Vinhedo" 
@@ -16,8 +16,8 @@ export default function ApresentacaoDashboard() {
         <p className="text-gray-500 mt-2">Gestão de Apresentação de Visitantes</p>
       </div>
 
-      {/* Grid responsivo: 1 coluna no celular, 3 colunas em telas médias/grandes */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
+      {/* Grid responsivo: 1 coluna no celular, 4 colunas em telas médias/grandes */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 w-full max-w-5xl">
         
         {/* Card 1: Cadastro */}
         <Link href="/apresentacao/cadastro" 
@@ -29,7 +29,7 @@ export default function ApresentacaoDashboard() {
           <p className="text-gray-500 mt-2 text-sm">Registrar novos visitantes, famílias e acompanhantes.</p>
         </Link>
 
-        {/* Card 2: Apresentação ao vivo */}
+        {/* Card 2: Apresentação ao vivo (Clara) */}
         <Link href="/apresentacao/apresentacao" 
               className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col items-center text-center group">
           <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4 group-hover:bg-green-600 group-hover:text-white transition-colors">
@@ -39,7 +39,19 @@ export default function ApresentacaoDashboard() {
           <p className="text-gray-500 mt-2 text-sm">Visualizar fila do dia e marcar visitantes já apresentados.</p>
         </Link>
 
-        {/* Card 3: Edição */}
+        {/* Card 3: Apresentação ao vivo (Black) - Ícone de Lua e Cores Escuras */}
+        <Link href="/apresentacao/apresentacaoblack" 
+              className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col items-center text-center group">
+          <div className="w-16 h-16 bg-gray-100 text-gray-800 rounded-full flex items-center justify-center mb-4 group-hover:bg-gray-900 group-hover:text-white transition-colors">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-800">Apresentação Black</h2>
+          <p className="text-gray-500 mt-2 text-sm">Visualizar fila com fundo escuro (ideal para telões e painéis).</p>
+        </Link>
+
+        {/* Card 4: Edição */}
         <Link href="/apresentacao/edicao" 
               className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col items-center text-center group">
           <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mb-4 group-hover:bg-orange-600 group-hover:text-white transition-colors">
