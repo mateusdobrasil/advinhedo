@@ -115,8 +115,8 @@ export default async function TelaApresentacao() {
             const nomesAcompanhantes = acompanhantes.map((a: any) => a.nome);
 
             return (
-              // O Card agora tem max-h-full e flex-col para controlar o transbordo interno
-              <div key={visitante.id} className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 md:p-10 max-w-6xl w-full max-h-full flex flex-col animate-fade-in">
+              // O Card agora tem max-w-[95%] para esticar em telas grandes e evitar quebra de linha em nomes longos
+              <div key={visitante.id} className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 md:p-10 w-full max-w-[95%] 2xl:max-w-[1600px] max-h-full flex flex-col animate-fade-in">
                 
                 {/* Área de Texto - Rola internamente se for absurdamente grande, protegendo o botão */}
                 <div className="flex-1 overflow-y-auto px-4 flex flex-col items-center text-center space-y-4 md:space-y-6 pb-4">
@@ -151,23 +151,22 @@ export default async function TelaApresentacao() {
 
                   {/* 4. Esposa */}
                   {visitante.nome_esposa && (
-                    <p className="text-3xl md:text-5xl text-gray-700 leading-snug">
-                      <span className="font-black text-gray-900" >Esposa:</span> 
-                      <span className="font-black text-gray-900" >{visitante.nome_esposa}</span>
+                    <p className="text-2xl md:text-5xl text-gray-500 font-medium leading-snug">
+                      Esposa: <span className="text-gray-800 font-bold"> {visitante.nome_esposa} </span>
                     </p>
                   )}
 
                   {/* 5. Filhos */}
                   {nomesFilhos.length > 0 && (
-                    <p className="text-3xl md:text-5xl text-gray-700 leading-snug break-words">
-                      <span className="font-black text-gray-900">Filhos:</span> {formatarLista(nomesFilhos)}
+                     <p className="text-2xl md:text-5xl text-gray-500 font-medium leading-snug break-words">
+                      Filhos: <span className="text-gray-800 font-bold"> {formatarLista(nomesFilhos)} </span>
                     </p>
                   )}
 
                   {/* 6. Acompanhantes */}
                   {nomesAcompanhantes.length > 0 && (
-                    <p className="text-3xl md:text-5xl text-gray-700 leading-snug break-words">
-                      <span className="font-black text-gray-900">Acompanhantes:</span> {formatarLista(nomesAcompanhantes)}
+                    <p className="text-2xl md:text-5xl text-gray-500 font-medium leading-snug break-words">
+                      Acompanhantes: <span className="text-gray-800 font-bold"> {formatarLista(nomesAcompanhantes)} </span>
                     </p>
                   )}
                 </div>
