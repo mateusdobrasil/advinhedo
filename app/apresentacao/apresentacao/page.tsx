@@ -42,7 +42,7 @@ export default async function TelaApresentacao() {
       <div className="p-4 md:px-8 flex items-center justify-between bg-white border-b border-gray-200 shadow-sm shrink-0">
         <div className="flex items-center gap-4">
           <img src={logo.src} alt="Logo AD Vinhedo" className="h-10 w-auto object-contain" />
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Culto AD Vinhedo</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">AD Vinhedo - Culto de Aniversário do Pr Heber Souza</h1>
         </div>
         
         <div className="flex items-center gap-3 md:gap-4">
@@ -121,8 +121,8 @@ export default async function TelaApresentacao() {
                 {/* Área de Texto - Rola internamente se for absurdamente grande, protegendo o botão */}
                 <div className="flex-1 overflow-y-auto px-4 flex flex-col items-center text-center space-y-4 md:space-y-6 pb-4">
                   
-                  {/* 1. Nome do Visitante */}
-                  <h2 className="text-5xl md:text-7xl font-black text-blue-900 uppercase tracking-tight leading-tight break-words w-full">
+                  {/* 1. Nome do Visitante (Reduzido para font-bold e adicionado drop-shadow) */}
+                  <h2 className="text-5xl md:text-7xl font-bold text-blue-900 uppercase leading-tight break-words w-full drop-shadow-sm">
                     {visitante.nome_visitante}
                   </h2>
                   
@@ -137,10 +137,11 @@ export default async function TelaApresentacao() {
                   {visitante.representado_por && (
                     <div className="pt-2">
                       <div className="bg-yellow-100 border-2 border-yellow-300 text-yellow-900 px-6 py-3 md:px-8 md:py-4 rounded-2xl inline-flex flex-wrap items-center justify-center gap-2 shadow-sm">
-                        <span className="font-bold text-yellow-700 uppercase text-xl md:text-3xl tracking-wider">
+                        <span className="font-bold text-yellow-700 uppercase text-xl md:text-3xl tracking-wide">
                           Representado por:
                         </span>
-                        <span className="text-3xl md:text-5xl font-black ml-2">
+                        {/* Reduzido para font-bold */}
+                        <span className="text-3xl md:text-5xl font-bold ml-2">
                           {visitante.representado_por}
                         </span>
                       </div>
@@ -177,9 +178,10 @@ export default async function TelaApresentacao() {
                     "use server";
                     await toggleStatusApresentacao(visitante.id, visitante.foi_apresentado);
                   }}>
+                    {/* Reduzido para font-bold */}
                     <button 
                       type="submit"
-                      className="w-full bg-green-600 hover:bg-green-700 text-white font-black py-5 md:py-6 px-8 rounded-2xl shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-4 text-2xl md:text-3xl uppercase tracking-widest"
+                      className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-5 md:py-6 px-8 rounded-2xl shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-4 text-2xl md:text-3xl uppercase tracking-wide"
                     >
                       <svg className="w-8 h-8 md:w-10 md:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
