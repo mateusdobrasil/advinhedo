@@ -151,9 +151,8 @@ export default async function TelaApresentacao() {
 
                   {/* 4. Esposa */}
                   {visitante.nome_esposa && (
-                    <p className="text-3xl md:text-5xl text-gray-700 leading-snug">
-                      <span className="text-gray-800 font-bold">Esposa: </span> 
-                      <span className="font-black text-gray-900" >{visitante.nome_esposa}</span>
+                    <p className="text-2xl md:text-5xl text-gray-500 font-medium leading-snug">
+                      Esposa: <span className="text-gray-800 font-bold">{visitante.nome_esposa}</span>
                     </p>
                   )}
 
