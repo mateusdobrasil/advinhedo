@@ -151,21 +151,21 @@ export default async function TelaApresentacao() {
 
                   {/* 4. Esposa */}
                   {visitante.nome_esposa && (
-                    <p className="text-2xl md:text-6xl text-gray-500 font-medium leading-snug">
+                    <p className="text-2xl md:text-5xl text-gray-500 font-medium leading-snug">
                       Esposa: <span className="text-gray-800 font-bold"> {visitante.nome_esposa} </span>
                     </p>
                   )}
 
                   {/* 5. Filhos */}
                   {nomesFilhos.length > 0 && (
-                     <p className="text-2xl md:text-6xl text-gray-500 font-medium leading-snug">
+                     <p className="text-2xl md:text-5xl text-gray-500 font-medium leading-snug">
                       Filhos: <span className="text-gray-800 font-bold"> {formatarLista(nomesFilhos)} </span>
                     </p>
                   )}
 
                   {/* 6. Acompanhantes */}
                   {nomesAcompanhantes.length > 0 && (
-                    <p className="text-2xl md:text-6xl text-gray-500 font-medium leading-snug">
+                    <p className="text-2xl md:text-5xl text-gray-500 font-medium leading-snug">
                       Acompanhantes: <span className="text-gray-800 font-bold"> {formatarLista(nomesAcompanhantes)} </span>
                     </p>
                   )}
