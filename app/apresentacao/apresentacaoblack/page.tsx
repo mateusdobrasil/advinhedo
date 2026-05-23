@@ -41,7 +41,7 @@ export default async function TelaApresentacaoBlack() {
       <div className="p-4 md:px-8 flex items-center justify-between bg-gray-900 border-b border-gray-800 shadow-sm shrink-0">
         <div className="flex items-center gap-4">
           {/* Logo pode precisar ser uma versão branca dependendo do arquivo original */}
-          <img src={logo.src} alt="Logo AD Vinhedo" className="h-10 w-auto object-contain brightness-0 invert opacity-90" />
+          <img src={logo.src} alt="Logo AD Vinhedo" className="h-10 w-auto object-contain" />
           <h1 className="text-2xl md:text-3xl font-bold text-gray-100">AD Vinhedo - Culto de Aniversário do Pr Heber Souza</h1>
         </div>
         
