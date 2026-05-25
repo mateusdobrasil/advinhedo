@@ -28,7 +28,7 @@ export default function TelaApresentacao() {
       `)
       .eq('evento_id', eventoId)
       .eq('foi_apresentado', false)
-      .order('created_at', { ascending: true }); // A ordem de chegada é mantida dentro de cada bloco
+      .order('created_at', { ascending: true });
 
     if (error) {
       setErro(error.message);
@@ -64,17 +64,12 @@ export default function TelaApresentacao() {
     return () => clearInterval(intervalo);
   }, [router, supabase, carregarDados]);
 
-  // Função para marcar como apresentado
   const handleApresentar = async (visitante: any) => {
     if (processandoId) return;
     setProcessandoId(visitante.id);
     
     await toggleStatusApresentacao(visitante.id, visitante.foi_apresentado);
-    
-    // Atualiza a tela escondendo o card na hora para parecer rápido
     setVisitantes(prev => prev.filter(v => v.id !== visitante.id));
-    
-    // Puxa do banco pra garantir
     await carregarDados(eventoAtivo!);
     setProcessandoId(null);
   };
@@ -92,7 +87,6 @@ export default function TelaApresentacao() {
     return new Date(dataStr + 'T00:00:00').toLocaleDateString('pt-BR');
   };
 
-  // Função para rolar a tela até o bloco correspondente
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
@@ -100,10 +94,11 @@ export default function TelaApresentacao() {
     }
   };
 
-  // Separa a lista por tipos para criar os blocos
+  // Separa a lista por tipos
   const listaVisitas = visitantes.filter(v => (v.tipo === 'Visitas' || !v.tipo));
   const listaOracao = visitantes.filter(v => v.tipo === 'Pedido de Oraçao');
   const listaAniversarios = visitantes.filter(v => v.tipo === 'Aniversários');
+  const listaAgradecimentos = visitantes.filter(v => v.tipo === 'Agradecimento');
   const listaAvisos = visitantes.filter(v => v.tipo === 'Aviso');
 
   if (erro) {
@@ -119,7 +114,7 @@ export default function TelaApresentacao() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       
-      {/* Cabeçalho Fixo (Agora com botões de navegação) */}
+      {/* Cabeçalho Fixo */}
       <div className="p-4 md:px-8 flex flex-col gap-4 bg-white border-b border-gray-200 shadow-sm sticky top-0 z-20">
         
         <div className="flex items-center justify-between">
@@ -141,43 +136,16 @@ export default function TelaApresentacao() {
           </div>
         </div>
 
-        {/* Navegação Rápida (Menu de Pílulas) */}
+        {/* Navegação Rápida */}
         <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-gray-100">
           <span className="text-sm font-bold text-gray-400 uppercase tracking-wider mr-2 hidden md:block">Navegar:</span>
           
-          <button 
-            onClick={() => scrollToSection('bloco-visitas')}
-            disabled={listaVisitas.length === 0}
-            className={`px-4 py-2 rounded-lg font-bold text-base transition-colors ${listaVisitas.length > 0 ? 'bg-blue-100 text-blue-800 hover:bg-blue-200 shadow-sm' : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'}`}
-          >
-            Visitas ({listaVisitas.length})
-          </button>
-
-          <button 
-            onClick={() => scrollToSection('bloco-oracoes')}
-            disabled={listaOracao.length === 0}
-            className={`px-4 py-2 rounded-lg font-bold text-base transition-colors ${listaOracao.length > 0 ? 'bg-purple-100 text-purple-800 hover:bg-purple-200 shadow-sm' : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'}`}
-          >
-            Orações ({listaOracao.length})
-          </button>
-
-          <button 
-            onClick={() => scrollToSection('bloco-aniversarios')}
-            disabled={listaAniversarios.length === 0}
-            className={`px-4 py-2 rounded-lg font-bold text-base transition-colors ${listaAniversarios.length > 0 ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 shadow-sm' : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'}`}
-          >
-            Aniversários ({listaAniversarios.length})
-          </button>
-
-          <button 
-            onClick={() => scrollToSection('bloco-avisos')}
-            disabled={listaAvisos.length === 0}
-            className={`px-4 py-2 rounded-lg font-bold text-base transition-colors ${listaAvisos.length > 0 ? 'bg-red-100 text-red-800 hover:bg-red-200 shadow-sm' : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'}`}
-          >
-            Avisos ({listaAvisos.length})
-          </button>
+          <button onClick={() => scrollToSection('bloco-visitas')} disabled={listaVisitas.length === 0} className={`px-4 py-2 rounded-lg font-bold text-base transition-colors ${listaVisitas.length > 0 ? 'bg-blue-100 text-blue-800 hover:bg-blue-200 shadow-sm' : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'}`}>Visitas ({listaVisitas.length})</button>
+          <button onClick={() => scrollToSection('bloco-oracoes')} disabled={listaOracao.length === 0} className={`px-4 py-2 rounded-lg font-bold text-base transition-colors ${listaOracao.length > 0 ? 'bg-purple-100 text-purple-800 hover:bg-purple-200 shadow-sm' : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'}`}>Orações ({listaOracao.length})</button>
+          <button onClick={() => scrollToSection('bloco-aniversarios')} disabled={listaAniversarios.length === 0} className={`px-4 py-2 rounded-lg font-bold text-base transition-colors ${listaAniversarios.length > 0 ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 shadow-sm' : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'}`}>Aniversários ({listaAniversarios.length})</button>
+          <button onClick={() => scrollToSection('bloco-agradecimentos')} disabled={listaAgradecimentos.length === 0} className={`px-4 py-2 rounded-lg font-bold text-base transition-colors ${listaAgradecimentos.length > 0 ? 'bg-green-100 text-green-800 hover:bg-green-200 shadow-sm' : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'}`}>Agradecimentos ({listaAgradecimentos.length})</button>
+          <button onClick={() => scrollToSection('bloco-avisos')} disabled={listaAvisos.length === 0} className={`px-4 py-2 rounded-lg font-bold text-base transition-colors ${listaAvisos.length > 0 ? 'bg-red-100 text-red-800 hover:bg-red-200 shadow-sm' : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'}`}>Avisos ({listaAvisos.length})</button>
         </div>
-
       </div>
 
       <div className="flex-1 p-4 md:p-8">
@@ -186,23 +154,17 @@ export default function TelaApresentacao() {
           <div className="bg-white rounded-3xl shadow-sm border border-dashed border-gray-300 p-20 text-center max-w-2xl mx-auto mt-10">
             <h3 className="text-4xl text-gray-400 font-medium mb-4">Púlpito Limpo</h3>
             <p className="text-2xl text-gray-400 mb-8">Não há nada aguardando leitura no momento.</p>
-            <button 
-              onClick={() => eventoAtivo && carregarDados(eventoAtivo)}
-              className="bg-gray-100 text-gray-600 hover:bg-gray-200 px-8 py-4 rounded-xl font-bold text-lg transition-colors mx-auto"
-            >
+            <button onClick={() => eventoAtivo && carregarDados(eventoAtivo)} className="bg-gray-100 text-gray-600 hover:bg-gray-200 px-8 py-4 rounded-xl font-bold text-lg transition-colors mx-auto">
               Recarregar Painel
             </button>
           </div>
         ) : (
-          /* CONTAINER EM UMA ÚNICA COLUNA EMPILHADA */
           <div className="flex flex-col gap-10 max-w-6xl mx-auto w-full pb-32">
             
-            {/* 1. BLOCO: VISITAS */}
+            {/* BLOCO: VISITAS */}
             {listaVisitas.length > 0 && (
               <div id="bloco-visitas" className="bg-white rounded-2xl shadow-sm border border-blue-200 overflow-hidden scroll-mt-48">
-                <div className="bg-blue-600 px-6 py-5 flex justify-between items-center">
-                  <h2 className="text-2xl font-bold text-white uppercase tracking-wider">Visitas ({listaVisitas.length})</h2>
-                </div>
+                <div className="bg-blue-600 px-6 py-5 flex justify-between items-center"><h2 className="text-2xl font-bold text-white uppercase tracking-wider">Visitas ({listaVisitas.length})</h2></div>
                 <div className="p-4 md:p-6 space-y-6">
                   {listaVisitas.map(v => {
                     const filhos = v.dependentes_acompanhantes?.filter((d: any) => d.tipo === 'FILHO').map((f:any)=>f.nome) || [];
@@ -219,9 +181,7 @@ export default function TelaApresentacao() {
                             {acompanhantes.length > 0 && <p><b>Acompanhantes:</b> {formatarLista(acompanhantes)}</p>}
                           </div>
                         </div>
-                        <button onClick={() => handleApresentar(v)} disabled={processandoId === v.id} className="shrink-0 self-center md:self-start bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 text-lg rounded-xl shadow-md disabled:opacity-50 transition-transform active:scale-95 w-full md:w-auto">
-                          {processandoId === v.id ? "Marcando..." : "Apresentado"}
-                        </button>
+                        <button onClick={() => handleApresentar(v)} disabled={processandoId === v.id} className="shrink-0 self-center md:self-start bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 text-lg rounded-xl shadow-md disabled:opacity-50 transition-transform active:scale-95 w-full md:w-auto">Apresentado</button>
                       </div>
                     )
                   })}
@@ -229,55 +189,42 @@ export default function TelaApresentacao() {
               </div>
             )}
 
-            {/* 2. BLOCO: PEDIDOS DE ORAÇÃO */}
+            {/* BLOCO: PEDIDOS DE ORAÇÃO */}
             {listaOracao.length > 0 && (
               <div id="bloco-oracoes" className="bg-white rounded-2xl shadow-sm border border-purple-200 overflow-hidden scroll-mt-48">
-                <div className="bg-purple-600 px-6 py-5 flex justify-between items-center">
-                  <h2 className="text-2xl font-bold text-white uppercase tracking-wider">Pedidos de Oração ({listaOracao.length})</h2>
-                </div>
+                <div className="bg-purple-600 px-6 py-5 flex justify-between items-center"><h2 className="text-2xl font-bold text-white uppercase tracking-wider">Pedidos de Oração ({listaOracao.length})</h2></div>
                 <div className="p-4 md:p-6 space-y-6">
                   {listaOracao.map(v => (
                     <div key={v.id} className="bg-purple-50/70 border border-purple-200 rounded-2xl p-6 flex flex-col md:flex-row justify-between gap-6 shadow-sm">
                       <div className="flex-1">
-                        
-                        {/* QUEM PEDE */}
                         {v.representado_por && (
                           <div className="mb-4 bg-purple-100/50 p-3 rounded-lg border border-purple-200">
                             <span className="text-sm md:text-base text-purple-700 font-bold uppercase block mb-1">Quem pede:</span>
                             <p className="text-xl md:text-2xl font-bold text-gray-800 leading-tight">{v.representado_por}</p>
                           </div>
                         )}
-
-                        {/* PARA QUEM */}
                         <div className="mb-4">
                           <span className="text-sm md:text-base text-purple-700 font-bold uppercase block mb-1">Para quem é a oração:</span>
                           <h3 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">{v.nome_visitante}</h3>
                         </div>
-
-                        {/* MOTIVO DO PEDIDO */}
                         {v.observacoes && (
                           <div className="bg-white p-4 rounded-xl border border-purple-200 mt-2">
                             <p className="text-sm md:text-base text-gray-500 font-bold uppercase mb-2">Motivo do Pedido:</p>
                             <p className="text-gray-800 font-medium text-lg md:text-xl leading-relaxed">{v.observacoes}</p>
                           </div>
                         )}
-
                       </div>
-                      <button onClick={() => handleApresentar(v)} disabled={processandoId === v.id} className="shrink-0 self-center md:self-start bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 text-lg rounded-xl shadow-md disabled:opacity-50 transition-transform active:scale-95 w-full md:w-auto">
-                        Lido ✓
-                      </button>
+                      <button onClick={() => handleApresentar(v)} disabled={processandoId === v.id} className="shrink-0 self-center md:self-start bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 text-lg rounded-xl shadow-md disabled:opacity-50 transition-transform active:scale-95 w-full md:w-auto">Lido ✓</button>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* 3. BLOCO: ANIVERSÁRIOS */}
+            {/* BLOCO: ANIVERSÁRIOS */}
             {listaAniversarios.length > 0 && (
               <div id="bloco-aniversarios" className="bg-white rounded-2xl shadow-sm border border-yellow-300 overflow-hidden scroll-mt-48">
-                <div className="bg-yellow-500 px-6 py-5 flex justify-between items-center">
-                  <h2 className="text-2xl font-bold text-yellow-950 uppercase tracking-wider">Aniversariantes ({listaAniversarios.length})</h2>
-                </div>
+                <div className="bg-yellow-500 px-6 py-5 flex justify-between items-center"><h2 className="text-2xl font-bold text-yellow-950 uppercase tracking-wider">Aniversariantes ({listaAniversarios.length})</h2></div>
                 <div className="p-4 md:p-6 space-y-6">
                   {listaAniversarios.map(v => (
                     <div key={v.id} className="bg-yellow-50/80 border border-yellow-200 rounded-2xl p-6 flex flex-col md:flex-row justify-between gap-6 shadow-sm">
@@ -286,21 +233,36 @@ export default function TelaApresentacao() {
                         {v.data_aniversario && <p className="text-gray-700 font-medium mb-3 text-lg md:text-xl"><b>Data:</b> {formatarData(v.data_aniversario)}</p>}
                         {v.observacoes && <p className="text-gray-800 italic bg-white p-4 rounded-lg border border-yellow-200 text-lg md:text-xl">"{v.observacoes}"</p>}
                       </div>
-                      <button onClick={() => handleApresentar(v)} disabled={processandoId === v.id} className="shrink-0 self-center md:self-start bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 text-lg rounded-xl shadow-md disabled:opacity-50 transition-transform active:scale-95 w-full md:w-auto">
-                        Lido ✓
-                      </button>
+                      <button onClick={() => handleApresentar(v)} disabled={processandoId === v.id} className="shrink-0 self-center md:self-start bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 text-lg rounded-xl shadow-md disabled:opacity-50 transition-transform active:scale-95 w-full md:w-auto">Lido ✓</button>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* 4. BLOCO: AVISOS */}
+            {/* BLOCO: AGRADECIMENTOS */}
+            {listaAgradecimentos.length > 0 && (
+              <div id="bloco-agradecimentos" className="bg-white rounded-2xl shadow-sm border border-green-200 overflow-hidden scroll-mt-48">
+                <div className="bg-green-600 px-6 py-5 flex justify-between items-center"><h2 className="text-2xl font-bold text-white uppercase tracking-wider">Agradecimentos ({listaAgradecimentos.length})</h2></div>
+                <div className="p-4 md:p-6 space-y-6">
+                  {listaAgradecimentos.map(v => (
+                    <div key={v.id} className="bg-green-50/70 border border-green-200 rounded-2xl p-6 flex flex-col md:flex-row justify-between gap-6 shadow-sm">
+                      <div className="flex-1">
+                        <span className="text-sm md:text-base text-green-800 font-bold uppercase block mb-1">Quem agradece:</span>
+                        <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{v.nome_visitante}</h3>
+                        <p className="text-gray-800 whitespace-pre-wrap bg-white p-5 rounded-xl border border-green-200 text-xl md:text-2xl leading-relaxed">{v.observacoes}</p>
+                      </div>
+                      <button onClick={() => handleApresentar(v)} disabled={processandoId === v.id} className="shrink-0 self-center md:self-start bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 text-lg rounded-xl shadow-md disabled:opacity-50 transition-transform active:scale-95 w-full md:w-auto">Lido ✓</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* BLOCO: AVISOS */}
             {listaAvisos.length > 0 && (
               <div id="bloco-avisos" className="bg-white rounded-2xl shadow-sm border border-red-200 overflow-hidden scroll-mt-48">
-                <div className="bg-red-600 px-6 py-5 flex justify-between items-center">
-                  <h2 className="text-2xl font-bold text-white uppercase tracking-wider">Avisos e Recados ({listaAvisos.length})</h2>
-                </div>
+                <div className="bg-red-600 px-6 py-5 flex justify-between items-center"><h2 className="text-2xl font-bold text-white uppercase tracking-wider">Avisos e Recados ({listaAvisos.length})</h2></div>
                 <div className="p-4 md:p-6 space-y-6">
                   {listaAvisos.map(v => (
                     <div key={v.id} className="bg-red-50/70 border border-red-200 rounded-2xl p-6 flex flex-col md:flex-row justify-between gap-6 shadow-sm">
@@ -308,9 +270,7 @@ export default function TelaApresentacao() {
                         <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{v.nome_visitante}</h3>
                         <p className="text-gray-800 whitespace-pre-wrap bg-white p-5 rounded-xl border border-red-200 text-xl md:text-2xl leading-relaxed">{v.observacoes}</p>
                       </div>
-                      <button onClick={() => handleApresentar(v)} disabled={processandoId === v.id} className="shrink-0 self-center md:self-start bg-gray-800 hover:bg-gray-900 text-white font-bold py-4 px-8 text-lg rounded-xl shadow-md disabled:opacity-50 transition-transform active:scale-95 w-full md:w-auto">
-                        Aviso Lido
-                      </button>
+                      <button onClick={() => handleApresentar(v)} disabled={processandoId === v.id} className="shrink-0 self-center md:self-start bg-gray-800 hover:bg-gray-900 text-white font-bold py-4 px-8 text-lg rounded-xl shadow-md disabled:opacity-50 transition-transform active:scale-95 w-full md:w-auto">Aviso Lido</button>
                     </div>
                   ))}
                 </div>

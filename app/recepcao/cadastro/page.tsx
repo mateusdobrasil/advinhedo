@@ -36,9 +36,9 @@ export default function CadastroVisitante() {
 
   // Estados Base
   const [tipo, setTipo] = useState("Visitas");
-  const [nome, setNome] = useState(""); // Usado para Visitante, Aniversariante, Para quem (oração) ou Quem Avisa
+  const [nome, setNome] = useState(""); // Usado para Visitante, Aniversariante, Para quem, Quem Agradece ou Quem Avisa
   const [representadoPor, setRepresentadoPor] = useState(""); // Usado para Representado ou Quem Pediu (Oração)
-  const [observacoes, setObservacoes] = useState(""); // Usado para Obs, Pedido ou Aviso
+  const [observacoes, setObservacoes] = useState(""); // Usado para Obs, Pedido, Agradecimento ou Aviso
   
   // Específicos de Visitas
   const [setor, setSetor] = useState("");
@@ -66,6 +66,7 @@ export default function CadastroVisitante() {
     e.preventDefault();
     if (!eventoAtivoId) return;
 
+    // Apenas a chamada correta da função de estado
     setLoading(true);
     setMensagem("");
 
@@ -131,6 +132,7 @@ export default function CadastroVisitante() {
   if (tipo === "Visitas") labelNome = "Nome do Visitante *";
   if (tipo === "Aniversários") labelNome = "Nome do Aniversariante *";
   if (tipo === "Pedido de Oraçao") labelNome = "Para quem é a oração? *";
+  if (tipo === "Agradecimento") labelNome = "Quem está agradecendo? *";
   if (tipo === "Aviso") labelNome = "Quem está dando o aviso? (Ou título) *";
 
   return (
@@ -171,6 +173,7 @@ export default function CadastroVisitante() {
                 <option value="Visitas">Visitas</option>
                 <option value="Aniversários">Aniversários</option>
                 <option value="Pedido de Oraçao">Pedido de Oração</option>
+                <option value="Agradecimento">Agradecimento</option>
                 <option value="Aviso">Aviso</option>
               </select>
             </div>
@@ -221,7 +224,7 @@ export default function CadastroVisitante() {
               </>
             )}
 
-            {/* --- CAMPOS EXCLUSIVOS: PEDIDO DE ORAÇÃO (3º CAMPO DA ORDEM) --- */}
+            {/* --- CAMPOS EXCLUSIVOS: PEDIDO DE ORAÇÃO --- */}
             {tipo === "Pedido de Oraçao" && (
               <>
                 <div className="col-span-1 md:col-span-2">
@@ -229,6 +232,21 @@ export default function CadastroVisitante() {
                   <textarea value={observacoes} required onChange={(e) => setObservacoes(e.target.value)} rows={3} className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Motivo da oração (saúde, família, porta de emprego...)"></textarea>
                 </div>
               </>
+            )}
+
+            {/* --- CAMPOS EXCLUSIVOS: AGRADECIMENTO --- */}
+            {tipo === "Agradecimento" && (
+              <div className="col-span-1 md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Agradecimento *</label>
+                <textarea 
+                  value={observacoes} 
+                  required 
+                  onChange={(e) => setObservacoes(e.target.value)} 
+                  rows={4} 
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" 
+                  placeholder="Escreva os detalhes e o motivo do agradecimento aqui..."
+                ></textarea>
+              </div>
             )}
 
             {/* --- CAMPOS EXCLUSIVOS: AVISO --- */}
