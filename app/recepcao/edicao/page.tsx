@@ -27,6 +27,9 @@ export default function EdicaoVisitante() {
   const [buscando, setBuscando] = useState(false);
   const [mensagem, setMensagem] = useState("");
   const [visitanteEditando, setVisitanteEditando] = useState<any | null>(null);
+  
+  // NOVO ESTADO: Filtro de navegação
+  const [filtroAtivo, setFiltroAtivo] = useState("Todos");
 
   // Estados dos inputs de edição (Reativos)
   const [tipo, setTipo] = useState("Visitas");
@@ -147,14 +150,13 @@ export default function EdicaoVisitante() {
     setSalvandoEvento(false);
   };
 
-  // 4. BUSCAR VISITANTES DO EVENTO ATIVO (AGORA COM SILENT REFRESH)
+  // 4. BUSCAR VISITANTES DO EVENTO ATIVO (COM SILENT REFRESH)
   const fetchVisitantes = useCallback(async (busca = "", silent = false) => {
     if (!eventoAtivoId) {
       setResultados([]);
       return;
     }
 
-    // Se não for um refresh silencioso (background), mostra o loading e reseta a mensagem
     if (!silent) {
       setBuscando(true);
       setMensagem("");
@@ -181,21 +183,16 @@ export default function EdicaoVisitante() {
     if (!silent) setBuscando(false);
   }, [eventoAtivoId, supabase]);
 
-  // Carregamento inicial quando a página abre ou o evento muda (Atualização #1)
   useEffect(() => {
     if (eventoAtivoId) {
       fetchVisitantes(""); 
     }
   }, [eventoAtivoId, fetchVisitantes]);
 
-  // Refresh Automático a cada 5 segundos (Atualização #2)
   useEffect(() => {
-    // Se não houver evento ativo ou se o usuário estiver editando alguém, PAUSA o timer.
-    // Isso impede que a tela atualize bruscamente e atrapalhe o usuário enquanto ele digita.
     if (!eventoAtivoId || visitanteEditando) return;
 
     const intervalo = setInterval(() => {
-      // Envia "true" para o parâmetro silent, atualizando a lista sem piscar a tela
       fetchVisitantes(termoBusca, true);
     }, 5000);
 
@@ -206,6 +203,22 @@ export default function EdicaoVisitante() {
     e.preventDefault();
     fetchVisitantes(termoBusca);
   };
+
+  // --- LÓGICA DE FILTRAGEM (NAVEGAÇÃO) ---
+  const contagem = {
+    Todos: resultados.length,
+    Visitas: resultados.filter(r => (r.tipo || 'Visitas') === 'Visitas').length,
+    'Pedido de Oraçao': resultados.filter(r => r.tipo === 'Pedido de Oraçao').length,
+    Aniversários: resultados.filter(r => r.tipo === 'Aniversários').length,
+    Agradecimento: resultados.filter(r => r.tipo === 'Agradecimento').length,
+    Aviso: resultados.filter(r => r.tipo === 'Aviso').length,
+  };
+
+  const resultadosFiltrados = resultados.filter(r => {
+    if (filtroAtivo === "Todos") return true;
+    const tipoReal = r.tipo || "Visitas";
+    return tipoReal === filtroAtivo;
+  });
 
   // --- FUNÇÕES DE EDIÇÃO DE VISITANTES ---
   const alternarStatusApresentacao = async (id: string, statusAtual: boolean) => {
@@ -278,7 +291,6 @@ export default function EdicaoVisitante() {
       setVisitanteEditando(null);
       setTermoBusca("");
       
-      // Atualização #3 (Logo após edição)
       fetchVisitantes(""); 
     } catch (error: any) {
       console.error(error);
@@ -341,7 +353,7 @@ export default function EdicaoVisitante() {
 
         {/* ---------------- NOVA SEÇÃO: GERENCIAMENTO DE EVENTO ---------------- */}
         {!visitanteEditando && (
-          <div className="w-full bg-blue-50/50 p-5 rounded-xl border border-blue-100 mb-8 flex flex-col md:flex-row items-end gap-4">
+          <div className="w-full bg-blue-50/50 p-5 rounded-xl border border-blue-100 mb-6 flex flex-col md:flex-row items-end gap-4">
             <div className="flex-1 w-full">
               <label className="block text-xs font-bold text-blue-800 uppercase tracking-wider mb-2">
                 Evento Selecionado
@@ -386,6 +398,60 @@ export default function EdicaoVisitante() {
           </div>
         )}
 
+        {/* ---------------- NOVA BARRA DE FILTRO (PÍLULAS) ---------------- */}
+        {eventoAtivoId && !visitanteEditando && resultados.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mb-8 bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm">
+            <span className="text-sm font-bold text-gray-400 uppercase tracking-wider mr-2 w-full md:w-auto mb-2 md:mb-0">Filtro:</span>
+            
+            <button 
+              onClick={() => setFiltroAtivo('Todos')}
+              className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors flex-1 md:flex-none ${filtroAtivo === 'Todos' ? 'bg-gray-800 text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-100'}`}
+            >
+              Todos ({contagem['Todos']})
+            </button>
+
+            <button 
+              onClick={() => setFiltroAtivo('Visitas')}
+              disabled={contagem['Visitas'] === 0}
+              className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors flex-1 md:flex-none ${filtroAtivo === 'Visitas' ? 'bg-blue-600 text-white shadow-sm' : contagem['Visitas'] > 0 ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200' : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'}`}
+            >
+              Visitas ({contagem['Visitas']})
+            </button>
+
+            <button 
+              onClick={() => setFiltroAtivo('Pedido de Oraçao')}
+              disabled={contagem['Pedido de Oraçao'] === 0}
+              className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors flex-1 md:flex-none ${filtroAtivo === 'Pedido de Oraçao' ? 'bg-purple-600 text-white shadow-sm' : contagem['Pedido de Oraçao'] > 0 ? 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200' : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'}`}
+            >
+              Orações ({contagem['Pedido de Oraçao']})
+            </button>
+
+            <button 
+              onClick={() => setFiltroAtivo('Aniversários')}
+              disabled={contagem['Aniversários'] === 0}
+              className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors flex-1 md:flex-none ${filtroAtivo === 'Aniversários' ? 'bg-yellow-500 text-white shadow-sm' : contagem['Aniversários'] > 0 ? 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100 border border-yellow-200' : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'}`}
+            >
+              Aniversários ({contagem['Aniversários']})
+            </button>
+
+            <button 
+              onClick={() => setFiltroAtivo('Agradecimento')}
+              disabled={contagem['Agradecimento'] === 0}
+              className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors flex-1 md:flex-none ${filtroAtivo === 'Agradecimento' ? 'bg-green-600 text-white shadow-sm' : contagem['Agradecimento'] > 0 ? 'bg-green-50 text-green-700 hover:bg-green-100 border border-green-200' : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'}`}
+            >
+              Agradecimentos ({contagem['Agradecimento']})
+            </button>
+
+            <button 
+              onClick={() => setFiltroAtivo('Aviso')}
+              disabled={contagem['Aviso'] === 0}
+              className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors flex-1 md:flex-none ${filtroAtivo === 'Aviso' ? 'bg-red-600 text-white shadow-sm' : contagem['Aviso'] > 0 ? 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200' : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'}`}
+            >
+              Avisos ({contagem['Aviso']})
+            </button>
+          </div>
+        )}
+
         {/* MENSAGEM */}
         {mensagem && (
           <div className={`p-4 mb-6 rounded-md font-medium ${mensagem.includes("sucesso") ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
@@ -423,12 +489,16 @@ export default function EdicaoVisitante() {
            <p className="text-center text-gray-500 py-10">Nenhum registro encontrado neste evento.</p>
         )}
 
-        {eventoAtivoId && !visitanteEditando && resultados.length > 0 && (
+        {/* Renderiza a mensagem se houver resultados no total, mas o filtro atual estiver vazio */}
+        {eventoAtivoId && !visitanteEditando && resultados.length > 0 && resultadosFiltrados.length === 0 && (
+           <p className="text-center text-gray-500 py-10">Nenhum registro corresponde ao filtro de <b>{filtroAtivo}</b>.</p>
+        )}
+
+        {eventoAtivoId && !visitanteEditando && resultadosFiltrados.length > 0 && (
           <div className="border border-gray-200 rounded-lg overflow-hidden">
             <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
               <h3 className="font-bold text-gray-700 flex items-center gap-2">
-                Lista de Cadastros ({resultados.length})
-                {/* Indicador sutil de que a página está atualizando ao vivo */}
+                Lista de Cadastros {filtroAtivo !== 'Todos' && `- ${filtroAtivo}`} ({resultadosFiltrados.length})
                 <span className="flex h-2 w-2 relative ml-2" title="Atualização em tempo real ativa">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
@@ -436,7 +506,7 @@ export default function EdicaoVisitante() {
               </h3>
             </div>
             <div className="divide-y divide-gray-200">
-              {resultados.map((visitante) => {
+              {resultadosFiltrados.map((visitante) => {
                 const tipoV = visitante.tipo || 'Visitas';
                 const filhos = visitante.dependentes_acompanhantes?.filter((d: any) => d.tipo === 'FILHO').map((f: any) => f.nome) || [];
                 const acompanhantes = visitante.dependentes_acompanhantes?.filter((d: any) => d.tipo === 'ACOMPANHANTE').map((a: any) => a.nome) || [];
