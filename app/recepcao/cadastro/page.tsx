@@ -168,8 +168,8 @@ export default function CadastroVisitante() {
               <select 
                 value={tipo} 
                 onChange={(e) => setTipo(e.target.value)} 
-                className="w-full p-3 border-2 border-blue-200 bg-blue-50 text-blue-900 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none font-bold"
-              >
+                className="w-full p-3 border-2 border-blue-200 bg-blue-50 text-blue-900 
+                rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none font-bold">
                 <option value="Visitas">Visitas</option>
                 <option value="Aniversários">Aniversários</option>
                 <option value="Pedido de Oraçao">Pedido de Oração</option>
