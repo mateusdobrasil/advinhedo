@@ -131,6 +131,22 @@ export default function TelaApresentacaoBlack() {
 
   return (
     <div className="h-screen bg-gray-950 flex flex-col overflow-hidden text-gray-100">
+
+      <img
+        src={logo.src} 
+        alt="Marca d'água"
+        style={{
+          position: 'absolute',
+          top: '22%',
+          left: '15%',
+          transform: 'translate(-50%, -50%) rotate(-00deg)',
+          opacity: 0.1, // Deixe bem baixo para não atrapalhar a leitura
+          width: '200px', // Controle o tamanho da imagem por aqui
+          pointerEvents: 'none',
+          zIndex: 9999,
+          userSelect: 'none',
+        }}
+      />
       
       {/* Cabeçalho Fixo Black - Monitora toques e passadas de mouse diretamente na barra */}
       <div 
