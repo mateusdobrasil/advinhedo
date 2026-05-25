@@ -51,13 +51,11 @@ export default function EdicaoVisitante() {
       .order('created_at', { ascending: false });
 
     if (data) {
-      // Pega a data atual no formato YYYY-MM-DD ajustada ao fuso local
       const hojeStr = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
       
       const eventosValidos: any[] = [];
       const eventosVencidos: string[] = [];
 
-      // Filtra os eventos que já passaram da data
       data.forEach(evento => {
         if (evento.data_evento < hojeStr) {
           eventosVencidos.push(evento.id);
@@ -66,14 +64,12 @@ export default function EdicaoVisitante() {
         }
       });
 
-      // Desativa automaticamente os eventos vencidos no banco (Background)
       if (eventosVencidos.length > 0) {
         supabase.from('eventos').update({ ativo: false }).in('id', eventosVencidos).then();
       }
 
       setEventos(eventosValidos);
 
-      // Lê o cookie para ver se já tínhamos um evento escolhido antes
       const cookieEvento = document.cookie
         .split('; ')
         .find(row => row.startsWith('evento_ativo='))
@@ -82,7 +78,6 @@ export default function EdicaoVisitante() {
       if (cookieEvento && eventosValidos.some(e => e.id === cookieEvento)) {
         setEventoAtivoId(cookieEvento);
       } else if (cookieEvento) {
-        // Se o evento do cookie venceu e foi desativado, limpamos o cookie
         document.cookie = `evento_ativo=; path=/; max-age=0`;
         setEventoAtivoId("");
       }
@@ -97,8 +92,8 @@ export default function EdicaoVisitante() {
   // 2. MUDAR DE EVENTO E ENCERRAR EVENTO (MANUAL)
   const handleSelecionarEvento = (id: string) => {
     setEventoAtivoId(id);
-    document.cookie = `evento_ativo=${id}; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 dias
-    setVisitanteEditando(null); // Fecha modo edição se trocar de evento
+    document.cookie = `evento_ativo=${id}; path=/; max-age=${60 * 60 * 24 * 7}`;
+    setVisitanteEditando(null);
   };
 
   const handleEncerrarEvento = async () => {
@@ -114,14 +109,13 @@ export default function EdicaoVisitante() {
       return;
     }
 
-    // Limpa o evento ativo e o cookie
     document.cookie = `evento_ativo=; path=/; max-age=0`;
     setEventoAtivoId("");
     setVisitanteEditando(null);
     setResultados([]);
     setMensagem("Evento encerrado com sucesso.");
     
-    await carregarEventos(); // Recarrega a lista
+    await carregarEventos();
   };
 
   // 3. CRIAR NOVO EVENTO
@@ -153,16 +147,18 @@ export default function EdicaoVisitante() {
     setSalvandoEvento(false);
   };
 
-  // 4. BUSCAR VISITANTES DO EVENTO ATIVO
-  const fetchVisitantes = useCallback(async (busca = "") => {
+  // 4. BUSCAR VISITANTES DO EVENTO ATIVO (AGORA COM SILENT REFRESH)
+  const fetchVisitantes = useCallback(async (busca = "", silent = false) => {
     if (!eventoAtivoId) {
       setResultados([]);
       return;
     }
 
-    setBuscando(true);
-    setMensagem("");
-    setVisitanteEditando(null);
+    // Se não for um refresh silencioso (background), mostra o loading e reseta a mensagem
+    if (!silent) {
+      setBuscando(true);
+      setMensagem("");
+    }
 
     let query = supabase
       .from("visitantes")
@@ -177,18 +173,34 @@ export default function EdicaoVisitante() {
     const { data, error } = await query;
 
     if (error) {
-      setMensagem(`Erro na busca: ${error.message}`);
+      if (!silent) setMensagem(`Erro na busca: ${error.message}`);
     } else {
       setResultados(data || []);
     }
-    setBuscando(false);
+    
+    if (!silent) setBuscando(false);
   }, [eventoAtivoId, supabase]);
 
+  // Carregamento inicial quando a página abre ou o evento muda (Atualização #1)
   useEffect(() => {
     if (eventoAtivoId) {
       fetchVisitantes(""); 
     }
   }, [eventoAtivoId, fetchVisitantes]);
+
+  // Refresh Automático a cada 5 segundos (Atualização #2)
+  useEffect(() => {
+    // Se não houver evento ativo ou se o usuário estiver editando alguém, PAUSA o timer.
+    // Isso impede que a tela atualize bruscamente e atrapalhe o usuário enquanto ele digita.
+    if (!eventoAtivoId || visitanteEditando) return;
+
+    const intervalo = setInterval(() => {
+      // Envia "true" para o parâmetro silent, atualizando a lista sem piscar a tela
+      fetchVisitantes(termoBusca, true);
+    }, 5000);
+
+    return () => clearInterval(intervalo);
+  }, [eventoAtivoId, termoBusca, visitanteEditando, fetchVisitantes]);
 
   const handleBuscaSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -217,7 +229,6 @@ export default function EdicaoVisitante() {
     setEsposa(visitante.nome_esposa || "");
     setFoiApresentado(visitante.foi_apresentado);
     setDependentes(visitante.dependentes_acompanhantes || []);
-    setResultados([]); 
   };
 
   const adicionarDependente = (tipoDep: string) => setDependentes([...dependentes, { nome: "", tipo: tipoDep, novo: true }]);
@@ -266,6 +277,8 @@ export default function EdicaoVisitante() {
       setMensagem("Registro atualizado com sucesso!");
       setVisitanteEditando(null);
       setTermoBusca("");
+      
+      // Atualização #3 (Logo após edição)
       fetchVisitantes(""); 
     } catch (error: any) {
       console.error(error);
@@ -305,11 +318,11 @@ export default function EdicaoVisitante() {
   if (tipo === "Visitas") labelNome = "Nome do Visitante *";
   if (tipo === "Aniversários") labelNome = "Nome do Aniversariante *";
   if (tipo === "Pedido de Oraçao") labelNome = "Para quem é a oração? *";
+  if (tipo === "Agradecimento") labelNome = "Quem está agradecendo? *";
   if (tipo === "Aviso") labelNome = "Quem está dando o aviso? (Ou título) *";
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-12">
-      {/* AUMENTADA A LARGURA MÁXIMA DE max-w-4xl para max-w-6xl */}
       <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
         
         {/* Cabeçalho Principal */}
@@ -413,7 +426,14 @@ export default function EdicaoVisitante() {
         {eventoAtivoId && !visitanteEditando && resultados.length > 0 && (
           <div className="border border-gray-200 rounded-lg overflow-hidden">
             <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="font-bold text-gray-700">Lista de Cadastros ({resultados.length})</h3>
+              <h3 className="font-bold text-gray-700 flex items-center gap-2">
+                Lista de Cadastros ({resultados.length})
+                {/* Indicador sutil de que a página está atualizando ao vivo */}
+                <span className="flex h-2 w-2 relative ml-2" title="Atualização em tempo real ativa">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+              </h3>
             </div>
             <div className="divide-y divide-gray-200">
               {resultados.map((visitante) => {
@@ -422,16 +442,13 @@ export default function EdicaoVisitante() {
                 const acompanhantes = visitante.dependentes_acompanhantes?.filter((d: any) => d.tipo === 'ACOMPANHANTE').map((a: any) => a.nome) || [];
 
                 return (
-                  // ADICIONADO min-w-0 NO ITEM PARA EVITAR OVERFLOW DO FLEXBOX
                   <div key={visitante.id} className="p-5 flex flex-col lg:flex-row justify-between items-start gap-6 hover:bg-gray-50 transition-colors">
-                    
-                    {/* flex-1 COM min-w-0 É A REGRA MÁGICA PRA TEXTO LONGO QUEBRAR LINHA NO FLEXBOX */}
                     <div className="flex-1 min-w-0 w-full"> 
-                      
                       <h4 className="font-bold text-gray-900 text-xl mb-3 flex flex-wrap items-center gap-2 break-words">
                         <span className={`text-xs px-2 py-0.5 rounded uppercase tracking-wider font-bold shrink-0
                           ${tipoV === 'Aniversários' ? 'bg-yellow-100 text-yellow-800 border border-yellow-300' : 
                             tipoV === 'Pedido de Oraçao' ? 'bg-purple-100 text-purple-800 border border-purple-300' : 
+                            tipoV === 'Agradecimento' ? 'bg-green-100 text-green-800 border border-green-300' : 
                             tipoV === 'Aviso' ? 'bg-red-100 text-red-800 border border-red-300' : 
                             'bg-blue-100 text-blue-800 border border-blue-300'}`}>
                           {tipoV}
@@ -455,6 +472,11 @@ export default function EdicaoVisitante() {
                             {visitante.observacoes && <p className="italic bg-yellow-50 p-3 rounded-lg border border-yellow-100 mt-2 whitespace-pre-wrap"><span className="font-bold text-gray-800 not-italic block mb-1">Observações:</span> {visitante.observacoes}</p>}
                           </>
                         )}
+                        {tipoV === 'Agradecimento' && (
+                          <>
+                            {visitante.observacoes && <p className="bg-green-50 p-3 rounded-lg border border-green-100 mt-2 whitespace-pre-wrap text-gray-900 leading-relaxed"><span className="font-bold text-green-900 block mb-1">Agradecimento:</span> {visitante.observacoes}</p>}
+                          </>
+                        )}
                         {tipoV === 'Pedido de Oraçao' && (
                           <>
                             {visitante.representado_por && <p><span className="font-medium text-gray-800">Quem pediu:</span> {visitante.representado_por}</p>}
@@ -476,7 +498,6 @@ export default function EdicaoVisitante() {
                       </div>
                     </div>
 
-                    {/* BOTÕES GARANTIDOS NO SEU ESPAÇO */}
                     <div className="flex flex-wrap lg:flex-col xl:flex-row gap-2 w-full lg:w-auto shrink-0 mt-2 lg:mt-0">
                       <button 
                         onClick={() => alternarStatusApresentacao(visitante.id, visitante.foi_apresentado)} 
@@ -518,6 +539,7 @@ export default function EdicaoVisitante() {
                   <option value="Visitas">Visitas</option>
                   <option value="Aniversários">Aniversários</option>
                   <option value="Pedido de Oraçao">Pedido de Oração</option>
+                  <option value="Agradecimento">Agradecimento</option>
                   <option value="Aviso">Aviso</option>
                 </select>
               </div>
@@ -562,6 +584,13 @@ export default function EdicaoVisitante() {
                     <textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows={4} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
                   </div>
                 </>
+              )}
+
+              {tipo === "Agradecimento" && (
+                <div className="col-span-1 md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Agradecimento *</label>
+                  <textarea value={observacoes} required onChange={(e) => setObservacoes(e.target.value)} rows={4} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+                </div>
               )}
 
               {tipo === "Pedido de Oraçao" && (
