@@ -192,7 +192,7 @@ export default function TelaApresentacaoBlack() {
                 
                 <div className="flex-1 overflow-y-auto px-4 flex flex-col items-center text-center space-y-4 md:space-y-6 pb-4 custom-scrollbar">
                   
-                  {/* TAG COLORIDA COM O TIPO DA APRESENTAÇÃO */}
+                  {/* TAG COLORIDA COM O TIPO DA APRESENTAÇÃO 
                   <div className="mb-2">
                     <span className={`px-6 py-2 rounded-full text-xl md:text-2xl font-bold uppercase tracking-wider shadow-sm border-2 
                       ${tipo === 'Aniversários' ? 'bg-yellow-900/40 text-yellow-300 border-yellow-700' : 
@@ -203,6 +203,7 @@ export default function TelaApresentacaoBlack() {
                       {tipo}
                     </span>
                   </div>
+                  */}
 
                   {/* SUBTÍTULO ORAÇÃO (SE FOR O CASO) */}
                   {tipo === 'Pedido de Oraçao' && (
