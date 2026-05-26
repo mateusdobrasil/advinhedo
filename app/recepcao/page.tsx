@@ -57,7 +57,7 @@ export default function ApresentacaoDashboard() {
           className="h-48 w-auto object-contain mb-6 drop-shadow-sm" 
         />
         <h1 className="text-4xl font-bold text-gray-800">Painel Administrativo - Recepção da Igreja</h1>
-        <p className="text-gray-500 mt-2">Gestão de Apresentação de Visitas, Aniversários, Pedidos de Oração e Avisos</p>
+        <p className="text-gray-500 mt-2">Gestão de Apresentação de Visitas, Aniversários, Pedidos de Oração, Agradecimentos e Avisos</p>
       </div>
 
       {/* Barra de Seleção de Evento */}
