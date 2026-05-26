@@ -12,10 +12,10 @@ export default async function AdminPage() {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) redirect('/')
 
-  // 1. Busca os dados básicos do perfil (capturando o polo_id direto)
+  // 1. Busca apenas o tipo de usuário (não precisamos mais do polo aqui)
   const { data: perfil } = await supabase
     .from('perfis')
-    .select('nome_completo, tipo_usuario, polo, polo_id')
+    .select('tipo_usuario')
     .eq('id', session.user.id)
     .single()
 
@@ -32,67 +32,35 @@ export default async function AdminPage() {
     redirect('/ibuc/aluno')
   }
 
-  // 2. CORREÇÃO: Busca o nome do polo separadamente para eliminar erros de tipagem do TypeScript
-  let nomePolo = perfil?.polo || ''
-  
-  if (perfil?.polo_id) {
-    const { data: poloDados } = await supabase
-      .from('polos')
-      .select('nome')
-      .eq('id', perfil.polo_id)
-      .single()
-      
-    if (poloDados?.nome) {
-      nomePolo = poloDados.nome
-    }
-  }
-  
-  const isPoloEBD = nomePolo.toUpperCase().includes('EBD')
-  
-  // 3. Lista dos módulos com a flag "isEBD" nos cards correspondentes
+  // 2. Lista ENXUTA: Contém apenas os módulos pertencentes ao IBUC com os links corretos
   const modulos = [
-    { nome: 'Cadastro Central', icon: '📇', link: '/ibuc/admin/cadastro', desc: 'Gerencie alunos e dados', ativo: true, permissoes: ['Administrador', 'Administrativo'], isEBD: true },
-    { nome: 'Alunos', icon: '👥', link: '/ibuc/admin/alunos', desc: 'Gestão de estudantes', ativo: true, permissoes: ['Administrador', 'Administrativo'], isEBD: true },
+    { nome: 'Cadastro Central', icon: '📇', link: '/ibuc/admin/cadastro', desc: 'Gerencie alunos e dados', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
+    { nome: 'Alunos', icon: '👥', link: '/ibuc/admin/alunos', desc: 'Gestão de estudantes', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
     { nome: 'Diário de Classe', icon: '✅', link: '/ibuc/admin/diario', desc: 'Notas e presenças', ativo: true, permissoes: ['Administrador', 'Administrativo', 'Professor'] },
     { nome: 'Mural de Avisos', icon: '📢', link: '/ibuc/admin/avisos', desc: 'Publique recados globais', ativo: true, permissoes: ['Administrador', 'Administrativo', 'Professor'] },
     { nome: 'Turmas', icon: '🏫', link: '/ibuc/admin/turmas', desc: 'Organize as salas', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
-    { nome: 'Matrículas', icon: '📝', link: '/ibuc/admin/matriculas', desc: 'Aprovações e inscrições', ativo: true, permissoes: ['Administrador', 'Administrativo'], isEBD: true },
+    { nome: 'Matrículas', icon: '📝', link: '/ibuc/admin/matriculas', desc: 'Aprovações e inscrições', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
     { nome: 'Cursos', icon: '🏛️', link: '/ibuc/admin/cursos', desc: 'Grade curricular', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
     { nome: 'Matérias', icon: '📚', link: '/ibuc/admin/materias', desc: 'Disciplinas e conteúdos', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
-    
-    // Módulos específicos da EBD
-    { nome: 'Salas da EBD', icon: '📖', link: '/ibuc/admin/ebd', desc: 'Gerencie a EBD', ativo: true, permissoes: ['Administrador', 'Administrativo', 'Professor'], isEBD: true },
-    { nome: 'Relatórios da EBD', icon: '📈', link: '/ibuc/admin/relatoriosEBD', desc: 'Gerencie a EBD', ativo: true, permissoes: ['Administrador', 'Administrativo'], isEBD: true },
-    
     { nome: 'Relatórios', icon: '📊', link: '/ibuc/admin/relatorios', desc: 'Métricas e gráficos', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
     { nome: 'Financeiro', icon: '💰', link: '/ibuc/admin/financeiro', desc: 'Caixa e mensalidades', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
     { nome: 'Polos', icon: '🏢', link: '/ibuc/admin/polos', desc: 'Sedes e Congregações', ativo: true, permissoes: ['Administrador'] },
     { nome: 'Permissões', icon: '🔐', link: '/ibuc/admin/permissoes', desc: 'Cargos e acessos', ativo: true, permissoes: ['Administrador'] },
     { nome: 'Auditoria', icon: '👁️', link: '/ibuc/admin/auditoria', desc: 'Logs e rastreamento', ativo: true, permissoes: ['Administrador'] },
-    { nome: 'Diplomas', icon: '🎓', link: '/ibuc/admin/diplomas', desc: 'Emissão de certificados', ativo: false, permissoes: ['Administrador', 'Administrativo', 'Professor'], isEBD: true },
+    { nome: 'Diplomas', icon: '🎓', link: '/ibuc/admin/diplomas', desc: 'Emissão de certificados', ativo: false, permissoes: ['Administrador', 'Administrativo', 'Professor'] },
   ]
 
-  // FILTRO DUPLO: Permissão de Cargo + Verificação do Polo
-  const modulosFiltrados = modulos.filter(m => {
-    // 1. Verifica se tem permissão de cargo
-    const temPermissaoCargo = m.permissoes.some(p => tipoUsuario.toLowerCase().includes(p.toLowerCase()))
-    if (!temPermissaoCargo) return false
-
-    // 2. Se o usuário for exclusivamente do polo EBD, ele só vê os cards com a flag isEBD
-    if (isPoloEBD) {
-      return m.isEBD === true
-    }
-
-    // Se for de outro polo (ex: IBV, Sede, etc), vê tudo que o cargo permite
-    return true
-  })
+  // FILTRO ÚNICO: Apenas Permissão de Cargo (O escopo IBUC já está garantido pela pasta)
+  const modulosFiltrados = modulos.filter(m => 
+    m.permissoes.some(p => tipoUsuario.toLowerCase().includes(p.toLowerCase()))
+  )
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 p-6">
       <div className="max-w-6xl mx-auto">
         
         <div className="mb-8">
-          <h1 className="text-3xl font-black text-gray-800 tracking-tight">Painel de Gestão IBV</h1>
+          <h1 className="text-3xl font-black text-gray-800 tracking-tight">Painel de Gestão IBUC</h1>
           <p className="text-gray-500 mt-1">Selecione o módulo administrativo que deseja acessar.</p>
         </div>
 
