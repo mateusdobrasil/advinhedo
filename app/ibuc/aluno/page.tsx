@@ -51,14 +51,21 @@ export default async function AlunoDashboardPage() {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-5xl mx-auto space-y-8">
         
-        {/* CABEÇALHO */}
-        <header>
-          <h1 className="text-3xl font-black text-gray-800">
-            Olá, {perfil?.nome_completo?.split(' ')[0] || 'Aluno'}! 👋
-          </h1>
-          <p className="text-gray-500">Bem-vindo ao seu portal de estudos.</p>
-        </header>
-        
+        <div className="flex justify-between items-center mb-8">
+
+          <div>
+          {/* CABEÇALHO */}
+            <header>
+              <h1 className="text-3xl font-black text-gray-800">
+                Olá, {perfil?.nome_completo?.split(' ')[0] || 'Aluno'}! 👋
+              </h1>
+              <p className="text-gray-500">Bem-vindo ao seu portal de estudos.</p>
+            </header>
+          </div>
+          <Link href="/ibuc" className="text-sm bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition">
+              Voltar ao Nível de Acesso
+          </Link>
+        </div>
         <Analytics />
         
         {/* ATALHOS RÁPIDOS */}
