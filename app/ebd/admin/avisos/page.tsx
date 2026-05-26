@@ -27,7 +27,7 @@ export default async function AvisosPage() {
                     tipo.includes('professor')
 
   if (!temAcesso) {
-    redirect('/ibv') // Se for aluno, redireciona para a área dele
+    redirect('/ebd') // Se for aluno, redireciona para a área dele
   }
 
   // 4. Busca as turmas para o formulário
@@ -51,7 +51,7 @@ export default async function AvisosPage() {
             <h1 className="text-2xl font-bold text-gray-800">📢 Mural de Avisos</h1>
             <p className="text-gray-500 text-sm mt-1">Publique comunicados para toda a escola, polos ou turmas específicas.</p>
           </div>
-          <Link href="/ibv/admin" className="text-sm bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition">
+          <Link href="/ebd/admin" className="text-sm bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition">
             Voltar ao Hub
           </Link>
         </div>

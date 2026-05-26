@@ -31,7 +31,7 @@ export default async function CadastroCentralPage({ searchParams }: PageProps) {
                     tipo.includes('professor')
 
   if (!temAcesso) {
-    redirect('/ibv') // Se não tiver permissão, redireciona para fora do admin
+    redirect('/ebd') // Se não tiver permissão, redireciona para fora do admin
   }
 
   // =================================================================
@@ -59,7 +59,7 @@ export default async function CadastroCentralPage({ searchParams }: PageProps) {
             <h1 className="text-2xl font-bold text-gray-800">👥 Cadastro Central</h1>
             <p className="text-gray-500 text-sm mt-1">Gerencie todos os usuários do sistema (Alunos e Equipe).</p>
           </div>
-          <Link href="/ibv/admin" className="text-sm bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition whitespace-nowrap">
+          <Link href="/ebd/admin" className="text-sm bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition whitespace-nowrap">
             Voltar ao Hub
           </Link>
         </div>
@@ -79,7 +79,7 @@ export default async function CadastroCentralPage({ searchParams }: PageProps) {
                 Buscar
               </button>
               {busca && (
-                <Link href="/ibv/admin/cadastro" className="flex items-center justify-center bg-gray-100 text-gray-500 px-4 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-200 hover:text-gray-700 transition">
+                <Link href="/ebd/admin/cadastro" className="flex items-center justify-center bg-gray-100 text-gray-500 px-4 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-200 hover:text-gray-700 transition">
                   Limpar
                 </Link>
               )}
@@ -130,7 +130,7 @@ export default async function CadastroCentralPage({ searchParams }: PageProps) {
                         <td className="px-6 py-4 text-gray-500">{user.email}</td>
                         <td className="px-6 py-4 text-right">
                           <Link 
-                            href={`/ibv/admin/cadastro/${user.id}`} 
+                            href={`/ebd/admin/cadastro/${user.id}`} 
                             className="text-[11px] bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-bold uppercase tracking-wider hover:bg-blue-100 transition shadow-sm inline-block"
                           >
                             Ver perfil

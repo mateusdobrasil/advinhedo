@@ -33,7 +33,7 @@ export default async function DetalhesTurmaPage({ params }: PageProps) {
                     tipo.includes('professor')
 
   if (!temAcesso) {
-    redirect('/ibv') // Se não tiver permissão, redireciona para fora do admin
+    redirect('/ebd') // Se não tiver permissão, redireciona para fora do admin
   }
 
   const resolvedParams = await params
@@ -146,7 +146,7 @@ export default async function DetalhesTurmaPage({ params }: PageProps) {
             </div>
             
             <Link
-              href="/ibv/admin/turmas"
+              href="/ebd/admin/turmas"
               className="text-sm bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg font-medium transition border border-white/10"
             >
               Voltar para Turmas
@@ -218,7 +218,7 @@ export default async function DetalhesTurmaPage({ params }: PageProps) {
 
                       <td className="px-6 py-4 text-right align-middle">
                         <Link 
-                          href={`/ibv/admin/cadastro/${aluno.aluno_id}`} 
+                          href={`/ebd/admin/cadastro/${aluno.aluno_id}`} 
                           className="text-xs bg-gray-100 text-gray-600 px-3 py-2 rounded-lg font-bold hover:bg-blue-600 hover:text-white transition inline-block"
                         >
                           Ver Perfil

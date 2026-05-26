@@ -28,7 +28,7 @@ export default async function TurmasEBDPage() {
                     tipo.includes('professor')
 
   if (!temAcesso) {
-    redirect('/ibv') // Se não tiver permissão, redireciona para fora do admin
+    redirect('/ebd') // Se não tiver permissão, redireciona para fora do admin
   }
 
   // 👇 NOVA LÓGICA: Variável que define quem pode criar e editar turmas
@@ -72,7 +72,7 @@ export default async function TurmasEBDPage() {
             <h1 className="text-2xl font-bold text-orange-600">🏫 Salas da EBD</h1>
             <p className="text-gray-500 text-sm mt-1">Crie e gerencie as salas de aula da Escola Bíblica Dominical.</p>
           </div>
-          <Link href="/ibv/admin" className="text-sm bg-white border border-gray-200 px-4 py-2 rounded-lg font-medium shadow-sm hover:bg-gray-50 transition">
+          <Link href="/ebd/admin" className="text-sm bg-white border border-gray-200 px-4 py-2 rounded-lg font-medium shadow-sm hover:bg-gray-50 transition">
             Voltar ao Hub
           </Link>
         </div>
@@ -122,7 +122,7 @@ export default async function TurmasEBDPage() {
                   <div className="border-t border-gray-100 pt-4 flex gap-2 items-center">
                     {/* Botão de acessar a classe */}
                     <Link 
-                      href={`/ibv/admin/ebd/${turma.id}`}
+                      href={`/ebd/admin/ebd/${turma.id}`}
                       className="flex-1 bg-orange-50 text-orange-700 py-2 rounded-lg text-sm font-bold text-center hover:bg-orange-100 transition border border-orange-100"
                     >
                       Acessar Diário de Classe

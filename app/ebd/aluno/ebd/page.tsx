@@ -55,7 +55,7 @@ export default async function AlunoEBDPage() {
         
         {/* CABEÇALHO E VOLTAR */}
         <div className="mb-8">
-          <Link href="/ibv/aluno" className="text-sm text-indigo-600 hover:text-indigo-800 font-medium mb-4 inline-block transition">
+          <Link href="/ebd/aluno" className="text-sm text-indigo-600 hover:text-indigo-800 font-medium mb-4 inline-block transition">
             ← Voltar ao Início
           </Link>
           <h1 className="text-2xl font-black text-gray-800">📖 Escola Bíblica Dominical</h1>

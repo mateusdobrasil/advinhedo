@@ -41,7 +41,7 @@ export default async function MateriaisAlunoPage() {
             <p className="text-gray-500 text-sm mt-1">Acesse apostilas, slides e arquivos das disciplinas.</p>
           </div>
           <Link 
-            href="/ibv/aluno" 
+            href="/ebd/aluno" 
             className="text-sm bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition"
           >
             ← Voltar

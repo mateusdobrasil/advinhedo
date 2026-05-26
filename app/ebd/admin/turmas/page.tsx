@@ -27,7 +27,7 @@ export default async function TurmasPage() {
                     tipo.includes('professor')
 
   if (!temAcesso) {
-    redirect('/ibv') // Se não tiver permissão, redireciona para fora do admin
+    redirect('/ebd') // Se não tiver permissão, redireciona para fora do admin
   }
 
   // 4. Busca as turmas ordenadas por status (Ativa primeiro) e depois por ordem alfabética
@@ -66,7 +66,7 @@ export default async function TurmasPage() {
             <h1 className="text-2xl font-bold text-gray-800">🏫 Gestão de Turmas</h1>
             <p className="text-gray-500 text-sm mt-1">Crie e gerencie as salas de aula e polos de estudo.</p>
           </div>
-          <Link href="/ibv/admin" className="text-sm bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition">
+          <Link href="/ebd/admin" className="text-sm bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition">
             Voltar ao Hub
           </Link>
         </div>
@@ -112,7 +112,7 @@ export default async function TurmasPage() {
                   <div className="border-t border-gray-200 pt-4 flex gap-2 items-center">
                     {/* BOTÃO VER ALUNOS (Abre a rota [id] que você criou) */}
                     <Link 
-                      href={`/ibv/admin/turmas/${turma.id}`}
+                      href={`/ebd/admin/turmas/${turma.id}`}
                       className="flex-1 bg-blue-50 text-blue-700 py-2 rounded-lg text-sm font-bold text-center hover:bg-blue-100 transition border border-blue-100"
                     >
                       Ver Alunos

@@ -24,7 +24,7 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
   const { data: perfil } = await supabase.from('perfis').select('tipo_usuario').eq('id', session.user.id).single()
   const tipo = perfil?.tipo_usuario?.toLowerCase() || ''
   const temAcesso = tipo.includes('administrador') || tipo.includes('administrativo') || tipo.includes('professor')
-  if (!temAcesso) redirect('/ibv')
+  if (!temAcesso) redirect('/ebd')
 
   // 👇 NOVA LÓGICA: Variável que define quem pode matricular alunos
   const podeEditar = tipo.includes('administrador') || tipo.includes('administrativo')
@@ -111,7 +111,7 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
               <h1 className="text-xl sm:text-2xl font-bold text-white">{turma.nome}</h1>
               <p className="text-gray-400 text-xs sm:text-sm mt-1">{turma.dia_semana} às {turma.horario}</p>
             </div>
-            <Link href="/ibv/admin/ebd" className="w-full sm:w-auto text-center text-sm bg-white/10 hover:bg-white/20 text-white px-4 py-2.5 rounded-lg font-bold transition border border-white/10">
+            <Link href="/ebd/admin/ebd" className="w-full sm:w-auto text-center text-sm bg-white/10 hover:bg-white/20 text-white px-4 py-2.5 rounded-lg font-bold transition border border-white/10">
               Voltar para Turmas
             </Link>
           </div>
@@ -236,7 +236,7 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
                         </span>
                       </td>
                       <td className="px-4 sm:px-6 py-4 text-right">
-                        <Link href={`/ibv/admin/cadastro/${aluno.aluno_id}`} className="text-[10px] bg-gray-100 text-gray-600 px-3 py-2 rounded-lg font-bold hover:bg-slate-900 hover:text-white transition uppercase">
+                        <Link href={`/ebd/admin/cadastro/${aluno.aluno_id}`} className="text-[10px] bg-gray-100 text-gray-600 px-3 py-2 rounded-lg font-bold hover:bg-slate-900 hover:text-white transition uppercase">
                           Perfil
                         </Link>
                       </td>

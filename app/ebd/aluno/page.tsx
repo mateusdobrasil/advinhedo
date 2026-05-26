@@ -63,25 +63,25 @@ export default async function AlunoDashboardPage() {
         
         {/* ATALHOS RÁPIDOS */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Link href="/ibv/aluno/notas" className="bg-indigo-600 
+          <Link href="/ebd/aluno/notas" className="bg-indigo-600 
               text-white p-4 rounded-2xl shadow-lg shadow-indigo-200 
               hover:bg-indigo-700 hover:-translate-y-1 transition-all">
             <span className="text-2xl mb-2 block">📊</span>
             <span className="font-bold text-sm">Meu Boletim</span>
           </Link>
-          <Link href="/ibv/aluno/materiais" className="bg-indigo-600 
+          <Link href="/ebd/aluno/materiais" className="bg-indigo-600 
               text-white p-4 rounded-2xl shadow-lg shadow-indigo-200 
               hover:bg-indigo-700 hover:-translate-y-1 transition-all">
             <span className="text-2xl mb-2 block">📚</span>
             <span className="font-bold text-sm">Materiais</span>
           </Link>
-          <Link href="/ibv/aluno/financeiro" className="bg-indigo-600 
+          <Link href="/ebd/aluno/financeiro" className="bg-indigo-600 
               text-white p-4 rounded-2xl shadow-lg shadow-indigo-200 
               hover:bg-indigo-700 hover:-translate-y-1 transition-all">
             <span className="text-2xl mb-2 block">💰</span>
             <span className="font-bold text-sm">Financeiro</span>
           </Link>
-          <Link href="/ibv/aluno/ebd" className="bg-indigo-600 
+          <Link href="/ebd/aluno/ebd" className="bg-indigo-600 
               text-white p-4 rounded-2xl shadow-lg shadow-indigo-200 
               hover:bg-indigo-700 hover:-translate-y-1 transition-all">
             <span className="text-2xl mb-2 block">📖</span>
