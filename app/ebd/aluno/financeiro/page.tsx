@@ -61,7 +61,7 @@ export default async function FinanceiroAlunoPage() {
             <p className="text-gray-500 text-sm mt-1">Consulte o histórico de suas mensalidades.</p>
           </div>
           <Link 
-            href="/dashboard/aluno" 
+            href="/ibv/aluno" 
             className="text-sm bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition"
           >
             ← Voltar

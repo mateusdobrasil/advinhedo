@@ -51,6 +51,6 @@ export async function lancarNota(formData: FormData) {
   }
 
   // Atualiza as páginas em cache para a nota aparecer na hora
-  revalidatePath('/dashboard/admin')
-  revalidatePath('/dashboard/notas')
+  revalidatePath('/ibv/admin')
+  revalidatePath('/ibv/notas')
 }

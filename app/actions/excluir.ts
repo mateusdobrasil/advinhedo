@@ -9,7 +9,7 @@ export async function excluirNota(id: string, alunoId: string) {
   const { error } = await supabase.from('notas').delete().eq('id', id)
   
   if (error) throw new Error('Erro ao excluir nota')
-  revalidatePath(`/dashboard/admin/aluno/${alunoId}`)
+  revalidatePath(`/ibv/admin/aluno/${alunoId}`)
 }
 
 export async function excluirFatura(id: string, alunoId: string) {
@@ -17,5 +17,5 @@ export async function excluirFatura(id: string, alunoId: string) {
   const { error } = await supabase.from('financeiro').delete().eq('id', id)
   
   if (error) throw new Error('Erro ao excluir fatura')
-  revalidatePath(`/dashboard/admin/aluno/${alunoId}`)
+  revalidatePath(`/ibv/admin/aluno/${alunoId}`)
 }

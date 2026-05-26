@@ -64,5 +64,5 @@ export async function salvarChamadaUnificada(formData: FormData) {
   }
 
   // 5. Atualiza os componentes visuais na tela
-  revalidatePath(`/dashboard/admin/ebd/${turma_id}`)
+  revalidatePath(`/ibv/admin/ebd/${turma_id}`)
 }

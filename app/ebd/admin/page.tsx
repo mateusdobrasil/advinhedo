@@ -29,7 +29,7 @@ export default async function AdminPage() {
   )
 
   if (!temAcessoAdmin) {
-    redirect('/dashboard/aluno')
+    redirect('/ibv/aluno')
   }
 
   // 2. CORREÇÃO: Busca o nome do polo separadamente para eliminar erros de tipagem do TypeScript
@@ -51,24 +51,24 @@ export default async function AdminPage() {
   
   // 3. Lista dos módulos com a flag "isEBD" nos cards correspondentes
   const modulos = [
-    { nome: 'Cadastro Central', icon: '📇', link: '/dashboard/admin/cadastro', desc: 'Gerencie alunos e dados', ativo: true, permissoes: ['Administrador', 'Administrativo'], isEBD: true },
-    { nome: 'Alunos', icon: '👥', link: '/dashboard/admin/alunos', desc: 'Gestão de estudantes', ativo: true, permissoes: ['Administrador', 'Administrativo'], isEBD: true },
-    { nome: 'Mural de Avisos', icon: '📢', link: '/dashboard/admin/avisos', desc: 'Publique recados globais', ativo: true, permissoes: ['Administrador', 'Administrativo', 'Professor'] },
-    { nome: 'Turmas', icon: '🏫', link: '/dashboard/admin/turmas', desc: 'Organize as salas', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
-    { nome: 'Matrículas', icon: '📝', link: '/dashboard/admin/matriculas', desc: 'Aprovações e inscrições', ativo: true, permissoes: ['Administrador', 'Administrativo'], isEBD: true },
-    { nome: 'Cursos', icon: '🏛️', link: '/dashboard/admin/cursos', desc: 'Grade curricular', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
-    { nome: 'Matérias', icon: '📚', link: '/dashboard/admin/materias', desc: 'Disciplinas e conteúdos', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
+    { nome: 'Cadastro Central', icon: '📇', link: '/ibv/admin/cadastro', desc: 'Gerencie alunos e dados', ativo: true, permissoes: ['Administrador', 'Administrativo'], isEBD: true },
+    { nome: 'Alunos', icon: '👥', link: '/ibv/admin/alunos', desc: 'Gestão de estudantes', ativo: true, permissoes: ['Administrador', 'Administrativo'], isEBD: true },
+    { nome: 'Mural de Avisos', icon: '📢', link: '/ibv/admin/avisos', desc: 'Publique recados globais', ativo: true, permissoes: ['Administrador', 'Administrativo', 'Professor'] },
+    { nome: 'Turmas', icon: '🏫', link: '/ibv/admin/turmas', desc: 'Organize as salas', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
+    { nome: 'Matrículas', icon: '📝', link: '/ibv/admin/matriculas', desc: 'Aprovações e inscrições', ativo: true, permissoes: ['Administrador', 'Administrativo'], isEBD: true },
+    { nome: 'Cursos', icon: '🏛️', link: '/ibv/admin/cursos', desc: 'Grade curricular', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
+    { nome: 'Matérias', icon: '📚', link: '/ibv/admin/materias', desc: 'Disciplinas e conteúdos', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
     
     // Módulos específicos da EBD
-    { nome: 'Salas da EBD', icon: '📖', link: '/dashboard/admin/ebd', desc: 'Gerencie a EBD', ativo: true, permissoes: ['Administrador', 'Administrativo', 'Professor'], isEBD: true },
-    { nome: 'Relatórios da EBD', icon: '📈', link: '/dashboard/admin/relatoriosEBD', desc: 'Gerencie a EBD', ativo: true, permissoes: ['Administrador', 'Administrativo'], isEBD: true },
+    { nome: 'Salas da EBD', icon: '📖', link: '/ibv/admin/ebd', desc: 'Gerencie a EBD', ativo: true, permissoes: ['Administrador', 'Administrativo', 'Professor'], isEBD: true },
+    { nome: 'Relatórios da EBD', icon: '📈', link: '/ibv/admin/relatoriosEBD', desc: 'Gerencie a EBD', ativo: true, permissoes: ['Administrador', 'Administrativo'], isEBD: true },
     
-    { nome: 'Relatórios', icon: '📊', link: '/dashboard/admin/relatorios', desc: 'Métricas e gráficos', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
-    { nome: 'Financeiro', icon: '💰', link: '/dashboard/admin/financeiro', desc: 'Caixa e mensalidades', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
-    { nome: 'Polos', icon: '🏢', link: '/dashboard/admin/polos', desc: 'Sedes e Congregações', ativo: true, permissoes: ['Administrador'] },
-    { nome: 'Permissões', icon: '🔐', link: '/dashboard/admin/permissoes', desc: 'Cargos e acessos', ativo: true, permissoes: ['Administrador'] },
-    { nome: 'Auditoria', icon: '👁️', link: '/dashboard/admin/auditoria', desc: 'Logs e rastreamento', ativo: true, permissoes: ['Administrador'] },
-    { nome: 'Diplomas', icon: '🎓', link: '/dashboard/admin/diplomas', desc: 'Emissão de certificados', ativo: false, permissoes: ['Administrador', 'Administrativo', 'Professor'], isEBD: true },
+    { nome: 'Relatórios', icon: '📊', link: '/ibv/admin/relatorios', desc: 'Métricas e gráficos', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
+    { nome: 'Financeiro', icon: '💰', link: '/ibv/admin/financeiro', desc: 'Caixa e mensalidades', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
+    { nome: 'Polos', icon: '🏢', link: '/ibv/admin/polos', desc: 'Sedes e Congregações', ativo: true, permissoes: ['Administrador'] },
+    { nome: 'Permissões', icon: '🔐', link: '/ibv/admin/permissoes', desc: 'Cargos e acessos', ativo: true, permissoes: ['Administrador'] },
+    { nome: 'Auditoria', icon: '👁️', link: '/ibv/admin/auditoria', desc: 'Logs e rastreamento', ativo: true, permissoes: ['Administrador'] },
+    { nome: 'Diplomas', icon: '🎓', link: '/ibv/admin/diplomas', desc: 'Emissão de certificados', ativo: false, permissoes: ['Administrador', 'Administrativo', 'Professor'], isEBD: true },
   ]
 
   // FILTRO DUPLO: Permissão de Cargo + Verificação do Polo

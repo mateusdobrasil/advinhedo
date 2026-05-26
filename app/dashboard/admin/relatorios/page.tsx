@@ -22,7 +22,7 @@ export default async function RelatoriosPage() {
   const temAcesso = tipo.includes('administrador') || tipo.includes('administrativo')
 
   if (!temAcesso) {
-    redirect('/dashboard/admin') 
+    redirect('/ibv/admin') 
   }
 
   // =================================================================
@@ -59,10 +59,10 @@ export default async function RelatoriosPage() {
             <p className="text-gray-500 text-sm mt-1">Visão geral e métricas de desempenho do Instituto.</p>
           </div>
           <div className="flex gap-3">
-            <Link href="/dashboard/admin/relatoriosEBD" className="text-sm bg-indigo-50 border border-indigo-100 text-indigo-700 px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-100 transition shadow-sm">
+            <Link href="/ibv/admin/relatoriosEBD" className="text-sm bg-indigo-50 border border-indigo-100 text-indigo-700 px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-100 transition shadow-sm">
               Ver Relatório da EBD ➡️
             </Link>
-            <Link href="/dashboard/admin" className="text-sm bg-white border border-gray-200 text-gray-700 px-5 py-2.5 rounded-xl font-bold hover:bg-gray-50 transition shadow-sm">
+            <Link href="/ibv/admin" className="text-sm bg-white border border-gray-200 text-gray-700 px-5 py-2.5 rounded-xl font-bold hover:bg-gray-50 transition shadow-sm">
               Voltar ao Hub
             </Link>
           </div>

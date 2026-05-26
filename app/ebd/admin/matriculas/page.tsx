@@ -33,7 +33,7 @@ export default async function MatriculasPage({ searchParams }: PageProps) {
                     tipo.includes('professor')
 
   if (!temAcesso) {
-    redirect('/dashboard') // Se não tiver permissão, redireciona para fora do admin
+    redirect('/ibv') // Se não tiver permissão, redireciona para fora do admin
   }
 
   // =================================================================
@@ -101,7 +101,7 @@ export default async function MatriculasPage({ searchParams }: PageProps) {
             <h1 className="text-2xl font-bold text-gray-800">📄 Gestão de Matrículas</h1>
             <p className="text-gray-500 text-sm mt-1">Controle as inscrições e status dos alunos na instituição.</p>
           </div>
-          <Link href="/dashboard/admin" className="text-sm bg-white border border-gray-200 px-4 py-2 rounded-lg font-medium shadow-sm hover:bg-gray-50 transition whitespace-nowrap">
+          <Link href="/ibv/admin" className="text-sm bg-white border border-gray-200 px-4 py-2 rounded-lg font-medium shadow-sm hover:bg-gray-50 transition whitespace-nowrap">
             Voltar ao Hub
           </Link>
         </div>
@@ -121,7 +121,7 @@ export default async function MatriculasPage({ searchParams }: PageProps) {
                 Buscar
               </button>
               {busca && (
-                <Link href="/dashboard/admin/matriculas" className="flex items-center justify-center bg-gray-100 text-gray-500 px-4 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-200 hover:text-gray-700 transition">
+                <Link href="/ibv/admin/matriculas" className="flex items-center justify-center bg-gray-100 text-gray-500 px-4 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-200 hover:text-gray-700 transition">
                   Limpar
                 </Link>
               )}

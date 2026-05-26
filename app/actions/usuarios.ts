@@ -78,7 +78,7 @@ export async function criarUsuario(formData: FormData) {
     detalhes: `Cadastrou o aluno: ${nome_completo} no polo ${polo}`
   })
 
-  revalidatePath('/dashboard/admin/cadastro')
+  revalidatePath('/ibv/admin/cadastro')
 }
 
 // ============================================================================
@@ -120,6 +120,6 @@ export async function atualizarUsuario(formData: FormData) {
     detalhes: `Editou os dados completos de: ${dadosParaAtualizar.nome_completo}`
   })
 
-  revalidatePath(`/dashboard/admin/cadastro/${id}`)
-  revalidatePath('/dashboard/admin/cadastro')
+  revalidatePath(`/ibv/admin/cadastro/${id}`)
+  revalidatePath('/ibv/admin/cadastro')
 }

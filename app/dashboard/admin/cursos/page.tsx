@@ -27,7 +27,7 @@ export default async function CursosPage() {
                     tipo.includes('professor')
 
   if (!temAcesso) {
-    redirect('/dashboard') // Se não tiver permissão, redireciona para fora do painel
+    redirect('/ibv') // Se não tiver permissão, redireciona para fora do painel
   }
 
   // 4. BUSCA COM ORDENAÇÃO DUPLA: 'Ativo' vem antes de 'Inativo' no alfabeto
@@ -45,7 +45,7 @@ export default async function CursosPage() {
             <h1 className="text-2xl font-bold text-gray-800">🏛️ Gestão de Cursos</h1>
             <p className="text-gray-500 text-sm">Organize a grade curricular do IBV.</p>
           </div>
-          <Link href="/dashboard/admin" className="text-sm bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition">
+          <Link href="/ibv/admin" className="text-sm bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition">
             Voltar ao Hub
           </Link>
         </div>

@@ -26,8 +26,8 @@ export default async function DashboardPage() {
   const temAcessoAdmin = cargosAdmin.some(cargo => cargos.includes(cargo))
 
   if (temAcessoAdmin) {
-    redirect('/dashboard/admin')
+    redirect('/ibv/admin')
   } else {
-    redirect('/dashboard/aluno')
+    redirect('/ibv/aluno')
   }
 }

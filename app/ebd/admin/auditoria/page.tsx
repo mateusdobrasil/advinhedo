@@ -25,7 +25,7 @@ export default async function AuditoriaPage() {
 
   if (!temAcesso) {
     // Se for Administrativo ou Professor, volta para o Hub. (Aluno já cai na trava do layout)
-    redirect('/dashboard/admin') 
+    redirect('/ibv/admin') 
   }
 
   // 4. Busca os logs mais recentes
@@ -46,7 +46,7 @@ export default async function AuditoriaPage() {
             </h1>
             <p className="text-gray-500 text-sm mt-1">Rastreamento completo de ações e alterações no sistema.</p>
           </div>
-          <Link href="/dashboard/admin" className="text-sm bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition">
+          <Link href="/ibv/admin" className="text-sm bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition">
             Voltar ao Hub
           </Link>
         </div>

@@ -4,12 +4,12 @@ export default function MenuHub({ tipoUsuario }: { tipoUsuario: string }) {
   const userRole = tipoUsuario.toLowerCase()
 
   const todosLinks = [
-    { nome: 'Dashboard Geral', link: '/dashboard/admin', icon: '📊', admin: true, admini: true, prof: true },
-    { nome: 'Salas da EBD', link: '/dashboard/admin/ebd', icon: '📖', admin: true, admini: true, prof: true },
-    { nome: 'Matrículas', link: '/dashboard/admin/matriculas', icon: '📑', admin: true, admini: true, prof: true },
-    { nome: 'Financeiro', link: '/dashboard/admin/financeiro', icon: '💰', admin: true, admini: true, prof: false },
-    { nome: 'Gestão de Polos', link: '/dashboard/admin/polos', icon: '📍', admin: true, admini: false, prof: false },
-    { nome: 'Auditoria & Permissões', link: '/dashboard/admin/auditoria', icon: '🔐', admin: true, admini: false, prof: false },
+    { nome: 'Dashboard Geral', link: '/ibv/admin', icon: '📊', admin: true, admini: true, prof: true },
+    { nome: 'Salas da EBD', link: '/ibv/admin/ebd', icon: '📖', admin: true, admini: true, prof: true },
+    { nome: 'Matrículas', link: '/ibv/admin/matriculas', icon: '📑', admin: true, admini: true, prof: true },
+    { nome: 'Financeiro', link: '/ibv/admin/financeiro', icon: '💰', admin: true, admini: true, prof: false },
+    { nome: 'Gestão de Polos', link: '/ibv/admin/polos', icon: '📍', admin: true, admini: false, prof: false },
+    { nome: 'Auditoria & Permissões', link: '/ibv/admin/auditoria', icon: '🔐', admin: true, admini: false, prof: false },
   ]
 
   // Função para verificar se o usuário tem permissão para aquele link

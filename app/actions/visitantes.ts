@@ -55,5 +55,5 @@ export async function cadastrarVisitanteEBD(formData: FormData) {
   if (matriculaError) throw new Error('Visitante criado, mas ocorreu um erro ao vinculá-lo à turma.')
 
   // Atualiza a página da turma para o visitante aparecer na lista imediatamente
-  revalidatePath(`/dashboard/admin/turmas/${turma_id}`)
+  revalidatePath(`/ibv/admin/turmas/${turma_id}`)
 }

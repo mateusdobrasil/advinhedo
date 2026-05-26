@@ -44,5 +44,5 @@ export async function salvarCurso(formData: FormData) {
     detalhes: `${id ? 'Alterou' : 'Cadastrou'} o curso ${nome} com status: ${status.toUpperCase()}`
   })
 
-  revalidatePath('/dashboard/admin/cursos')
+  revalidatePath('/ibv/admin/cursos')
 }

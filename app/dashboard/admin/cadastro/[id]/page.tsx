@@ -33,7 +33,7 @@ export default async function DetalhesCadastroPage({ params }: PageProps) {
                     tipo.includes('professor')
 
   if (!temAcesso) {
-    redirect('/dashboard/aluno') // Aluno não entra aqui de jeito nenhum
+    redirect('/ibv/aluno') // Aluno não entra aqui de jeito nenhum
   }
 
   const resolvedParams = await params
@@ -70,7 +70,7 @@ export default async function DetalhesCadastroPage({ params }: PageProps) {
             <EditorCadastroCompleto usuario={perfil} polos={polos || []} />
             
             <Link
-              href="/dashboard/admin/cadastro"
+              href="/ibv/admin/cadastro"
               className="text-sm bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg font-medium transition border border-white/10 text-center"
             >
               Voltar

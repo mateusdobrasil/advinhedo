@@ -68,6 +68,6 @@ export async function enviarMaterial(formData: FormData) {
   }
 
   // Atualiza as páginas
-  revalidatePath('/dashboard/admin/materiais')
-  revalidatePath('/dashboard/materiais')
+  revalidatePath('/ibv/admin/materiais')
+  revalidatePath('/ibv/materiais')
 }

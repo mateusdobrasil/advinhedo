@@ -29,7 +29,7 @@ export default async function PermissoesPage({ searchParams }: PageProps) {
   const temAcesso = tipo.includes('administrador')
 
   if (!temAcesso) {
-    redirect('/dashboard/admin') // Se for Administrativo ou Professor, volta para o Hub
+    redirect('/ibv/admin') // Se for Administrativo ou Professor, volta para o Hub
   }
 
   // =================================================================
@@ -58,7 +58,7 @@ export default async function PermissoesPage({ searchParams }: PageProps) {
             <h1 className="text-2xl font-bold text-gray-800">🔐 Controle de Permissões</h1>
             <p className="text-gray-500 text-sm mt-1">Atribua múltiplos acessos e polos para os usuários do sistema.</p>
           </div>
-          <Link href="/dashboard/admin" className="text-sm bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition whitespace-nowrap">
+          <Link href="/ibv/admin" className="text-sm bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition whitespace-nowrap">
             Voltar ao Hub
           </Link>
         </div>
@@ -78,7 +78,7 @@ export default async function PermissoesPage({ searchParams }: PageProps) {
                 Buscar
               </button>
               {busca && (
-                <Link href="/dashboard/admin/permissoes" className="flex items-center justify-center bg-gray-100 text-gray-500 px-4 py-3 rounded-lg text-sm font-bold hover:bg-gray-200 hover:text-gray-700 transition">
+                <Link href="/ibv/admin/permissoes" className="flex items-center justify-center bg-gray-100 text-gray-500 px-4 py-3 rounded-lg text-sm font-bold hover:bg-gray-200 hover:text-gray-700 transition">
                   Limpar
                 </Link>
               )}

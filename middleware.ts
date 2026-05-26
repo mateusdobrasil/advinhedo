@@ -13,14 +13,14 @@ export async function middleware(req: NextRequest) {
   const path = url.pathname
 
   // 2. PROTEÇÃO BÁSICA: Se não estiver logado e tentar entrar no dashboard, vai para a Home (/)
-  if (!session && path.startsWith('/dashboard')) {
+  if (!session && path.startsWith('/ibv')) {
     url.pathname = '/'
     return NextResponse.redirect(url)
   }
 
   // 3. Se já estiver logado e tentar ir para a Home (/), manda para o distribuidor
   if (session && path === '/') {
-    url.pathname = '/dashboard'
+    url.pathname = '/ibv'
     return NextResponse.redirect(url)
   }
 

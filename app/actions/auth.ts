@@ -59,7 +59,7 @@ export async function realizarLogin(formData: FormData) {
   } 
   else {
     // Padrão IBV
-    urlDestino = ehAdminOuProfessor ? '/dashboard/admin' : '/dashboard/aluno'
+    urlDestino = ehAdminOuProfessor ? '/ibv/admin' : '/ibv/aluno'
   }
 
   // 5. Redireciona o usuário para o hub correto

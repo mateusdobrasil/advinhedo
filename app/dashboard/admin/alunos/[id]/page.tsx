@@ -26,7 +26,7 @@ export default async function PerfilAlunoAdminPage({ params }: { params: { id: s
                     tipo.includes('professor')
 
   if (!temAcesso) {
-    redirect('/dashboard/aluno') // Impede que o aluno veja o perfil dos outros
+    redirect('/ibv/aluno') // Impede que o aluno veja o perfil dos outros
   }
 
   const { id } = params
@@ -68,7 +68,7 @@ export default async function PerfilAlunoAdminPage({ params }: { params: { id: s
         
         {/* CABEÇALHO E BOTÃO VOLTAR */}
         <div className="flex justify-between items-start mb-8">
-          <Link href="/dashboard/admin/alunos" className="text-sm text-gray-500 hover:text-indigo-600 flex items-center gap-2 transition">
+          <Link href="/ibv/admin/alunos" className="text-sm text-gray-500 hover:text-indigo-600 flex items-center gap-2 transition">
             ← Voltar para a lista
           </Link>
           <div className="text-right">

@@ -27,7 +27,7 @@ export default async function DiarioPage() {
                     tipo.includes('professor')
 
   if (!temAcesso) {
-    redirect('/dashboard') // Se for aluno, redireciona para a área dele
+    redirect('/ibv') // Se for aluno, redireciona para a área dele
   }
 
   // 4. Busca os dados para alimentar as caixas de seleção do modal
@@ -55,7 +55,7 @@ export default async function DiarioPage() {
             <h1 className="text-2xl font-bold text-gray-800">✅ Diário de Classe</h1>
             <p className="text-gray-500 text-sm mt-1">Controle de notas, faltas e desempenho dos alunos.</p>
           </div>
-          <Link href="/dashboard/admin" className="text-sm bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition">
+          <Link href="/ibv/admin" className="text-sm bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition">
             Voltar ao Hub
           </Link>
         </div>

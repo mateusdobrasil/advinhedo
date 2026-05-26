@@ -25,7 +25,7 @@ export default async function PolosPage() {
   const temAcesso = tipo.includes('administrador')
 
   if (!temAcesso) {
-    redirect('/dashboard/admin') // Se for Administrativo ou Professor, volta para o Hub
+    redirect('/ibv/admin') // Se for Administrativo ou Professor, volta para o Hub
   }
 
   // 4. Busca os polos cadastrados
@@ -40,7 +40,7 @@ export default async function PolosPage() {
             <h1 className="text-2xl font-bold text-gray-800">🏢 Gestão de Polos</h1>
             <p className="text-gray-500 text-sm mt-1">Administre a Sede e as Congregações.</p>
           </div>
-          <Link href="/dashboard/admin" className="text-sm bg-white border px-4 py-2 rounded-lg font-medium shadow-sm">Voltar</Link>
+          <Link href="/ibv/admin" className="text-sm bg-white border px-4 py-2 rounded-lg font-medium shadow-sm">Voltar</Link>
         </div>
 
         <div className="grid grid-cols-1 gap-4">

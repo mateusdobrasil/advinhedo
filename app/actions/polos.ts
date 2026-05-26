@@ -42,5 +42,5 @@ export async function salvarPolo(formData: FormData) {
     detalhes: `${id ? 'Editou' : 'Cadastrou'} o polo: ${nome} (${tipo})`
   })
 
-  revalidatePath('/dashboard/admin/polos')
+  revalidatePath('/ibv/admin/polos')
 }

@@ -27,7 +27,7 @@ export default async function AdminMateriaisPage() {
                     tipo.includes('professor')
 
   if (!temAcesso) {
-    redirect('/dashboard') // Redireciona alunos e sem acesso
+    redirect('/ibv') // Redireciona alunos e sem acesso
   }
 
   // 4. Busca a lista de materiais já cadastrados
@@ -47,7 +47,7 @@ export default async function AdminMateriaisPage() {
             <p className="text-gray-500 text-sm mt-1">Faça upload de materiais didáticos para os alunos.</p>
           </div>
           <Link 
-            href="/dashboard/admin" 
+            href="/ibv/admin" 
             className="text-sm bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition"
           >
             Voltar

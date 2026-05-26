@@ -27,7 +27,7 @@ export default async function MateriasPage() {
                     tipo.includes('professor')
 
   if (!temAcesso) {
-    redirect('/dashboard') // Redireciona alunos e sem acesso para fora do painel
+    redirect('/ibv') // Redireciona alunos e sem acesso para fora do painel
   }
 
   // 4. Busca os Cursos Ativos (para alimentar o Select do CriadorMateria)
@@ -72,7 +72,7 @@ export default async function MateriasPage() {
             
             {/* 1º Botão: Voltar (Em cima) */}
             <Link 
-              href="/dashboard/admin" 
+              href="/ibv/admin" 
               className="text-sm bg-white border border-gray-200 text-gray-700 px-5 py-2 rounded-xl font-bold hover:bg-gray-50 transition shadow-sm w-max"
             >
               Voltar ao Hub

@@ -27,7 +27,7 @@ export default async function RelatoriosEBDPage({ searchParams }: PageProps) {
   const temAcesso = tipo.includes('administrador') || tipo.includes('administrativo')
 
   if (!temAcesso) {
-    redirect('/dashboard/admin') 
+    redirect('/ibv/admin') 
   }
 
   // =================================================================
@@ -229,7 +229,7 @@ export default async function RelatoriosEBDPage({ searchParams }: PageProps) {
             </h1>
             <p className="text-gray-500 text-sm mt-1">Desempenho e frequência das turmas da Escola Bíblica.</p>
           </div>
-          <Link href="/dashboard/admin" className="text-sm bg-white border border-gray-200 text-gray-700 px-5 py-2.5 rounded-xl font-bold hover:bg-gray-50 transition shadow-sm">
+          <Link href="/ibv/admin" className="text-sm bg-white border border-gray-200 text-gray-700 px-5 py-2.5 rounded-xl font-bold hover:bg-gray-50 transition shadow-sm">
             Voltar ao Hub
           </Link>
         </div>

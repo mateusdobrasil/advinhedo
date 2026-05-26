@@ -20,8 +20,8 @@ export default async function PerfilPage() {
   // 1. LÓGICA DE REDIRECIONAMENTO DINÂMICO
   const tipo = perfil?.tipo_usuario?.toLowerCase() || 'aluno'
   const linkVoltar = tipo.includes('aluno') 
-    ? '/dashboard/aluno' 
-    : '/dashboard/admin'
+    ? '/ibv/aluno' 
+    : '/ibv/admin'
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 p-6">

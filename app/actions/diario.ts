@@ -62,6 +62,6 @@ export async function lancarDiario(formData: FormData) {
     console.error("❌ ERRO AO GRAVAR AUDITORIA:", auditError.message)
   }
 
-  revalidatePath('/dashboard/admin/diario')
-  revalidatePath('/dashboard/admin/auditoria')
+  revalidatePath('/ibv/admin/diario')
+  revalidatePath('/ibv/admin/auditoria')
 }

@@ -42,5 +42,5 @@ export async function criarCobranca(formData: FormData) {
     })
   }
 
-  revalidatePath('/dashboard/admin/financeiro')
+  revalidatePath('/ibv/admin/financeiro')
 }

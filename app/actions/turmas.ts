@@ -74,5 +74,5 @@ export async function criarTurma(formData: FormData) {
   }
 
   // 5. Atualiza o cache da página para mostrar a nova turma instantaneamente
-  revalidatePath('/dashboard/admin/turmas')
+  revalidatePath('/ibv/admin/turmas')
 }

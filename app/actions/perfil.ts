@@ -55,6 +55,6 @@ export async function atualizarPerfil(formData: FormData) {
   }
 
   // Atualiza as páginas que mostram o nome do usuário
-  revalidatePath('/dashboard')
-  revalidatePath('/dashboard/perfil')
+  revalidatePath('/ibv')
+  revalidatePath('/ibv/perfil')
 }

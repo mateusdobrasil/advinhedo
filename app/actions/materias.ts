@@ -36,5 +36,5 @@ export async function salvarMateria(formData: FormData) {
     detalhes: `${id ? 'Alterou' : 'Cadastrou'} a matéria ${nome} como ${status.toUpperCase()}`
   })
 
-  revalidatePath('/dashboard/admin/materias')
+  revalidatePath('/ibv/admin/materias')
 }

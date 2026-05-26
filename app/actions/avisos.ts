@@ -47,5 +47,5 @@ export async function criarAviso(formData: FormData) {
     })
   }
 
-  revalidatePath('/dashboard/admin/avisos')
+  revalidatePath('/ibv/admin/avisos')
 }

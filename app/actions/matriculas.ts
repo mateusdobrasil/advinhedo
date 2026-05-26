@@ -92,8 +92,8 @@ export async function matricularAluno(formData: FormData) {
   }
 
   // Atualiza as páginas
-  revalidatePath('/dashboard/admin/matriculas')
-  revalidatePath('/dashboard/admin/turmas')
+  revalidatePath('/ibv/admin/matriculas')
+  revalidatePath('/ibv/admin/turmas')
 }
 
 // ==========================================
@@ -115,8 +115,8 @@ export async function alterarStatusMatricula(matriculaId: string, novoStatus: st
   if (error) throw new Error(`Erro ao alterar status: ${error.message}`)
 
   // 3. Atualiza o cache das páginas para mostrar a mudança instantaneamente
-  revalidatePath('/dashboard/admin/matriculas')
-  revalidatePath('/dashboard/admin/turmas')
+  revalidatePath('/ibv/admin/matriculas')
+  revalidatePath('/ibv/admin/turmas')
 }
 
 // ==========================================
@@ -208,6 +208,6 @@ export async function matricularEmLote(formData: FormData) {
     if (erroFinanceiro) throw new Error("Matrículas concluídas, mas houve erro ao gerar financeiro.")
   }
 
-  revalidatePath('/dashboard/admin/matriculas')
-  revalidatePath('/dashboard/admin/turmas')
+  revalidatePath('/ibv/admin/matriculas')
+  revalidatePath('/ibv/admin/turmas')
 }

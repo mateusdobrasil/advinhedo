@@ -26,7 +26,7 @@ export default async function FinanceiroPage() {
   const temAcesso = tipo.includes('administrador') || tipo.includes('administrativo')
 
   if (!temAcesso) {
-    redirect('/dashboard/admin') // Redireciona o Professor de volta para o Hub
+    redirect('/ibv/admin') // Redireciona o Professor de volta para o Hub
   }
 
   // 4. Busca todos os usuários do tipo "aluno" 
@@ -54,7 +54,7 @@ export default async function FinanceiroPage() {
             <h1 className="text-2xl font-bold text-gray-800">💰 Controle Financeiro</h1>
             <p className="text-gray-500 text-sm mt-1">Gerencie mensalidades, taxas e pagamentos dos alunos.</p>
           </div>
-          <Link href="/dashboard/admin" className="text-sm bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition">
+          <Link href="/ibv/admin" className="text-sm bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition">
             Voltar ao Hub
           </Link>
         </div>
