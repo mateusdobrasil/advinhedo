@@ -7,35 +7,61 @@ import { redirect } from 'next/navigation'
 export async function realizarLogin(formData: FormData) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
+  const poloDestino = formData.get('polo_destino') as string
 
   const supabase = createServerActionClient({ cookies })
 
-  // 1. Tenta fazer o login no Supabase Auth
+  // 1. Valida Email e Senha no Supabase
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
     email,
     password,
   })
 
   if (authError) {
-    console.error("❌ ERRO REAL DO SUPABASE:", authError.message)
-    return { erro: 'E-mail ou senha incorretos. Tente novamente.' }
+    return { erro: 'E-mail ou senha incorretos.' }
   }
 
-  // 2. Busca o perfil do usuário para decidir o destino (O segredo está aqui!)
-  const { data: perfil } = await supabase
+  // 2. Busca os dados de Perfil (Para checar permissões e polos vinculados)
+  const userId = authData.user.id
+  const { data: perfil, error: perfilError } = await supabase
     .from('perfis')
-    .select('tipo_usuario')
-    .eq('id', authData.user.id)
+    .select('tipo_usuario, polo')
+    .eq('id', userId)
     .single()
 
-  const cargo = perfil?.tipo_usuario?.toLowerCase() || ''
+  if (perfilError || !perfil) {
+    return { erro: 'Perfil não encontrado no sistema.' }
+  }
 
-  // 3. Redirecionamento Dinâmico
-  // Se for admin, administrativo ou professor, vai para o HUB ADMIN
-  if (cargo.includes('administrador') || cargo.includes('administrativo') || cargo.includes('professor')) {
-    redirect('/dashboard/admin')
+  // 3. Valida se o usuário tem vínculo com o Polo selecionado
+  // Verifica se o texto do banco contém a sigla selecionada no formulário (ex: "IBV", "EBD")
+  const polosDoUsuario = (perfil.polo || '').toUpperCase()
+  if (!polosDoUsuario.includes(poloDestino.toUpperCase())) {
+    // Desloga o usuário imediatamente caso ele não tenha acesso a este polo
+    await supabase.auth.signOut() 
+    return { erro: `Você não possui permissão de acesso ao polo ${poloDestino}.` }
+  }
+
+  // 4. Monta a rota de destino baseada no Polo e Nível de Acesso
+  let urlDestino = ''
+
+  const tipoUsuario = (perfil.tipo_usuario || '').toLowerCase()
+  const ehAdminOuProfessor = tipoUsuario.includes('administrador') || 
+                             tipoUsuario.includes('administrativo') || 
+                             tipoUsuario.includes('professor')
+
+  // Estrutura de roteamento dinâmica
+  if (poloDestino === 'EBD') {
+    urlDestino = ehAdminOuProfessor ? '/ebd/admin' : '/ebd/aluno'
   } 
-  
-  // Caso contrário, vai para o painel de aluno
-  redirect('/dashboard/aluno')
+  else if (poloDestino === 'IBUC') {
+    urlDestino = ehAdminOuProfessor ? '/ibuc/admin' : '/ibuc/aluno'
+  } 
+  else {
+    // Padrão IBV
+    urlDestino = ehAdminOuProfessor ? '/dashboard/admin' : '/dashboard/aluno'
+  }
+
+  // 5. Redireciona o usuário para o hub correto
+  redirect(urlDestino)
 }

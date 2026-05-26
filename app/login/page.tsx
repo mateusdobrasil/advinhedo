@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link' // 👈 Import necessário
+import Link from 'next/link'
 import { Analytics } from "@vercel/analytics/next"
 import { realizarLogin } from '../actions/auth'
 
@@ -15,7 +15,7 @@ export default function LoginPage() {
 
         <Analytics />
         
-        {/* Logo / Título com Link para a página principal */}
+        {/* Logo / Título */}
         <div className="text-center mb-8">
           <Link href="/" className="block group">
             <div className="bg-indigo-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg group-hover:bg-indigo-700 transition">
@@ -39,6 +39,7 @@ export default function LoginPage() {
             
             const resposta = await realizarLogin(formData)
             
+            // Se houver erro de credencial ou de acesso ao polo, exibe aqui
             if (resposta?.erro) {
               setErro(resposta.erro)
               setCarregando(false)
@@ -47,6 +48,21 @@ export default function LoginPage() {
           className="space-y-5"
         >
           
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Polo de Acesso</label>
+            <select 
+              name="polo_destino" 
+              required 
+              defaultValue=""
+              className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition bg-white cursor-pointer"
+            >
+              <option value="" disabled>Selecione por onde deseja entrar...</option>
+              <option value="IBV">IBV (Sede)</option>
+              <option value="EBD">Escola Bíblica Dominical (EBD)</option>
+              <option value="IBUC">IBUC</option>
+            </select>
+          </div>
+
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-1">E-mail</label>
             <input 
@@ -74,7 +90,7 @@ export default function LoginPage() {
             disabled={carregando} 
             className="w-full bg-indigo-600 text-white font-bold text-lg p-3 rounded-xl hover:bg-indigo-700 transition shadow-md disabled:opacity-70 disabled:cursor-not-allowed mt-2"
           >
-            {carregando ? 'Validando credenciais...' : 'Entrar no Sistema'}
+            {carregando ? 'Validando acesso...' : 'Entrar no Sistema'}
           </button>
 
         </form>
