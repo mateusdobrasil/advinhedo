@@ -52,14 +52,14 @@ export async function realizarLogin(formData: FormData) {
 
   // Estrutura de roteamento dinâmica
   if (poloDestino === 'EBD') {
-    urlDestino = ehAdminOuProfessor ? '/ebd/admin' : '/ebd/aluno'
+    urlDestino = ehAdminOuProfessor ? '/ebd' : '/ebd'
   } 
   else if (poloDestino === 'IBUC') {
-    urlDestino = ehAdminOuProfessor ? '/ibuc/admin' : '/ibuc/aluno'
+    urlDestino = ehAdminOuProfessor ? '/ibuc' : '/ibuc'
   } 
   else {
     // Padrão IBV
-    urlDestino = ehAdminOuProfessor ? '/ibv/admin' : '/ibv/aluno'
+    urlDestino = ehAdminOuProfessor ? '/ibv' : '/ibv'
   }
 
   // 5. Redireciona o usuário para o hub correto

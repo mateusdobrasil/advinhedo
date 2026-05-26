@@ -55,11 +55,15 @@ export default async function AdminEBDPage() {
     <div className="min-h-screen bg-gray-50 text-gray-900 p-6">
       <div className="max-w-6xl mx-auto">
         
-        <div className="mb-8">
-          <h1 className="text-3xl font-black text-gray-800 tracking-tight">Painel de Gestão EBD</h1>
-          <p className="text-gray-500 mt-1">Selecione o módulo administrativo que deseja acessar.</p>
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-black text-gray-800 tracking-tight">Painel de Gestão EBD</h1>
+            <p className="text-gray-500 mt-1">Selecione o módulo administrativo que deseja acessar.</p>
         </div>
-
+        <Link href="/ebd" className="text-sm bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition">
+            Voltar ao Nível de Acesso
+        </Link>
+      </div>
         <Analytics />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
