@@ -14,6 +14,18 @@ export async function matricularAluno(formData: FormData) {
   const aluno_id = formData.get('aluno_id') as string
   const turma_id = formData.get('turma_id') as string
 
+  // 🛡️ TRAVA ANTI-DUPLICIDADE INDIVIDUAL
+  const { data: matriculaExistente } = await supabase
+    .from('matriculas')
+    .select('id')
+    .eq('aluno_id', aluno_id)
+    .eq('turma_id', turma_id)
+    .maybeSingle()
+
+  if (matriculaExistente) {
+    throw new Error('⚠️ Este aluno já está matriculado nesta turma!')
+  }
+
   // Dados Financeiros
   const valorMatricula = parseFloat(formData.get('valor_matricula') as string) || 0
   const valorMensalidade = parseFloat(formData.get('valor_mensalidade') as string) || 0
@@ -52,17 +64,13 @@ export async function matricularAluno(formData: FormData) {
 
   // B) Lança as Mensalidades automaticamente baseadas no tempo de curso
   if (valorMensalidade > 0 && qtdeParcelas > 0 && dataVencimentoInicial) {
-    // Quebra a data 'YYYY-MM-DD' para fazer o cálculo seguro
     const [anoStr, mesStr, diaStr] = dataVencimentoInicial.split('-')
     const anoInicial = parseInt(anoStr)
     const mesInicial = parseInt(mesStr)
     const diaInicial = parseInt(diaStr)
 
     for (let i = 0; i < qtdeParcelas; i++) {
-      // O JavaScript calcula viradas de ano automaticamente (ex: mês 13 vira janeiro do próximo ano)
       const dataCalculada = new Date(anoInicial, (mesInicial - 1) + i, diaInicial)
-      
-      // Formata de volta para o formato de banco de dados (YYYY-MM-DD)
       const dataFormatada = dataCalculada.toISOString().split('T')[0]
 
       lancamentosFinanceiros.push({
@@ -85,7 +93,6 @@ export async function matricularAluno(formData: FormData) {
       .insert(lancamentosFinanceiros)
 
     if (erroFinanceiro) {
-      // Nota: Se falhar aqui, a matrícula já foi feita, mas o financeiro não. 
       console.error("Erro ao gerar parcelas:", erroFinanceiro)
       throw new Error("Matrícula concluída, mas houve erro ao gerar o financeiro automático.")
     }
@@ -102,11 +109,9 @@ export async function matricularAluno(formData: FormData) {
 export async function alterarStatusMatricula(matriculaId: string, novoStatus: string) {
   const supabase = createServerActionClient({ cookies })
 
-  // 1. Verificação de Segurança
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Não autorizado')
 
-  // 2. Atualiza o status na tabela matriculas
   const { error } = await supabase
     .from('matriculas')
     .update({ status: novoStatus })
@@ -114,7 +119,6 @@ export async function alterarStatusMatricula(matriculaId: string, novoStatus: st
 
   if (error) throw new Error(`Erro ao alterar status: ${error.message}`)
 
-  // 3. Atualiza o cache das páginas para mostrar a mudança instantaneamente
   revalidatePath('/ibv/admin/matriculas')
   revalidatePath('/ibv/admin/turmas')
 }
@@ -129,10 +133,29 @@ export async function matricularEmLote(formData: FormData) {
   if (!session) throw new Error('Não autorizado')
 
   const turma_id = formData.get('turma_id') as string
-  const alunos_selecionados = formData.getAll('alunos_selecionados') as string[] // Captura todos os checkboxes marcados
+  const alunos_selecionados = formData.getAll('alunos_selecionados') as string[]
 
   if (!alunos_selecionados || alunos_selecionados.length === 0) {
     throw new Error('Selecione pelo menos um aluno para matricular.')
+  }
+
+  // 🛡️ TRAVA ANTI-DUPLICIDADE EM LOTE
+  // Verifica no banco quais desses alunos já estão nessa turma
+  const { data: matriculasExistentes } = await supabase
+    .from('matriculas')
+    .select('aluno_id')
+    .eq('turma_id', turma_id)
+    .in('aluno_id', alunos_selecionados)
+
+  // Cria uma lista apenas com os IDs dos que já estão matriculados
+  const alunosJaMatriculados = matriculasExistentes?.map(m => m.aluno_id) || []
+
+  // Filtra a lista original, mantendo APENAS os alunos que ainda NÃO estão matriculados
+  const alunosParaMatricular = alunos_selecionados.filter(id => !alunosJaMatriculados.includes(id))
+
+  // Se todos os alunos selecionados já estiverem matriculados, bloqueia a operação
+  if (alunosParaMatricular.length === 0) {
+    throw new Error('⚠️ Todos os alunos selecionados já estão matriculados nesta turma.')
   }
 
   // Dados Financeiros Padrão para o Lote
@@ -143,8 +166,8 @@ export async function matricularEmLote(formData: FormData) {
 
   const lancamentosFinanceiros = []
 
-  // Loop para processar cada aluno selecionado
-  for (const aluno_id of alunos_selecionados) {
+  // Loop para processar APENAS os alunos filtrados e válidos
+  for (const aluno_id of alunosParaMatricular) {
     // 1. Cria a Matrícula
     const { data: novaMatricula, error: erroMatricula } = await supabase
       .from('matriculas')
@@ -158,7 +181,7 @@ export async function matricularEmLote(formData: FormData) {
 
     if (erroMatricula) {
       console.error(`Erro ao matricular aluno ${aluno_id}:`, erroMatricula.message)
-      continue // Pula para o próximo em caso de erro, para não parar o lote todo
+      continue 
     }
 
     // 2. Prepara o Financeiro daquele aluno

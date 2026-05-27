@@ -13,19 +13,25 @@ export async function salvarChamadaUnificada(formData: FormData) {
   const visitantes = Number(formData.get('visitantes')) || 0
   const oferta = Number(formData.get('oferta')) || 0
 
-  const alunoIds = formData.getAll('aluno_ids') as string[]
+  // Pega a lista bruta de alunos que veio do formulário
+  const alunoIdsRaw = formData.getAll('aluno_ids') as string[]
 
-  if (!alunoIds || alunoIds.length === 0) {
+  if (!alunoIdsRaw || alunoIdsRaw.length === 0) {
     throw new Error('Nenhum aluno encontrado para registrar a chamada.')
   }
 
-  // 2. Constrói o array de registros para o banco (Alinhado 100% com o seu SQL)
+  // 🔥 O ESCUDO ANTI-DUPLICIDADE:
+  // Usa o Set() para arrancar qualquer ID repetido da lista.
+  // Resolve o erro: "cannot affect row a second time"
+  const alunoIds = Array.from(new Set(alunoIdsRaw))
+
+  // 2. Constrói o array de registros para o banco
   const registrosParaSalvar = alunoIds.map((aluno_id, index) => {
     const presente = formData.has(`presente_${aluno_id}`)
     const trouxe_biblia = formData.has(`biblia_${aluno_id}`)
     const trouxe_revista = formData.has(`revista_${aluno_id}`)
     
-    // TÉCNICA DE SEGURANÇA: Salva a oferta e visitantes APENAS na linha do primeiro aluno
+    // TÉCNICA DE SEGURANÇA: Salva a oferta e visitantes APENAS na linha do primeiro aluno único
     const salvarDadosGerais = index === 0
 
     return {
@@ -37,29 +43,22 @@ export async function salvarChamadaUnificada(formData: FormData) {
       trouxe_revista,
       visitantes: salvarDadosGerais ? visitantes : 0,
       oferta: salvarDadosGerais ? oferta : 0
-      // REMOVIDO o campo 'faltas' que estava a causar conflito com o SQL
     }
   })
 
-  // 3. Estratégia de "Limpa e Grava de Novo" para permitir edições fáceis da chamada do dia
-  const { error: deleteError } = await supabase
+  // 3. O UPSERT: Insere novos ou atualiza existentes
+  const { error } = await supabase
     .from('frequencia_ebd')
-    .delete()
-    .eq('turma_id', turma_id)
-    .eq('data_aula', data_aula)
+    .upsert(registrosParaSalvar, { 
+      onConflict: 'aluno_id, turma_id, data_aula' 
+    })
 
-  if (deleteError) {
-    console.error("❌ ERRO AO LIMPAR CHAMADA ANTERIOR:", deleteError)
-    throw new Error(`Erro ao preparar o banco: ${deleteError.message}`)
+  // 4. Tratamento do Erro
+  if (error) {
+    console.error("❌ ERRO AO SALVAR NO BANCO:", error)
+    throw new Error(`Falha ao registrar no banco de dados: ${error.message}`)
   }
 
-  // 4. Insere a nova lista de presença (agora respeitando exatamente a estrutura da sua tabela)
-  const { error } = await supabase
-  .from('frequencia_ebd')
-  .upsert(registrosParaSalvar, { 
-    onConflict: 'aluno_id, turma_id, data_aula' 
-  })
-
-  // 5. Atualiza os componentes visuais na tela
-  revalidatePath(`/ibv/admin/ebd/${turma_id}`)
+  // 5. Atualiza a tela
+  revalidatePath(`/ebd/admin/ebd/${turma_id}`)
 }
