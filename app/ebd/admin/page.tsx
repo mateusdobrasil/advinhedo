@@ -39,11 +39,11 @@ export default async function AdminEBDPage() {
     { nome: 'Matrículas', icon: '📝', link: '/ebd/admin/matriculas', desc: 'Aprovações e inscrições', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
     { nome: 'Salas da EBD', icon: '📖', link: '/ebd/admin/ebd', desc: 'Gerencie a EBD', ativo: true, permissoes: ['Administrador', 'Administrativo', 'Professor'] },
     { nome: 'Relatórios da EBD', icon: '📈', link: '/ebd/admin/relatoriosEBD', desc: 'Métricas e frequências', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
-    { nome: 'Diplomas', icon: '🎓', link: '/ebd/admin/diplomas', desc: 'Emissão de certificados', ativo: false, permissoes: ['Administrador', 'Administrativo', 'Professor'] },
     { nome: 'Polos', icon: '🏢', link: '/ebd/admin/polos', desc: 'Sedes e Congregações', ativo: true, permissoes: ['Administrador'] },
     { nome: 'Permissões', icon: '🔐', link: '/ebd/admin/permissoes', desc: 'Cargos e acessos', ativo: true, permissoes: ['Administrador'] },
     { nome: 'Auditoria', icon: '👁️', link: '/ebd/admin/auditoria', desc: 'Logs e rastreamento', ativo: true, permissoes: ['Administrador'] },
-    
+    { nome: 'Diplomas', icon: '🎓', link: '/ebd/admin/diplomas', desc: 'Emissão de certificados', ativo: false, permissoes: ['Administrador', 'Administrativo', 'Professor'] },
+        
   ]
 
   // FILTRO ÚNICO: Apenas Permissão de Cargo (O escopo EBD já está garantido pela pasta)

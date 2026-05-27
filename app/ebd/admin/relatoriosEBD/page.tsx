@@ -66,17 +66,22 @@ export default async function RelatoriosEBDPage({ searchParams }: PageProps) {
   }
 
   // =================================================================
-  // CONSULTAS AO BANCO
+  // 3. CONSULTAS AO BANCO
   // =================================================================
   
-  // Total de Alunos Matriculados Ativos Geral
-  const { count: totalAlunosAtivos } = await supabase
-    .from('perfis')
-    .select('id', { count: 'exact', head: true })
-    .ilike('tipo_usuario', '%aluno%')
+  // 3.1 Busca todas as turmas da EBD
+  const { data: turmasEBD } = await supabase
+    .from('turmas')
+    .select('id, nome')
+    .eq('is_ebd', true)
+
+  // 3.2 Busca matrículas ativas para contar os alunos de cada turma da EBD
+  const { data: matriculasAtivas } = await supabase
+    .from('matriculas')
+    .select('turma_id, aluno_id')
     .eq('status', 'Ativo')
 
-  // Presenças de Alunos para o Ranking Individual
+  // 3.3 Presenças de Alunos para o Ranking Individual (Top 5)
   const { data: frequenciasAlunos } = await supabase
     .from('frequencia_ebd')
     .select(`
@@ -88,89 +93,102 @@ export default async function RelatoriosEBDPage({ searchParams }: PageProps) {
     .lte('data_aula', end)
     .eq('presente', true)
 
-  // Frequências Agregadas (Para as turmas)
+  // 3.4 Frequências Agregadas (Para preencher as métricas das turmas)
   const { data: frequencias } = await supabase
     .from('frequencia_ebd')
-    .select('turma_id, aluno_id, data_aula, presente, trouxe_biblia, trouxe_revista, visitantes, oferta, turmas (nome)')
+    .select('turma_id, aluno_id, data_aula, presente, trouxe_biblia, trouxe_revista, visitantes, oferta')
     .gte('data_aula', start)
     .lte('data_aula', end)
 
+
   // =================================================================
-  // PROCESSAMENTO DE DADOS
+  // 4. PROCESSAMENTO DE DADOS (Baseado nas Turmas, não nas frequências)
   // =================================================================
   const turmasMap: Record<string, any> = {}
 
+  // Inicializa o mapa garantindo que TODAS as turmas da EBD existam na tabela
+  turmasEBD?.forEach((t: any) => {
+    turmasMap[t.id] = {
+      id: t.id,
+      nome: t.nome,
+      total_alunos: 0,
+      presentes: 0,
+      biblias: 0,
+      revistas: 0,
+      aulas: {}
+    }
+  })
+
+  // Conta os alunos matriculados ativos em cada turma
+  matriculasAtivas?.forEach((m: any) => {
+    if (turmasMap[m.turma_id]) {
+      turmasMap[m.turma_id].total_alunos++
+    }
+  })
+
+  // (Regra de Negócio): Remove turmas que não possuem NENHUM aluno matriculado
+  Object.keys(turmasMap).forEach(key => {
+    if (turmasMap[key].total_alunos === 0) {
+      delete turmasMap[key]
+    }
+  })
+
+  // Agora sim, cruza com as frequências para preencher os dados
   if (frequencias) {
     frequencias.forEach((f: any) => {
       const tId = f.turma_id
-      
-      let nomeDaTurma = 'Turma Desconhecida'
-      if (f.turmas) {
-         if (Array.isArray(f.turmas) && f.turmas.length > 0) {
-            nomeDaTurma = f.turmas[0].nome
-         } else if (!Array.isArray(f.turmas) && f.turmas.nome) {
-            nomeDaTurma = f.turmas.nome
-         }
-      }
+      if (turmasMap[tId]) {
+        if (f.presente) turmasMap[tId].presentes++
+        if (f.trouxe_biblia) turmasMap[tId].biblias++
+        if (f.trouxe_revista) turmasMap[tId].revistas++
 
-      if (!turmasMap[tId]) {
-        turmasMap[tId] = { 
-          id: tId, 
-          nome: nomeDaTurma,
-          presentes: 0, 
-          biblias: 0, 
-          revistas: 0, 
-          aulas: {},
-          alunos_matriculados: new Set() // Set para contar alunos distintos na turma
+        if (!turmasMap[tId].aulas[f.data_aula]) {
+          turmasMap[tId].aulas[f.data_aula] = { visitantes: 0, oferta: 0 }
         }
-      }
-      
-      // Armazena o ID do aluno para contar quantos matriculados existem na turma
-      if (f.aluno_id) {
-        turmasMap[tId].alunos_matriculados.add(f.aluno_id)
-      }
-
-      if (f.presente) turmasMap[tId].presentes++
-      if (f.trouxe_biblia) turmasMap[tId].biblias++
-      if (f.trouxe_revista) turmasMap[tId].revistas++
-
-      if (!turmasMap[tId].aulas[f.data_aula]) {
-        turmasMap[tId].aulas[f.data_aula] = { visitantes: 0, oferta: 0 }
-      }
-      if (f.visitantes > turmasMap[tId].aulas[f.data_aula].visitantes) {
-        turmasMap[tId].aulas[f.data_aula].visitantes = f.visitantes
-      }
-      if (f.oferta > turmasMap[tId].aulas[f.data_aula].oferta) {
-        turmasMap[tId].aulas[f.data_aula].oferta = Number(f.oferta)
+        if (f.visitantes > turmasMap[tId].aulas[f.data_aula].visitantes) {
+          turmasMap[tId].aulas[f.data_aula].visitantes = f.visitantes
+        }
+        if (f.oferta > turmasMap[tId].aulas[f.data_aula].oferta) {
+          turmasMap[tId].aulas[f.data_aula].oferta = Number(f.oferta)
+        }
       }
     })
   }
 
-  // Formata a lista final e calcula TOTAIS
+  // Formata a lista final e calcula TOTAIS globais da escola
   let totalGeralPresentes = 0
   let totalGeralBiblias = 0
   let totalGeralRevistas = 0
   let totalGeralVisitantes = 0
   let totalGeralOferta = 0
+  let totalGeralMatriculados = 0
+  let totalGeralAusentes = 0
 
   const listaEBD = Object.values(turmasMap).map((t: any) => {
     let totalVisitantes = 0
     let totalOferta = 0
+    const qtdAulas = Object.keys(t.aulas).length
     
     Object.values(t.aulas).forEach((a: any) => {
       totalVisitantes += a.visitantes
       totalOferta += a.oferta
     })
 
+    // Correção Matemática: O cálculo de ausentes considera quantas aulas ocorreram no período.
+    const totalPresencasPossiveis = t.total_alunos * qtdAulas
+    const ausentes = qtdAulas > 0 ? Math.max(0, totalPresencasPossiveis - t.presentes) : 0
+
     totalGeralPresentes += t.presentes
     totalGeralBiblias += t.biblias
     totalGeralRevistas += t.revistas
     totalGeralVisitantes += totalVisitantes
     totalGeralOferta += totalOferta
+    totalGeralMatriculados += t.total_alunos
+    totalGeralAusentes += ausentes
 
     return {
       ...t,
-      total_alunos: t.alunos_matriculados ? t.alunos_matriculados.size : 0, // Envia o total de matriculados da turma
+      ausentes: ausentes,
       visitantes: totalVisitantes,
       oferta: totalOferta
     }
@@ -271,24 +289,35 @@ export default async function RelatoriosEBDPage({ searchParams }: PageProps) {
                   Filtrar Dados
                 </button>
 
+                {/* SCRIPT CORRIGIDO: Usa Event Delegation para não quebrar no Next.js */}
                 <script dangerouslySetInnerHTML={{__html: `
-                  const select = document.getElementById('periodoSelect');
-                  if(select) {
-                    select.addEventListener('change', function() {
-                      const val = this.value;
-                      document.getElementById('blocoDiario').style.display = val === 'diario' ? 'block' : 'none';
-                      document.getElementById('blocoTrimestre').style.display = val === 'trimestre' ? 'block' : 'none';
-                      document.getElementById('blocoAno').style.display = (val === 'trimestre' || val === 'anual') ? 'block' : 'none';
-                    });
+                  function updateFiltrosEBD() {
+                    const select = document.getElementById('periodoSelect');
+                    if(!select) return;
+                    const val = select.value;
+                    const diario = document.getElementById('blocoDiario');
+                    const trim = document.getElementById('blocoTrimestre');
+                    const ano = document.getElementById('blocoAno');
+                    
+                    if(diario) diario.style.display = val === 'diario' ? 'block' : 'none';
+                    if(trim) trim.style.display = val === 'trimestre' ? 'block' : 'none';
+                    if(ano) ano.style.display = (val === 'trimestre' || val === 'anual') ? 'block' : 'none';
                   }
+                  
+                  document.addEventListener('change', function(e) {
+                    if(e.target && e.target.id === 'periodoSelect') {
+                      updateFiltrosEBD();
+                    }
+                  });
+                  
+                  updateFiltrosEBD();
                 `}} />
               </form>
               
               <BotaoExportarEBD 
                 data={listaEBD} 
                 resumoGeral={{
-                  // 🔥 Correção: Garantimos que será sempre um número, nunca null
-                  totalMatriculados: totalAlunosAtivos || 0, 
+                  totalMatriculados: totalGeralMatriculados || 0, 
                   presentes: totalGeralPresentes,
                   biblias: totalGeralBiblias,
                   revistas: totalGeralRevistas,
@@ -307,7 +336,7 @@ export default async function RelatoriosEBDPage({ searchParams }: PageProps) {
               <div className="grid grid-cols-2 md:grid-cols-7 gap-3 mb-10 pb-8 border-b border-dashed border-gray-200">
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-center">
                   <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">Matriculados</p>
-                  <p className="text-2xl font-black text-gray-800">{totalAlunosAtivos}</p>
+                  <p className="text-2xl font-black text-gray-800">{totalGeralMatriculados}</p>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-center">
                   <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">Total Presentes</p>
@@ -315,7 +344,7 @@ export default async function RelatoriosEBDPage({ searchParams }: PageProps) {
                 </div>
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-center">
                   <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">Total Ausentes</p>
-                  <p className="text-2xl font-black text-gray-800">{(totalAlunosAtivos || 0) - (totalGeralPresentes || 0)}</p>
+                  <p className="text-2xl font-black text-gray-800">{totalGeralAusentes}</p>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-center">
                   <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">Total Bíblias</p>
@@ -391,7 +420,7 @@ export default async function RelatoriosEBDPage({ searchParams }: PageProps) {
                         <td className="px-4 py-3 font-bold text-gray-800">{t.nome}</td>
                         <td className="px-4 py-3 text-center font-black text-indigo-600">{t.total_alunos}</td>
                         <td className="px-4 py-3 text-center font-medium text-gray-600">{t.presentes}</td>
-                        <td className="px-4 py-3 text-center font-medium text-gray-600">{t.total_alunos - t.presentes}</td>
+                        <td className="px-4 py-3 text-center font-medium text-gray-600">{t.ausentes}</td>
                         <td className="px-4 py-3 text-center font-medium text-gray-600">{t.biblias}</td>
                         <td className="px-4 py-3 text-center font-medium text-gray-600">{t.revistas}</td>
                         <td className="px-4 py-3 text-center font-medium text-orange-600">{t.visitantes}</td>
@@ -404,14 +433,6 @@ export default async function RelatoriosEBDPage({ searchParams }: PageProps) {
 
               {/* NOVOS RELATÓRIOS: ALUNOS E RANKING INDIVIDUAL */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-200">
-                
-                {/*<div className="bg-gradient-to-br from-indigo-900 to-slate-900 p-6 rounded-2xl text-white flex flex-col justify-center items-center text-center shadow-sm">
-                  <span className="text-4xl mb-3">🎓</span>
-                  <h3 className="text-xs uppercase font-extrabold text-indigo-300 tracking-wider">Alunos Matriculados Ativos</h3>
-                  <p className="text-5xl font-black text-white mt-2">{totalAlunosAtivos || 0}</p>
-                  <p className="text-[11px] text-slate-400 mt-3 max-w-[200px]">Alunos regulares com status ativo no sistema.</p>
-                </div>*/}
-
                 <div className="md:col-span- bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
                   <div className="bg-slate-50 border-b border-gray-100 px-5 py-3.5">
                     <h3 className="text-xs uppercase font-extrabold text-slate-700 tracking-wider">🌟 Ranking de Frequência (Top Alunos)</h3>
@@ -452,8 +473,8 @@ export default async function RelatoriosEBDPage({ searchParams }: PageProps) {
           ) : (
             <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
               <span className="text-3xl mb-2 block">📅</span>
-              <p className="text-gray-500 font-medium">Nenhum dado de EBD registrado para este período.</p>
-              <p className="text-xs text-gray-400 mt-1">Verifique as datas ou confirme se as chamadas foram salvas pela liderança.</p>
+              <p className="text-gray-500 font-medium">Nenhum dado de EBD e nenhuma sala com alunos para exibir.</p>
+              <p className="text-xs text-gray-400 mt-1">Matricule os alunos nas salas para que os relatórios sejam gerados.</p>
             </div>
           )}
         </div>
