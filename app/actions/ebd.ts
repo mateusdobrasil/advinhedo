@@ -54,14 +54,11 @@ export async function salvarChamadaUnificada(formData: FormData) {
   }
 
   // 4. Insere a nova lista de presença (agora respeitando exatamente a estrutura da sua tabela)
-  const { error: insertError } = await supabase
-    .from('frequencia_ebd')
-    .insert(registrosParaSalvar)
-
-  if (insertError) {
-    console.error("❌ ERRO AO INSERIR DADOS NA TABELA FREQUENCIA_EBD:", insertError)
-    throw new Error(`Erro no banco: ${insertError.message}`)
-  }
+  const { error } = await supabase
+  .from('frequencia_ebd')
+  .upsert(registrosParaSalvar, { 
+    onConflict: 'aluno_id, turma_id, data_aula' 
+  })
 
   // 5. Atualiza os componentes visuais na tela
   revalidatePath(`/ibv/admin/ebd/${turma_id}`)
