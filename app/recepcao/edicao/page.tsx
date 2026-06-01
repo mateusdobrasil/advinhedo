@@ -773,7 +773,7 @@ export default function EdicaoVisitante() {
                   <label className="block text-sm font-bold text-gray-700 mb-1">Local do Evento</label>
                   <input 
                     type="text" 
-                    placeholder="Ex: Templo Central, Sala dos Jovens"
+                    placeholder="Ex: Sede, Congregaçao, Salão, etc..."
                     value={novoEventoLocal} 
                     onChange={(e) => setNovoEventoLocal(e.target.value)} 
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
