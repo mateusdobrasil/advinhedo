@@ -147,8 +147,8 @@ export default function ApresentacaoDashboard() {
         </div>
       )}
 
-      {/* Grid responsivo: 1 coluna no celular, 4 colunas em telas médias/grandes */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 w-full max-w-5xl">
+      {/* Grid responsivo: Agora acomoda 5 cards ajustando-se automaticamente */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 w-full max-w-7xl">
         
         {/* Card 1: Cadastro */}
         <Link href={isAcessoLiberado ? "/recepcao/cadastro" : "#"}
@@ -188,8 +188,20 @@ export default function ApresentacaoDashboard() {
           <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mb-4 group-hover:bg-orange-600 group-hover:text-white transition-colors">
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
           </div>
-          <h2 className="text-xl font-semibold text-gray-800">Edição / Gerenciar Eventos</h2>
-          <p className="text-gray-500 mt-2 text-sm">Criar eventos, buscar histórico ou corrigir dados.</p>
+          <h2 className="text-xl font-semibold text-gray-800">Edição de Eventos</h2>
+          <p className="text-gray-500 mt-2 text-sm">Criar eventos atuais, corrigir dados e gerenciar status ativos.</p>
+        </Link>
+
+        {/* Card 5: NOVO - Histórico (SEMPRE ATIVO) */}
+        <Link href="/recepcao/historico" 
+              className="bg-white p-8 rounded-xl border border-gray-100 flex flex-col items-center text-center group transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer">
+          <div className="w-16 h-16 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mb-4 group-hover:bg-teal-600 group-hover:text-white transition-colors">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-800">Histórico</h2>
+          <p className="text-gray-500 mt-2 text-sm">Consultar todos os recados e eventos passados, incluindo inativos.</p>
         </Link>
 
       </div>
