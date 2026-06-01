@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -20,6 +20,7 @@ export default function TelaApresentacaoBlack() {
   
   // Controle de visibilidade restrito apenas à interação com a barra superior
   const [mostrarControles, setMostrarControles] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const carregarDados = useCallback(async (eventoId: string) => {
     const { data, error } = await supabase
@@ -59,6 +60,24 @@ export default function TelaApresentacaoBlack() {
     const tipoReal = v.tipo || "Visitas";
     return tipoReal === filtroAtivo;
   });
+
+  // Lógica de movimento real do mouse (Apenas na barra superior)
+  useEffect(() => {
+    const resetarTimeoutControles = (e: MouseEvent) => {
+      // Verifica se houve movimento físico real do mouse
+      if (e.movementX !== 0 || e.movementY !== 0) {
+        setMostrarControles(true);
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(() => setMostrarControles(false), 5000);
+      }
+    };
+
+    window.addEventListener("mousemove", resetarTimeoutControles);
+    return () => {
+      window.removeEventListener("mousemove", resetarTimeoutControles);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const cookieEvento = document.cookie
@@ -131,22 +150,6 @@ export default function TelaApresentacaoBlack() {
 
   return (
     <div className="h-screen bg-gray-950 flex flex-col overflow-hidden text-gray-100">
-
-      <img
-        src={logo.src} 
-        alt="Marca d'água"
-        style={{
-          position: 'absolute',
-          top: '22%',
-          left: '15%',
-          transform: 'translate(-50%, -50%) rotate(-00deg)',
-          opacity: 0.1,
-          width: '200px',
-          pointerEvents: 'none',
-          zIndex: 9999,
-          userSelect: 'none',
-        }}
-      />
       
       {/* Cabeçalho Fixo Black - Monitora toques e passadas de mouse diretamente na barra */}
       <div 
@@ -248,6 +251,11 @@ export default function TelaApresentacaoBlack() {
 
                   {tipo === 'Aniversários' && (
                     <>
+                      {visitante.representado_por && (
+                        <p className="text-3xl md:text-5xl text-gray-400 font-medium leading-snug mt-6">
+                          Quem parabeniza: <span className="text-gray-100 font-bold">{visitante.representado_por}</span>
+                        </p>
+                      )}
                       {visitante.data_aniversario && <p className="text-4xl md:text-7xl text-gray-400 font-medium mt-6">Data: <span className="text-gray-100 font-bold">{formatarData(visitante.data_aniversario)}</span></p>}
                       {visitante.observacoes && <div className="mt-10 bg-gray-800/80 p-8 md:p-10 rounded-3xl border border-gray-700 max-w-5xl"><p className="text-3xl md:text-5xl text-yellow-100/90 italic">"{visitante.observacoes}"</p></div>}
                     </>

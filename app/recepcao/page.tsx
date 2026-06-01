@@ -9,10 +9,13 @@ export default function ApresentacaoDashboard() {
   const supabase = createClientComponentClient();
   
   const [eventos, setEventos] = useState<any[]>([]);
+  const [locaisDisponiveis, setLocaisDisponiveis] = useState<string[]>([]);
+  
+  const [localSelecionado, setLocalSelecionado] = useState<string>("");
   const [eventoSelecionado, setEventoSelecionado] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
-  // Busca os eventos no banco e checa se já existe um selecionado no cookie
+  // Busca os eventos no banco e extrai os locais únicos (Agrupamento perfeito)
   useEffect(() => {
     const carregarEventos = async () => {
       const { data, error } = await supabase
@@ -21,22 +24,42 @@ export default function ApresentacaoDashboard() {
         .eq('ativo', true)
         .order('created_at', { ascending: false });
 
-      if (data) setEventos(data);
+      if (data) {
+        setEventos(data);
+        
+        // Extrai locais únicos ignorando espaços em branco no início ou fim
+        const locais = Array.from(new Set(
+          data.map(e => e.local_evento?.trim() || 'Local não especificado')
+        ));
+        setLocaisDisponiveis(locais);
 
-      // Lê o cookie para ver se já tínhamos um evento escolhido antes
-      const cookieEvento = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('evento_ativo='))
-        ?.split('=')[1];
+        // Lê o cookie para ver se já tínhamos um evento escolhido antes
+        const cookieEvento = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('evento_ativo='))
+          ?.split('=')[1];
 
-      if (cookieEvento && data?.some(e => e.id === cookieEvento)) {
-        setEventoSelecionado(cookieEvento);
+        if (cookieEvento) {
+          const eventoNoCookie = data.find(e => e.id === cookieEvento);
+          if (eventoNoCookie) {
+            // Se o cookie existe e o evento é válido, seleciona o local agrupadore e o evento automaticamente
+            setLocalSelecionado(eventoNoCookie.local_evento?.trim() || 'Local não especificado');
+            setEventoSelecionado(cookieEvento);
+          }
+        }
       }
       setLoading(false);
     };
 
     carregarEventos();
   }, [supabase]);
+
+  // Quando o usuário muda o local, resetamos o evento para forçar a nova escolha
+  const handleSelecionarLocal = (local: string) => {
+    setLocalSelecionado(local);
+    setEventoSelecionado("");
+    document.cookie = `evento_ativo=; path=/; max-age=0`; // Limpa o cookie de evento
+  };
 
   // Atualiza o state e salva no Cookie para as outras páginas usarem
   const handleSelecionarEvento = (id: string) => {
@@ -45,6 +68,12 @@ export default function ApresentacaoDashboard() {
   };
 
   const isAcessoLiberado = eventoSelecionado !== "";
+
+  // Filtra os eventos para mostrar apenas os do local selecionado
+  const eventosFiltrados = eventos.filter(e => {
+    const localDoEvento = e.local_evento?.trim() || 'Local não especificado';
+    return localDoEvento === localSelecionado;
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
@@ -60,34 +89,61 @@ export default function ApresentacaoDashboard() {
         <p className="text-gray-500 mt-2">Gestão de Apresentação de Visitas, Aniversários, Pedidos de Oração, Agradecimentos e Avisos</p>
       </div>
 
-      {/* Barra de Seleção de Evento */}
-      <div className="w-full max-w-xl bg-white p-5 rounded-xl shadow-sm border border-gray-200 mb-10 relative z-10">
-        <label className="block text-sm font-bold text-gray-500 uppercase tracking-wider mb-2 text-center">
-          Selecione o Culto / Evento Atual
-        </label>
-        <select 
-          value={eventoSelecionado} 
-          onChange={(e) => handleSelecionarEvento(e.target.value)}
-          disabled={loading}
-          className="w-full p-4 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-bold text-gray-800 disabled:opacity-50 text-center text-lg"
-        >
-          <option value="">{loading ? "Carregando..." : "Selecione um evento para liberar o acesso..."}</option>
-          {eventos.map(evento => {
-            // Formata a data para exibir no select (DD/MM/YYYY)
-            const dataFormatada = new Date(evento.data_evento + 'T00:00:00').toLocaleDateString('pt-BR');
-            return (
-              <option key={evento.id} value={evento.id}>
-                {evento.nome_evento} ({dataFormatada})
+      {/* Caixa de Seleção em duas etapas (Local -> Evento) */}
+      <div className="w-full max-w-2xl bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-10 relative z-10 flex flex-col md:flex-row gap-6">
+        
+        {/* Passo 1: Local */}
+        <div className="flex-1">
+          <label className="block text-sm font-bold text-gray-500 uppercase tracking-wider mb-2 text-center md:text-left">
+            1. Selecione o Local
+          </label>
+          <select 
+            value={localSelecionado} 
+            onChange={(e) => handleSelecionarLocal(e.target.value)}
+            disabled={loading || locaisDisponiveis.length === 0}
+            className="w-full p-4 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-bold text-gray-800 disabled:opacity-50 text-base"
+          >
+            <option value="">{loading ? "Carregando..." : "Escolha o Local..."}</option>
+            {locaisDisponiveis.map((local, index) => (
+              <option key={index} value={local}>
+                {local}
               </option>
-            );
-          })}
-        </select>
+            ))}
+          </select>
+        </div>
+
+        {/* Passo 2: Evento */}
+        <div className="flex-1">
+          <label className="block text-sm font-bold text-gray-500 uppercase tracking-wider mb-2 text-center md:text-left">
+            2. Culto / Evento Atual
+          </label>
+          <select 
+            value={eventoSelecionado} 
+            onChange={(e) => handleSelecionarEvento(e.target.value)}
+            disabled={!localSelecionado || loading}
+            className="w-full p-4 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-bold text-gray-800 disabled:opacity-50 text-base"
+          >
+            <option value="">
+              {!localSelecionado 
+                ? "Aguardando Local..." 
+                : "Selecione o culto..."}
+            </option>
+            {eventosFiltrados.map(evento => {
+              const dataFormatada = new Date(evento.data_evento + 'T00:00:00').toLocaleDateString('pt-BR');
+              return (
+                <option key={evento.id} value={evento.id}>
+                  {evento.nome_evento} ({dataFormatada})
+                </option>
+              );
+            })}
+          </select>
+        </div>
       </div>
 
       {/* Mensagem de alerta se não houver evento selecionado */}
       {!isAcessoLiberado && !loading && (
         <div className="mb-6 px-6 py-3 bg-yellow-50 text-yellow-800 border border-yellow-200 rounded-lg font-medium text-center">
-          Selecione um evento acima para habilitar o painel.
+          Selecione o local e o evento acima para habilitar o painel. Caso não haja eventos, acesse "Edição" para criar um novo.
         </div>
       )}
 
@@ -126,14 +182,14 @@ export default function ApresentacaoDashboard() {
           <p className="text-gray-500 mt-2 text-sm">Visualizar fila com fundo escuro (ideal para telões e painéis).</p>
         </Link>
 
-        {/* Card 4: Edição */}
-        <Link href={isAcessoLiberado ? "/recepcao/edicao" : "#"} 
-              className={`bg-white p-8 rounded-xl border border-gray-100 flex flex-col items-center text-center group transition-all duration-300 ${isAcessoLiberado ? 'shadow-sm hover:shadow-md cursor-pointer' : 'opacity-40 cursor-not-allowed pointer-events-none grayscale'}`}>
+        {/* Card 4: Edição (SEMPRE ATIVO) */}
+        <Link href="/recepcao/edicao" 
+              className="bg-white p-8 rounded-xl border border-gray-100 flex flex-col items-center text-center group transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer">
           <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mb-4 group-hover:bg-orange-600 group-hover:text-white transition-colors">
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
           </div>
-          <h2 className="text-xl font-semibold text-gray-800">Edição</h2>
-          <p className="text-gray-500 mt-2 text-sm">Buscar histórico, corrigir dados ou gerenciar cadastros salvos.</p>
+          <h2 className="text-xl font-semibold text-gray-800">Edição / Gerenciar Eventos</h2>
+          <p className="text-gray-500 mt-2 text-sm">Criar eventos, buscar histórico ou corrigir dados.</p>
         </Link>
 
       </div>

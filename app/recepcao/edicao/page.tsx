@@ -19,6 +19,7 @@ export default function EdicaoVisitante() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [novoEventoNome, setNovoEventoNome] = useState("");
   const [novoEventoData, setNovoEventoData] = useState("");
+  const [novoEventoLocal, setNovoEventoLocal] = useState(""); 
   const [salvandoEvento, setSalvandoEvento] = useState(false);
 
   // --- GERENCIAMENTO DE VISITANTES (EDICAO) ---
@@ -28,7 +29,7 @@ export default function EdicaoVisitante() {
   const [mensagem, setMensagem] = useState("");
   const [visitanteEditando, setVisitanteEditando] = useState<any | null>(null);
   
-  // NOVO ESTADO: Filtro de navegação
+  // Filtro de navegação
   const [filtroAtivo, setFiltroAtivo] = useState("Todos");
 
   // Estados dos inputs de edição (Reativos)
@@ -124,6 +125,7 @@ export default function EdicaoVisitante() {
   // 3. CRIAR NOVO EVENTO
   const abrirModal = () => {
     setNovoEventoNome("");
+    setNovoEventoLocal(""); 
     const hoje = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
     setNovoEventoData(hoje);
     setIsModalOpen(true);
@@ -136,7 +138,12 @@ export default function EdicaoVisitante() {
     setSalvandoEvento(true);
     const { data, error } = await supabase
       .from('eventos')
-      .insert([{ nome_evento: novoEventoNome, data_evento: novoEventoData, ativo: true }])
+      .insert([{ 
+        nome_evento: novoEventoNome, 
+        data_evento: novoEventoData, 
+        local_evento: novoEventoLocal || null, 
+        ativo: true 
+      }])
       .select()
       .single();
 
@@ -266,7 +273,8 @@ export default function EdicaoVisitante() {
         .update({
           tipo: tipo,
           nome_visitante: nome,
-          representado_por: (tipo === 'Visitas' || tipo === 'Pedido de Oraçao') ? representadoPor : null,
+          // Liberado representadoPor para Aniversários também
+          representado_por: (tipo === 'Visitas' || tipo === 'Pedido de Oraçao' || tipo === 'Aniversários') ? representadoPor : null,
           observacoes: (tipo !== 'Visitas') ? observacoes : null,
           data_aniversario: (tipo === 'Aniversários') ? dataAniversario : null,
           setor_trabalho: tipo === 'Visitas' ? setor : null,
@@ -351,7 +359,7 @@ export default function EdicaoVisitante() {
           </Link>
         </div>
 
-        {/* ---------------- NOVA SEÇÃO: GERENCIAMENTO DE EVENTO ---------------- */}
+        {/* ---------------- SEÇÃO: GERENCIAMENTO DE EVENTO ---------------- */}
         {!visitanteEditando && (
           <div className="w-full bg-blue-50/50 p-5 rounded-xl border border-blue-100 mb-6 flex flex-col md:flex-row items-end gap-4">
             <div className="flex-1 w-full">
@@ -369,7 +377,7 @@ export default function EdicaoVisitante() {
                   const dataFormatada = new Date(evento.data_evento + 'T00:00:00').toLocaleDateString('pt-BR');
                   return (
                     <option key={evento.id} value={evento.id}>
-                      {evento.nome_evento} ({dataFormatada})
+                      {evento.nome_evento} {evento.local_evento ? `- ${evento.local_evento}` : ''} ({dataFormatada})
                     </option>
                   );
                 })}
@@ -398,7 +406,7 @@ export default function EdicaoVisitante() {
           </div>
         )}
 
-        {/* ---------------- NOVA BARRA DE FILTRO (PÍLULAS) ---------------- */}
+        {/* ---------------- BARRA DE FILTRO (PÍLULAS) ---------------- */}
         {eventoAtivoId && !visitanteEditando && resultados.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 mb-8 bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm">
             <span className="text-sm font-bold text-gray-400 uppercase tracking-wider mr-2 w-full md:w-auto mb-2 md:mb-0">Filtro:</span>
@@ -538,6 +546,7 @@ export default function EdicaoVisitante() {
                         )}
                         {tipoV === 'Aniversários' && (
                           <>
+                            {visitante.representado_por && <p><span className="font-medium text-gray-800">Quem parabeniza:</span> {visitante.representado_por}</p>}
                             {visitante.data_aniversario && <p><span className="font-medium text-gray-800">Data:</span> {formatarData(visitante.data_aniversario)}</p>}
                             {visitante.observacoes && <p className="italic bg-yellow-50 p-3 rounded-lg border border-yellow-100 mt-2 whitespace-pre-wrap"><span className="font-bold text-gray-800 not-italic block mb-1">Observações:</span> {visitante.observacoes}</p>}
                           </>
@@ -646,6 +655,10 @@ export default function EdicaoVisitante() {
               {tipo === "Aniversários" && (
                 <>
                   <div className="col-span-1 md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Quem parabeniza? (Opcional)</label>
+                    <input type="text" value={representadoPor} onChange={(e) => setRepresentadoPor(e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Ex: Família, amigos, departamento..." />
+                  </div>
+                  <div className="col-span-1 md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Data do Aniversário *</label>
                     <input type="date" required value={dataAniversario} onChange={(e) => setDataAniversario(e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
                   </div>
@@ -749,9 +762,20 @@ export default function EdicaoVisitante() {
                   <input 
                     type="text" 
                     required 
-                    placeholder="Ex: Culto de Aniversário"
+                    placeholder="Ex: Culto de Celebração"
                     value={novoEventoNome} 
                     onChange={(e) => setNovoEventoNome(e.target.value)} 
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Local do Evento</label>
+                  <input 
+                    type="text" 
+                    placeholder="Ex: Templo Central, Sala dos Jovens"
+                    value={novoEventoLocal} 
+                    onChange={(e) => setNovoEventoLocal(e.target.value)} 
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
                   />
                 </div>

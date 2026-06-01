@@ -172,8 +172,9 @@ export default function TelaApresentacao() {
                     return (
                       <div key={v.id} className="bg-blue-50/70 border border-blue-200 rounded-2xl p-6 flex flex-col md:flex-row justify-between gap-6 shadow-sm">
                         <div className="flex-1">
+                          <div className="text-gray-700 space-y-2 text-lg md:text-xl"><b>Visitante:</b></div>
                           <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{v.nome_visitante}</h3>
-                          <div className="text-gray-700 space-y-2 text-lg md:text-xl">
+                          <div className="text-gray-700 space-y-2 text-lg md:text-3xl">
                             {v.setor_trabalho && <p><b>Vindo de:</b> {v.setor_trabalho}</p>}
                             {v.representado_por && <p className="text-yellow-800 bg-yellow-200/60 px-3 py-1 rounded inline-block mt-1"><b>Representado por:</b> {v.representado_por}</p>}
                             {v.nome_esposa && <p className="pt-1"><b>Esposa:</b> {v.nome_esposa}</p>}
@@ -200,7 +201,7 @@ export default function TelaApresentacao() {
                         {v.representado_por && (
                           <div className="mb-4 bg-purple-100/50 p-3 rounded-lg border border-purple-200">
                             <span className="text-sm md:text-base text-purple-700 font-bold uppercase block mb-1">Quem pede:</span>
-                            <p className="text-xl md:text-2xl font-bold text-gray-800 leading-tight">{v.representado_por}</p>
+                            <p className="text-xl md:text-4xl font-bold text-gray-800 leading-tight">{v.representado_por}</p>
                           </div>
                         )}
                         <div className="mb-4">
@@ -229,7 +230,18 @@ export default function TelaApresentacao() {
                   {listaAniversarios.map(v => (
                     <div key={v.id} className="bg-yellow-50/80 border border-yellow-200 rounded-2xl p-6 flex flex-col md:flex-row justify-between gap-6 shadow-sm">
                       <div className="flex-1">
+                        <div className="text-gray-700 space-y-2 text-lg md:text-xl"><b>Aniversariante:</b></div>
                         <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">{v.nome_visitante}</h3>
+                        
+                        {/* Novo campo: Quem parabeniza */}
+                        {v.representado_por && (
+                          <div className="mb-3">
+                            <span className="text-yellow-800 bg-yellow-200/60 px-3 py-1 rounded inline-block text-lg md:text-xl">
+                              <b>Quem parabeniza:</b> {v.representado_por}
+                            </span>
+                          </div>
+                        )}
+
                         {v.data_aniversario && <p className="text-gray-700 font-medium mb-3 text-lg md:text-xl"><b>Data:</b> {formatarData(v.data_aniversario)}</p>}
                         {v.observacoes && <p className="text-gray-800 italic bg-white p-4 rounded-lg border border-yellow-200 text-lg md:text-xl">"{v.observacoes}"</p>}
                       </div>
@@ -267,6 +279,7 @@ export default function TelaApresentacao() {
                   {listaAvisos.map(v => (
                     <div key={v.id} className="bg-red-50/70 border border-red-200 rounded-2xl p-6 flex flex-col md:flex-row justify-between gap-6 shadow-sm">
                       <div className="flex-1">
+                        <div className="text-gray-700 space-y-2 text-lg md:text-xl"><b>Quem avisa:</b></div>
                         <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{v.nome_visitante}</h3>
                         <p className="text-gray-800 whitespace-pre-wrap bg-white p-5 rounded-xl border border-red-200 text-xl md:text-2xl leading-relaxed">{v.observacoes}</p>
                       </div>

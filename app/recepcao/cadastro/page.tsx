@@ -37,7 +37,7 @@ export default function CadastroVisitante() {
   // Estados Base
   const [tipo, setTipo] = useState("Visitas");
   const [nome, setNome] = useState(""); // Usado para Visitante, Aniversariante, Para quem, Quem Agradece ou Quem Avisa
-  const [representadoPor, setRepresentadoPor] = useState(""); // Usado para Representado ou Quem Pediu (Oração)
+  const [representadoPor, setRepresentadoPor] = useState(""); // Usado para Representado, Quem Pediu (Oração) ou Quem Parabeniza (Aniversário)
   const [observacoes, setObservacoes] = useState(""); // Usado para Obs, Pedido, Agradecimento ou Aviso
   
   // Específicos de Visitas
@@ -66,7 +66,6 @@ export default function CadastroVisitante() {
     e.preventDefault();
     if (!eventoAtivoId) return;
 
-    // Apenas a chamada correta da função de estado
     setLoading(true);
     setMensagem("");
 
@@ -78,7 +77,7 @@ export default function CadastroVisitante() {
           evento_id: eventoAtivoId, 
           tipo: tipo,
           nome_visitante: nome, 
-          representado_por: (tipo === 'Visitas' || tipo === 'Pedido de Oraçao') ? representadoPor : null,
+          representado_por: (tipo === 'Visitas' || tipo === 'Pedido de Oraçao' || tipo === 'Aniversários') ? representadoPor : null,
           observacoes: (tipo !== 'Visitas') ? observacoes : null,
           data_aniversario: (tipo === 'Aniversários') ? dataAniversario : null,
           // Campos exclusivos de visitas
@@ -196,7 +195,7 @@ export default function CadastroVisitante() {
             {tipo === "Visitas" && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Setor de Trabalho (Congregação)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Vindo de: (Local, Igreja)</label>
                   <input type="text" value={setor} onChange={(e) => setSetor(e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
                 </div>
                 <div>
@@ -213,6 +212,10 @@ export default function CadastroVisitante() {
             {/* --- CAMPOS EXCLUSIVOS: ANIVERSÁRIOS --- */}
             {tipo === "Aniversários" && (
               <>
+                <div className="col-span-1 md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Quem parabeniza? (Opcional)</label>
+                  <input type="text" value={representadoPor} onChange={(e) => setRepresentadoPor(e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Ex: Família, amigos, departamento..." />
+                </div>
                 <div className="col-span-1 md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Data do Aniversário *</label>
                   <input type="date" required value={dataAniversario} onChange={(e) => setDataAniversario(e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
