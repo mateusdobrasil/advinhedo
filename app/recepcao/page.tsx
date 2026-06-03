@@ -15,7 +15,7 @@ export default function ApresentacaoDashboard() {
   const [eventoSelecionado, setEventoSelecionado] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
-  // Busca os eventos no banco e extrai os locais únicos (Agrupamento perfeito)
+  // Busca os eventos, desativa os vencidos e extrai locais únicos
   useEffect(() => {
     const carregarEventos = async () => {
       const { data, error } = await supabase
@@ -25,11 +25,31 @@ export default function ApresentacaoDashboard() {
         .order('created_at', { ascending: false });
 
       if (data) {
-        setEventos(data);
+        // Pega a data atual no formato YYYY-MM-DD ajustada ao fuso local
+        const hojeStr = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
         
-        // Extrai locais únicos ignorando espaços em branco no início ou fim
+        const eventosValidos: any[] = [];
+        const eventosVencidos: string[] = [];
+
+        // Separa os eventos válidos dos vencidos
+        data.forEach(evento => {
+          if (evento.data_evento < hojeStr) {
+            eventosVencidos.push(evento.id);
+          } else {
+            eventosValidos.push(evento);
+          }
+        });
+
+        // Desativa os vencidos no banco em background
+        if (eventosVencidos.length > 0) {
+          supabase.from('eventos').update({ ativo: false }).in('id', eventosVencidos).then();
+        }
+
+        setEventos(eventosValidos);
+        
+        // Extrai locais únicos dos eventos ainda válidos
         const locais = Array.from(new Set(
-          data.map(e => e.local_evento?.trim() || 'Local não especificado')
+          eventosValidos.map(e => e.local_evento?.trim() || 'Local não especificado')
         ));
         setLocaisDisponiveis(locais);
 
@@ -40,11 +60,15 @@ export default function ApresentacaoDashboard() {
           ?.split('=')[1];
 
         if (cookieEvento) {
-          const eventoNoCookie = data.find(e => e.id === cookieEvento);
+          const eventoNoCookie = eventosValidos.find(e => e.id === cookieEvento);
           if (eventoNoCookie) {
-            // Se o cookie existe e o evento é válido, seleciona o local agrupadore e o evento automaticamente
             setLocalSelecionado(eventoNoCookie.local_evento?.trim() || 'Local não especificado');
             setEventoSelecionado(cookieEvento);
+          } else {
+            // Se o evento selecionado anteriormente expirou, limpa o cookie e a seleção
+            document.cookie = `evento_ativo=; path=/; max-age=0`;
+            setEventoSelecionado("");
+            setLocalSelecionado("");
           }
         }
       }
@@ -58,13 +82,13 @@ export default function ApresentacaoDashboard() {
   const handleSelecionarLocal = (local: string) => {
     setLocalSelecionado(local);
     setEventoSelecionado("");
-    document.cookie = `evento_ativo=; path=/; max-age=0`; // Limpa o cookie de evento
+    document.cookie = `evento_ativo=; path=/; max-age=0`; 
   };
 
   // Atualiza o state e salva no Cookie para as outras páginas usarem
   const handleSelecionarEvento = (id: string) => {
     setEventoSelecionado(id);
-    document.cookie = `evento_ativo=${id}; path=/; max-age=${60 * 60 * 24 * 7}`; // Expira em 7 dias
+    document.cookie = `evento_ativo=${id}; path=/; max-age=${60 * 60 * 24 * 7}`; 
   };
 
   const isAcessoLiberado = eventoSelecionado !== "";
@@ -76,10 +100,9 @@ export default function ApresentacaoDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center justify-center">
       
       <div className="text-center mb-6 flex flex-col items-center">
-        {/* Logo centralizada acima do título */}
         <img 
           src={logo.src} 
           alt="Logo AD Vinhedo" 
@@ -147,7 +170,7 @@ export default function ApresentacaoDashboard() {
         </div>
       )}
 
-      {/* Grid responsivo: Agora acomoda 5 cards ajustando-se automaticamente */}
+      {/* Grid de Cards administrativos */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 w-full max-w-7xl">
         
         {/* Card 1: Cadastro */}
@@ -182,7 +205,7 @@ export default function ApresentacaoDashboard() {
           <p className="text-gray-500 mt-2 text-sm">Visualizar fila com fundo escuro (ideal para telões e painéis).</p>
         </Link>
 
-        {/* Card 4: Edição (SEMPRE ATIVO) */}
+        {/* Card 4: Edição */}
         <Link href="/recepcao/edicao" 
               className="bg-white p-8 rounded-xl border border-gray-100 flex flex-col items-center text-center group transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer">
           <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mb-4 group-hover:bg-orange-600 group-hover:text-white transition-colors">
@@ -192,7 +215,7 @@ export default function ApresentacaoDashboard() {
           <p className="text-gray-500 mt-2 text-sm">Criar eventos atuais, corrigir dados e gerenciar status ativos.</p>
         </Link>
 
-        {/* Card 5: NOVO - Histórico (SEMPRE ATIVO) */}
+        {/* Card 5: Histórico */}
         <Link href="/recepcao/historico" 
               className="bg-white p-8 rounded-xl border border-gray-100 flex flex-col items-center text-center group transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer">
           <div className="w-16 h-16 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mb-4 group-hover:bg-teal-600 group-hover:text-white transition-colors">
