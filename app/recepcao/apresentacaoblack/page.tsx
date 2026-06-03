@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -18,9 +18,8 @@ export default function TelaApresentacaoBlack() {
   const [processando, setProcessando] = useState(false);
   const [filtroAtivo, setFiltroAtivo] = useState("Todos");
   
-  // Controle de visibilidade restrito apenas à interação com a barra superior
+  // Controle de visibilidade restrito estritamente à barra superior
   const [mostrarControles, setMostrarControles] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const carregarDados = useCallback(async (eventoId: string) => {
     const { data, error } = await supabase
@@ -60,24 +59,6 @@ export default function TelaApresentacaoBlack() {
     const tipoReal = v.tipo || "Visitas";
     return tipoReal === filtroAtivo;
   });
-
-  // Lógica de movimento real do mouse (Apenas na barra superior)
-  useEffect(() => {
-    const resetarTimeoutControles = (e: MouseEvent) => {
-      // Verifica se houve movimento físico real do mouse
-      if (e.movementX !== 0 || e.movementY !== 0) {
-        setMostrarControles(true);
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        timeoutRef.current = setTimeout(() => setMostrarControles(false), 5000);
-      }
-    };
-
-    window.addEventListener("mousemove", resetarTimeoutControles);
-    return () => {
-      window.removeEventListener("mousemove", resetarTimeoutControles);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, []);
 
   useEffect(() => {
     const cookieEvento = document.cookie
@@ -149,25 +130,25 @@ export default function TelaApresentacaoBlack() {
   }
 
   return (
-    <div className="h-screen bg-gray-950 flex flex-col overflow-hidden text-gray-100">
+    <div className="h-screen bg-gray-950 flex flex-col overflow-hidden text-gray-100 select-none caret-transparent">
       
-      {/* Cabeçalho Fixo Black - Monitora toques e passadas de mouse diretamente na barra */}
+      {/* Cabeçalho Fixo Black - Eventos de toque e mouse focados apenas nesta barra */}
       <div 
         onClick={(e) => {
-          // Se o clique/toque veio de dentro dos botões ou do select, não fecha a barra
+          // Se clicar nos botões internos ou no select, não fecha a barra
           if ((e.target as HTMLElement).closest('.controles-container')) return;
           setMostrarControles(!mostrarControles);
         }}
         onMouseEnter={() => setMostrarControles(true)}
         onMouseLeave={() => setMostrarControles(false)}
-        className="p-4 md:px-8 flex items-center justify-between bg-gray-900 border-b border-gray-800 shadow-sm shrink-0 cursor-pointer select-none"
+        className="p-4 md:px-8 flex items-center justify-between bg-gray-900 border-b border-gray-800 shadow-sm shrink-0 cursor-pointer"
       >
         <div className="flex items-center gap-4">
           <img src={logo.src} alt="Logo" className="h-10 w-auto object-contain" />
           <h1 className="text-2xl md:text-3xl font-bold text-gray-100">{tituloEvento}</h1>
         </div>
         
-        {/* Container de Controles - Aparece conforme o estado */}
+        {/* Container de Controles - Responde apenas à visibilidade da barra */}
         <div className={`controles-container flex items-center gap-3 md:gap-4 transition-opacity duration-300 ${mostrarControles ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           
           <select
@@ -216,11 +197,11 @@ export default function TelaApresentacaoBlack() {
               <button 
                 key={visitante.id} 
                 onClick={() => {
-                  setMostrarControles(false); // Garante o fechamento da barra ao avançar no tablet
+                  setMostrarControles(false); // Oculta os controles ao trocar de card
                   handleApresentar(visitante);
                 }}
                 disabled={processando}
-                className={`bg-gray-900 rounded-3xl shadow-2xl border border-gray-800 p-6 md:p-10 w-full max-w-[95%] 2xl:max-w-[1600px] h-[92%] flex flex-col animate-fade-in text-left transition-all duration-300 cursor-pointer ${processando ? 'opacity-50 cursor-wait' : 'hover:bg-gray-800/40 active:scale-[0.995]'}`}
+                className={`bg-gray-900 rounded-3xl shadow-2xl border border-gray-800 p-6 md:p-10 w-full max-w-[95%] 2xl:max-w-[1600px] h-[92%] flex flex-col animate-fade-in text-left transition-all duration-300 cursor-pointer focus:outline-none ${processando ? 'opacity-50 cursor-wait' : 'hover:bg-gray-800/40 active:scale-[0.995]'}`}
               >
                 
                 <div className="flex-1 overflow-y-auto px-4 flex flex-col items-center justify-center text-center space-y-4 md:space-y-6 pb-4 w-full h-full custom-scrollbar">
