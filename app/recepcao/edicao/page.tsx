@@ -14,6 +14,9 @@ export default function EdicaoVisitante() {
   const [eventos, setEventos] = useState<any[]>([]);
   const [eventoAtivoId, setEventoAtivoId] = useState<string>("");
   const [loadingEventos, setLoadingEventos] = useState(true);
+  
+  // NOVO ESTADO: Armazena todos os locais existentes históricos do banco de dados
+  const [locaisExistentes, setLocaisExistentes] = useState<string[]>([]);
 
   // Estados para Modal de Evento
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,14 +48,31 @@ export default function EdicaoVisitante() {
   const [foiApresentado, setFoiApresentado] = useState(false);
   const [dependentes, setDependentes] = useState<any[]>([]);
 
-  // 1. CARREGAR EVENTOS E LÓGICA DE DESATIVAÇÃO AUTOMÁTICA
+  // 1. CARREGAR EVENTOS, DESATIVAR VENCIDOS E BUSCAR TODOS OS LOCAIS HISTÓRICOS
   const carregarEventos = useCallback(async () => {
     setLoadingEventos(true);
+    
+    // Busca eventos ativos para o select principal
     const { data, error } = await supabase
       .from('eventos')
       .select('*')
       .eq('ativo', true)
       .order('created_at', { ascending: false });
+
+    // BUSCA COMPLEMENTAR: Coleta todos os locais cadastrados na história (ativos e inativos)
+    const { data: todosEventos } = await supabase
+      .from('eventos')
+      .select('local_evento');
+
+    if (todosEventos) {
+      // Filtra strings vazias, remove duplicados e padroniza com trim()
+      const locaisUnicos = Array.from(new Set(
+        todosEventos
+          .map(e => e.local_evento?.trim())
+          .filter(Boolean)
+      )) as string[];
+      setLocaisExistentes(locaisUnicos);
+    }
 
     if (data) {
       const hojeStr = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
@@ -141,7 +161,7 @@ export default function EdicaoVisitante() {
       .insert([{ 
         nome_evento: novoEventoNome, 
         data_evento: novoEventoData, 
-        local_evento: novoEventoLocal || null, 
+        local_evento: novoEventoLocal?.trim() || null, 
         ativo: true 
       }])
       .select()
@@ -151,6 +171,8 @@ export default function EdicaoVisitante() {
       setEventos([data, ...eventos]); 
       handleSelecionarEvento(data.id); 
       setIsModalOpen(false); 
+      // Força a atualização da lista de locais inteligentes para incluir o novo se houver
+      await carregarEventos();
     } else {
       alert("Erro ao criar evento. Tente novamente.");
     }
@@ -273,7 +295,6 @@ export default function EdicaoVisitante() {
         .update({
           tipo: tipo,
           nome_visitante: nome,
-          // Liberado representadoPor para Aniversários também
           representado_por: (tipo === 'Visitas' || tipo === 'Pedido de Oraçao' || tipo === 'Aniversários') ? representadoPor : null,
           observacoes: (tipo !== 'Visitas') ? observacoes : null,
           data_aniversario: (tipo === 'Aniversários') ? dataAniversario : null,
@@ -747,7 +768,7 @@ export default function EdicaoVisitante() {
 
       </div>
 
-      {/* ---------------- MODAL DE CRIAR EVENTO ---------------- */}
+      {/* ---------------- MODAL DE CRIAR EVENTO (INTELIGENTE COM AUTOCOMPLETE + TEXTO LIVRE) ---------------- */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in">
@@ -769,15 +790,24 @@ export default function EdicaoVisitante() {
                   />
                 </div>
 
+                {/* CAMPO DE LOCAL MODIFICADO: Possui o atributo 'list' vinculado à nossa datalist */}
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-1">Local do Evento</label>
                   <input 
                     type="text" 
-                    placeholder="Ex: Sede, Congregaçao, Salão, etc..."
+                    list="locais-existentes-list"
+                    placeholder="Clique para ver sugestões ou digite um novo..."
                     value={novoEventoLocal} 
                     onChange={(e) => setNovoEventoLocal(e.target.value)} 
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
                   />
+                  
+                  {/* DATA LIST: Alimenta as opções sem trancar a digitação manual */}
+                  <datalist id="locais-existentes-list">
+                    {locaisExistentes.map((local, index) => (
+                      <option key={index} value={local} />
+                    ))}
+                  </datalist>
                 </div>
                 
                 <div>
