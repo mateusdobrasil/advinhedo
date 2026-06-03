@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { toggleStatusApresentacao } from '../actions/actions';
-import logo from '../../imgs/logo_branco.png';
+import logo1 from '../../imgs/logo.png';
+import logo2 from '../../imgs/logo_branco.png';
 
 export default function TelaApresentacaoBlack() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function TelaApresentacaoBlack() {
   
   // Controle de visibilidade restrito estritamente à barra superior
   const [mostrarControles, setMostrarControles] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const carregarDados = useCallback(async (eventoId: string) => {
     const { data, error } = await supabase
@@ -135,7 +137,6 @@ export default function TelaApresentacaoBlack() {
       {/* Cabeçalho Fixo Black - Eventos de toque e mouse focados apenas nesta barra */}
       <div 
         onClick={(e) => {
-          // Se clicar nos botões internos ou no select, não fecha a barra
           if ((e.target as HTMLElement).closest('.controles-container')) return;
           setMostrarControles(!mostrarControles);
         }}
@@ -144,7 +145,7 @@ export default function TelaApresentacaoBlack() {
         className="p-4 md:px-8 flex items-center justify-between bg-gray-900 border-b border-gray-800 shadow-sm shrink-0 cursor-pointer"
       >
         <div className="flex items-center gap-4">
-          <img src={logo.src} alt="Logo" className="h-10 w-auto object-contain" />
+          <img src={logo1.src} alt="Logo" className="h-10 w-auto object-contain" />
           <h1 className="text-2xl md:text-3xl font-bold text-gray-100">{tituloEvento}</h1>
         </div>
         
@@ -201,10 +202,19 @@ export default function TelaApresentacaoBlack() {
                   handleApresentar(visitante);
                 }}
                 disabled={processando}
-                className={`bg-gray-900 rounded-3xl shadow-2xl border border-gray-800 p-6 md:p-10 w-full max-w-[95%] 2xl:max-w-[1600px] h-[92%] flex flex-col animate-fade-in text-left transition-all duration-300 cursor-pointer focus:outline-none ${processando ? 'opacity-50 cursor-wait' : 'hover:bg-gray-800/40 active:scale-[0.995]'}`}
+                // Adicionado: relative overflow-hidden para conter a marca d'água corretamente
+                className={`relative overflow-hidden bg-gray-900 rounded-3xl shadow-2xl border border-gray-800 p-6 md:p-10 w-full max-w-[95%] 2xl:max-w-[1600px] h-[92%] flex flex-col animate-fade-in text-left transition-all duration-300 cursor-pointer focus:outline-none ${processando ? 'opacity-50 cursor-wait' : 'hover:bg-gray-800/40 active:scale-[0.995]'}`}
               >
                 
-                <div className="flex-1 overflow-y-auto px-4 flex flex-col items-center justify-center text-center space-y-4 md:space-y-6 pb-4 w-full h-full custom-scrollbar">
+                {/* MARCA D'ÁGUA: Canto superior esquerdo - TAMANHO REDUZIDO AQUI */}
+                <img 
+                  src={logo2.src} 
+                  alt="Marca d'água" 
+                  className="absolute top-8 left-8 md:top-8 md:left-8 w-18 md:w-32 opacity-40 pointer-events-none z-0 select-none drop-shadow-lg" 
+                />
+
+                {/* Camada do texto (z-10 para ficar acima da marca d'água) */}
+                <div className="relative z-10 flex-1 overflow-y-auto px-4 flex flex-col items-center justify-center text-center space-y-4 md:space-y-6 pb-4 w-full h-full custom-scrollbar">
                   
                   {tipo === 'Pedido de Oraçao' && <p className="text-3xl md:text-4xl text-gray-400 font-medium leading-none m-0">Para quem:</p>}
                   
@@ -267,7 +277,7 @@ export default function TelaApresentacaoBlack() {
                 </div>
 
                 {/* INSTRUÇÃO VISUAL */}
-                <div className="shrink-0 w-full pt-4 mt-2 text-center opacity-20">
+                <div className="relative z-10 shrink-0 w-full pt-4 mt-2 text-center opacity-20">
                    <p className="text-sm uppercase tracking-widest">{processando ? "Atualizando a fila..." : "Clique em qualquer lugar da tela para avançar"}</p>
                 </div>
               </button>
