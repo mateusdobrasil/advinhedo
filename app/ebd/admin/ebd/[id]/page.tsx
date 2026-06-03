@@ -4,8 +4,7 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
-import CriadorMatricula from '../../../../components/CriadorMatricula'
-import MatriculaPorTurma from '../../../../components/MatriculaPorTurma'
+import MatriculaEmLote from '../../../../components/MatriculaEmLote'
 import FormChamadaEBD from '../../../../components/FormChamadaEBD'
 import BotaoImprimir from '../../../../components/BotaoImprimir'
 
@@ -26,7 +25,6 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
   const temAcesso = tipo.includes('administrador') || tipo.includes('administrativo') || tipo.includes('professor')
   if (!temAcesso) redirect('/ebd')
 
-  // 👇 NOVA LÓGICA: Variável que define quem pode matricular alunos
   const podeEditar = tipo.includes('administrador') || tipo.includes('administrativo')
 
   const resolvedParams = await params
@@ -40,7 +38,7 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
   const dataSelecionada = resolvedSearch?.data || dataLocal
   const dataFormatada = new Date(dataSelecionada + 'T12:00:00').toLocaleDateString('pt-BR')
 
-  // 3. Busca a Turma e os Alunos
+  // 3. Busca a Turma Atual e os Alunos Dela
   const { data: turma, error: erroTurma } = await supabase.from('turmas').select('*').eq('id', id).single()
   if (erroTurma || !turma) notFound()
 
@@ -60,9 +58,39 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
     .sort((a: any, b: any) => a.nome_completo.localeCompare(b.nome_completo)) || []
 
   // 4. Buscas Auxiliares
-  const { data: todasAsTurmas } = await supabase.from('turmas').select('id, nome, curso').eq('status', 'Ativa').order('nome')
   const { data: todosOsAlunos } = await supabase.from('perfis').select('id, nome_completo, cpf').ilike('tipo_usuario', '%aluno%').order('nome_completo')
   const { data: cursosRegras } = await supabase.from('cursos').select('nome, valor_mensalidade')
+
+  // =================================================================
+  // 🛑 FILTRO SUPREMO DE ALUNOS (À PROVA DE FALHAS DO BANCO)
+  // =================================================================
+  
+  // A) Busca TODAS as matrículas ativas (usando ilike para ignorar se está escrito Ativo, ATIVO ou ativo)
+  const { data: todasMatriculasAtivas } = await supabase
+    .from('matriculas')
+    .select('aluno_id, turma_id')
+    .ilike('status', 'Ativo')
+
+  // B) Busca os IDs de TODAS as turmas que são especificamente da EBD
+  const { data: turmasDaEbd } = await supabase
+    .from('turmas')
+    .select('id')
+    .eq('is_ebd', true)
+
+  const idsTurmasEbd = new Set(turmasDaEbd?.map(t => t.id) || [])
+
+  // C) Faz o cruzamento na memória: Descobre exatamente quem está na EBD
+  const idsAlunosNaEbd = new Set()
+  todasMatriculasAtivas?.forEach(matricula => {
+    if (idsTurmasEbd.has(matricula.turma_id)) {
+      idsAlunosNaEbd.add(matricula.aluno_id)
+    }
+  })
+
+  // D) A lista final de disponíveis é todo mundo MENOS os IDs barrados acima
+  const alunosDisponiveis = todosOsAlunos?.filter((aluno: any) => !idsAlunosNaEbd.has(aluno.id)) || []
+  
+  // =================================================================
 
   // 5. LÓGICA DO RESUMO DIÁRIO
   let frequenciasExistentes: any[] = []
@@ -76,7 +104,6 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
     frequenciasExistentes = freqs || []
   }
 
-  // Cálculos matemáticos corrigidos
   const totalMatriculados = alunos.length
   const totalPresentes = frequenciasExistentes.filter(f => f.presente === true).length
   const totalAusentes = Math.max(0, totalMatriculados - totalPresentes)
@@ -120,8 +147,6 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
         {/* 1. FECHAMENTO DO DIA */}
         {turma.is_ebd && (
           <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-200">
-            
-            {/* Cabecalho e Filtros do Fechamento */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4 border-b border-gray-100 pb-4">
               <div>
                 <h2 className="text-lg font-black text-gray-800 flex flex-wrap items-center gap-2">
@@ -143,7 +168,6 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
               </div>
             </div>
 
-            {/* Cards do Fechamento (Grid responsiva melhorada) */}
             <div className="grid grid-cols-2 lg:grid-cols-7 gap-3 sm:gap-4">
               <div className="bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-100 flex flex-col">
                 <span className="text-[9px] sm:text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-1 truncate">Matriculados</span>
@@ -195,23 +219,16 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
           <div className="p-5 sm:p-6 border-b border-gray-100 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <h2 className="text-lg font-bold text-gray-800">Manutenção de Alunos ({alunos?.length || 0})</h2>
             
-            {/* 👇 Container exibido APENAS para quem tem permissão 👇 */}
             {podeEditar && (
-              <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
-                <div className="w-full sm:w-auto">
-                  <MatriculaPorTurma 
-                    turmas={todasAsTurmas || []} 
-                    turmaDestinoId={turma.id} 
-                  />
-                </div>
-                <div className="w-full sm:w-auto">
-                  <CriadorMatricula 
-                    alunos={todosOsAlunos || []} 
-                    turmas={todasAsTurmas || []} 
-                    cursosRegras={cursosRegras || []} 
-                    turmaIdPadrao={turma.id} 
-                  />
-                </div>
+              <div className="w-full sm:w-auto">
+                {/* 👇 ÚNICO BOTÃO DISPONÍVEL AGORA 👇 */}
+                <MatriculaEmLote 
+                  alunos={alunosDisponiveis} 
+                  turmaAtualId={String(turma.id)}
+                  turmaAtualNome={String(turma.nome)}
+                  cursoAtual={turma.curso ? String(turma.curso) : ''}
+                  cursosRegras={cursosRegras || []} 
+                />
               </div>
             )}
           </div>

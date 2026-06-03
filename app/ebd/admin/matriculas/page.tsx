@@ -4,9 +4,8 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import CriadorMatricula from '../../../components/CriadorMatricula'
 import BotaoStatusMatricula from '../../../components/BotaoStatusMatricula'
-import MatriculaEmLote from '../../../components/MatriculaEmLote'
+import MatriculaPorTurma from '../../../components/MatriculaPorTurma'
 
 interface PageProps {
   searchParams: any
@@ -73,23 +72,13 @@ export default async function MatriculasPage({ searchParams }: PageProps) {
   }
 
   // =================================================================
-  // 5. Buscas para alimentar os botões de Nova Matrícula e Lote
+  // 5. Busca as turmas para alimentar o botão de Matrícula
   // =================================================================
   const { data: todasAsTurmas } = await supabase
     .from('turmas')
     .select('id, nome, curso')
     .eq('status', 'Ativa')
     .order('nome')
-
-  const { data: todosOsAlunos } = await supabase
-    .from('perfis')
-    .select('id, nome_completo, cpf')
-    .ilike('tipo_usuario', '%aluno%') // Busca flexível ignorando maiúsculas
-    .order('nome_completo')
-
-  const { data: cursosRegras } = await supabase
-    .from('cursos')
-    .select('nome, valor_mensalidade')
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 p-6">
@@ -106,7 +95,7 @@ export default async function MatriculasPage({ searchParams }: PageProps) {
           </Link>
         </div>
 
-        {/* BARRA DE AÇÕES (FILTRO E BOTÕES) */}
+        {/* BARRA DE AÇÕES (FILTRO E BOTÃO UNIVERSAL) */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
           <form method="GET" className="flex flex-col sm:flex-row gap-3 w-full lg:max-w-lg bg-white p-2 rounded-xl shadow-sm border border-gray-200">
             <input
@@ -129,16 +118,8 @@ export default async function MatriculasPage({ searchParams }: PageProps) {
           </form>
           
           <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-2 justify-end">
-            <MatriculaEmLote 
-              alunos={todosOsAlunos || []} 
-              turmas={todasAsTurmas || []}
-              cursosRegras={cursosRegras || []} 
-            />
-            <CriadorMatricula 
-              alunos={todosOsAlunos || []} 
-              turmas={todasAsTurmas || []}
-              cursosRegras={cursosRegras || []} 
-            />
+            {/* 👇 Botão universal que permite escolher origem e destino 👇 */}
+            <MatriculaPorTurma turmas={todasAsTurmas || []} />
           </div>
         </div>
 
