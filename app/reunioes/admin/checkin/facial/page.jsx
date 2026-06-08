@@ -1,11 +1,6 @@
 'use client'
 
-/**
- * /reunioes/admin/checkin/facial/page.jsx
- * Check-in por reconhecimento facial
- */
-
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { useReuniaoAuth } from '@/hooks/useReuniaoAuth'
@@ -15,9 +10,9 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-const MODELS_URL    = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model'
-const LIMIAR_DIST   = 0.5  // distância máxima para considerar reconhecido (0 = idêntico, 1 = muito diferente)
-const INTERVALO_MS  = 1200 // ms entre cada tentativa de reconhecimento
+const MODELS_URL   = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model'
+const LIMIAR_DIST  = 0.5
+const INTERVALO_MS = 1200
 
 function iniciais(nome) {
   return (nome || '').split(' ').filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('')
@@ -32,26 +27,26 @@ const COR_CARGO = {
   'Membro':      { bg: '#F3F4F6', text: '#374151' },
 }
 
-export default function FacialPage() {
-  const router       = useRouter()
-  const searchParams = useSearchParams()
-  const reuniaoId    = searchParams.get('reuniao')
+// ── Componente interno (usa useSearchParams) ──────────────────────────────────
+function FacialContent() {
+  const router        = useRouter()
+  const searchParams  = useSearchParams()
+  const reuniaoId     = searchParams.get('reuniao')
   const reuniaoTitulo = searchParams.get('titulo')
   useReuniaoAuth()
 
-  const videoRef      = useRef(null)
-  const canvasRef     = useRef(null)
-  const streamRef     = useRef(null)
-  const matcherRef    = useRef(null)  // FaceMatcher com todos os descritores
-  const intervaloRef  = useRef(null)
+  const videoRef       = useRef(null)
+  const canvasRef      = useRef(null)
+  const streamRef      = useRef(null)
+  const matcherRef     = useRef(null)
+  const intervaloRef   = useRef(null)
   const processandoRef = useRef(false)
 
-  const [etapa, setEtapa]         = useState('carregando') // 'carregando' | 'scanner' | 'confirmacao' | 'sucesso' | 'jaPresente' | 'erro'
+  const [etapa, setEtapa]         = useState('carregando')
   const [statusMsg, setStatusMsg] = useState('Carregando modelos...')
   const [obreiro, setObreiro]     = useState(null)
   const [confianca, setConfianca] = useState(0)
 
-  // Inicializa modelos e câmera
   useEffect(() => {
     if (!reuniaoId) { router.push('/reunioes/admin/checkin'); return }
     init()
@@ -74,7 +69,6 @@ export default function FacialPage() {
 
       setStatusMsg('Carregando cadastros faciais...')
 
-      // Busca todos os obreiros com descritor facial
       const { data: obreiros } = await supabase
         .from('obreiros')
         .select('id, nome, foto_url, face_descriptor, congregacoes(nome), cargos(nome)')
@@ -87,13 +81,11 @@ export default function FacialPage() {
         return
       }
 
-      // Cria LabeledFaceDescriptors para o FaceMatcher
       const rotulos = obreiros.map(o => {
         const descritor = new Float32Array(o.face_descriptor)
         return new faceapi.LabeledFaceDescriptors(o.id, [descritor])
       })
 
-      // Armazena obreiros em mapa para lookup rápido
       const mapaObreiros = {}
       obreiros.forEach(o => { mapaObreiros[o.id] = o })
 
@@ -155,18 +147,17 @@ export default function FacialPage() {
           return
         }
 
-        // Rosto reconhecido! Para o intervalo e mostra confirmação
         clearInterval(intervaloRef.current)
         pararCamera()
 
         const obreiroEncontrado = mapaObreiros[resultado.label]
-        const pctConfianca = Math.round((1 - resultado.distance) / (1 - 0) * 100)
+        const pctConfianca = Math.round((1 - resultado.distance) * 100)
         setConfianca(Math.min(99, pctConfianca))
         setObreiro(obreiroEncontrado)
         setEtapa('confirmacao')
 
       } catch {
-        // Silencia erros de frame individual
+        // silencia erros de frame individual
       }
 
       processandoRef.current = false
@@ -176,7 +167,6 @@ export default function FacialPage() {
   async function confirmarCheckin() {
     if (!obreiro) return
 
-    // Verifica se já fez check-in
     const { data: existente } = await supabase
       .from('presencas')
       .select('id')
@@ -186,7 +176,6 @@ export default function FacialPage() {
 
     if (existente) { setEtapa('jaPresente'); return }
 
-    // Registra presença
     const { error } = await supabase.from('presencas').insert({
       reuniao_id:     reuniaoId,
       obreiro_id:     obreiro.id,
@@ -199,12 +188,10 @@ export default function FacialPage() {
   }
 
   async function naoSouEu() {
-    // Reinicia o scanner
     setObreiro(null)
     setEtapa('scanner')
     setStatusMsg('Aponte a câmera novamente')
     processandoRef.current = false
-
     const faceapi = await import('@vladmandic/face-api')
     await iniciarCamera()
     iniciarReconhecimento(faceapi)
@@ -215,7 +202,6 @@ export default function FacialPage() {
     setEtapa('scanner')
     setStatusMsg('Aponte a câmera para o próximo obreiro')
     processandoRef.current = false
-
     const faceapi = await import('@vladmandic/face-api')
     await iniciarCamera()
     iniciarReconhecimento(faceapi)
@@ -226,7 +212,6 @@ export default function FacialPage() {
   return (
     <div style={s.container}>
 
-      {/* Header */}
       <div style={s.header}>
         <button style={s.voltarBtn} onClick={() => router.push('/reunioes/admin/checkin')}>←</button>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -235,15 +220,13 @@ export default function FacialPage() {
         </div>
       </div>
 
-      {/* Carregando */}
-      {(etapa === 'carregando') && (
+      {etapa === 'carregando' && (
         <div style={s.centrado}>
           <div style={s.spinner} />
           <p style={s.textoClaro}>{statusMsg}</p>
         </div>
       )}
 
-      {/* Scanner ativo */}
       {etapa === 'scanner' && (
         <div style={s.scannerWrap}>
           <p style={s.instrucao}>{statusMsg}</p>
@@ -256,11 +239,9 @@ export default function FacialPage() {
         </div>
       )}
 
-      {/* Confirmação */}
       {etapa === 'confirmacao' && obreiro && (
         <div style={s.resultadoWrap}>
           <p style={s.resultadoLabel}>Obreiro identificado</p>
-
           <div style={s.obreiroCard}>
             {obreiro.foto_url ? (
               <img src={obreiro.foto_url} alt={obreiro.nome} style={s.obreiroFoto} />
@@ -287,9 +268,7 @@ export default function FacialPage() {
               </div>
             </div>
           </div>
-
           <p style={s.pergunta}>É você?</p>
-
           <div style={s.confirmBtns}>
             <button style={s.btnNaoSouEu} onClick={naoSouEu}>Não sou eu</button>
             <button style={s.btnConfirmar} onClick={confirmarCheckin}>Sim, confirmar ✓</button>
@@ -297,7 +276,6 @@ export default function FacialPage() {
         </div>
       )}
 
-      {/* Sucesso */}
       {etapa === 'sucesso' && obreiro && (
         <div style={s.resultadoWrap}>
           <div style={s.sucessoIcone}>✓</div>
@@ -310,7 +288,6 @@ export default function FacialPage() {
         </div>
       )}
 
-      {/* Já presente */}
       {etapa === 'jaPresente' && obreiro && (
         <div style={s.resultadoWrap}>
           <div style={{ ...s.sucessoIcone, background: '#1E3A5F' }}>!</div>
@@ -322,7 +299,6 @@ export default function FacialPage() {
         </div>
       )}
 
-      {/* Erro */}
       {etapa === 'erro' && (
         <div style={s.centrado}>
           <div style={{ ...s.sucessoIcone, background: '#7F1D1D' }}>✕</div>
@@ -339,42 +315,53 @@ export default function FacialPage() {
   )
 }
 
+// ── Export com Suspense boundary (obrigatório no Next.js 14) ──────────────────
+export default function FacialPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100dvh', background: '#111827', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 36, height: 36, border: '3px solid #374151', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      </div>
+    }>
+      <FacialContent />
+    </Suspense>
+  )
+}
+
 const s = {
-  container:       { minHeight: '100dvh', background: '#111827', fontFamily: "'Geist','Inter',sans-serif", maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column' },
-  header:          { padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 },
-  voltarBtn:       { background: 'none', border: 'none', color: '#9CA3AF', fontSize: 20, cursor: 'pointer', padding: '0 4px', flexShrink: 0 },
-  headerTitulo:    { fontSize: 14, fontWeight: 600, color: '#fff' },
-  headerSub:       { fontSize: 11, color: '#6B7280', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  centrado:        { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', gap: 16 },
-  spinner:         { width: 36, height: 36, border: '3px solid #374151', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' },
-  textoClaro:      { fontSize: 16, fontWeight: 600, color: '#fff', margin: 0, textAlign: 'center' },
-  // Scanner
-  scannerWrap:     { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 20px 40px' },
-  instrucao:       { fontSize: 13, color: '#9CA3AF', textAlign: 'center', margin: '0 0 20px', lineHeight: 1.5 },
-  videoContainer:  { position: 'relative', width: '100%', maxWidth: 360 },
-  video:           { width: '100%', borderRadius: 16, display: 'block', background: '#000' },
-  guia:            { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '65%', paddingBottom: '65%', borderRadius: '50%', border: '2px solid rgba(52,211,153,0.6)', pointerEvents: 'none' },
-  scanLine:        { position: 'absolute', top: '17%', left: '17%', width: '66%', height: 2, background: 'rgba(52,211,153,0.5)', animation: 'scanMove 2s ease-in-out infinite' },
-  dica:            { marginTop: 20, fontSize: 12, color: '#4B5563', textAlign: 'center' },
-  // Resultado/confirmação
-  resultadoWrap:   { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 24px', gap: 16 },
-  resultadoLabel:  { fontSize: 12, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 0.5, margin: 0 },
-  obreiroCard:     { background: '#1F2937', border: '1px solid #374151', borderRadius: 16, padding: '16px', width: '100%', maxWidth: 340, display: 'flex', alignItems: 'center', gap: 14 },
-  obreiroFoto:     { width: 56, height: 56, borderRadius: 12, objectFit: 'cover', flexShrink: 0 },
-  obreiroAvatar:   { width: 56, height: 56, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, flexShrink: 0 },
-  obreiroNome:     { fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 4px' },
-  obreiroSub:      { fontSize: 12, color: '#9CA3AF', display: 'flex', alignItems: 'center', gap: 6, margin: 0 },
-  badge:           { borderRadius: 20, padding: '1px 8px', fontSize: 11, fontWeight: 500 },
-  confiancaWrap:   { marginTop: 10 },
-  confiancaBarra:  { height: 4, background: '#374151', borderRadius: 99, overflow: 'hidden', marginBottom: 4, width: 160 },
-  confiancaFill:   { height: '100%', background: '#34D399', borderRadius: 99 },
-  confiancaTxt:    { fontSize: 11, color: '#6B7280' },
-  pergunta:        { fontSize: 18, fontWeight: 600, color: '#fff', margin: 0 },
-  confirmBtns:     { display: 'flex', gap: 10, width: '100%', maxWidth: 340 },
-  btnNaoSouEu:     { flex: 1, padding: '13px', background: '#1F2937', border: '1px solid #374151', borderRadius: 12, color: '#9CA3AF', fontSize: 14, cursor: 'pointer' },
-  btnConfirmar:    { flex: 2, padding: '13px', background: '#065F46', border: 'none', borderRadius: 12, color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' },
+  container:          { minHeight: '100dvh', background: '#111827', fontFamily: "'Geist','Inter',sans-serif", maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column' },
+  header:             { padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 },
+  voltarBtn:          { background: 'none', border: 'none', color: '#9CA3AF', fontSize: 20, cursor: 'pointer', padding: '0 4px', flexShrink: 0 },
+  headerTitulo:       { fontSize: 14, fontWeight: 600, color: '#fff' },
+  headerSub:          { fontSize: 11, color: '#6B7280', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  centrado:           { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', gap: 16 },
+  spinner:            { width: 36, height: 36, border: '3px solid #374151', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' },
+  textoClaro:         { fontSize: 16, fontWeight: 600, color: '#fff', margin: 0, textAlign: 'center' },
+  scannerWrap:        { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 20px 40px' },
+  instrucao:          { fontSize: 13, color: '#9CA3AF', textAlign: 'center', margin: '0 0 20px', lineHeight: 1.5 },
+  videoContainer:     { position: 'relative', width: '100%', maxWidth: 360 },
+  video:              { width: '100%', borderRadius: 16, display: 'block', background: '#000' },
+  guia:               { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '65%', paddingBottom: '65%', borderRadius: '50%', border: '2px solid rgba(52,211,153,0.6)', pointerEvents: 'none' },
+  scanLine:           { position: 'absolute', top: '17%', left: '17%', width: '66%', height: 2, background: 'rgba(52,211,153,0.5)', animation: 'scanMove 2s ease-in-out infinite' },
+  dica:               { marginTop: 20, fontSize: 12, color: '#4B5563', textAlign: 'center' },
+  resultadoWrap:      { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 24px', gap: 16 },
+  resultadoLabel:     { fontSize: 12, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 0.5, margin: 0 },
+  obreiroCard:        { background: '#1F2937', border: '1px solid #374151', borderRadius: 16, padding: '16px', width: '100%', maxWidth: 340, display: 'flex', alignItems: 'center', gap: 14 },
+  obreiroFoto:        { width: 56, height: 56, borderRadius: 12, objectFit: 'cover', flexShrink: 0 },
+  obreiroAvatar:      { width: 56, height: 56, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, flexShrink: 0 },
+  obreiroNome:        { fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 4px' },
+  obreiroSub:         { fontSize: 12, color: '#9CA3AF', display: 'flex', alignItems: 'center', gap: 6, margin: 0 },
+  badge:              { borderRadius: 20, padding: '1px 8px', fontSize: 11, fontWeight: 500 },
+  confiancaWrap:      { marginTop: 10 },
+  confiancaBarra:     { height: 4, background: '#374151', borderRadius: 99, overflow: 'hidden', marginBottom: 4, width: 160 },
+  confiancaFill:      { height: '100%', background: '#34D399', borderRadius: 99 },
+  confiancaTxt:       { fontSize: 11, color: '#6B7280' },
+  pergunta:           { fontSize: 18, fontWeight: 600, color: '#fff', margin: 0 },
+  confirmBtns:        { display: 'flex', gap: 10, width: '100%', maxWidth: 340 },
+  btnNaoSouEu:        { flex: 1, padding: '13px', background: '#1F2937', border: '1px solid #374151', borderRadius: 12, color: '#9CA3AF', fontSize: 14, cursor: 'pointer' },
+  btnConfirmar:       { flex: 2, padding: '13px', background: '#065F46', border: 'none', borderRadius: 12, color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' },
   obreiroCardSimples: { textAlign: 'center' },
-  sucessoIcone:    { width: 72, height: 72, borderRadius: '50%', background: '#065F46', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 700 },
-  btnProximo:      { padding: '13px 32px', background: '#fff', border: 'none', borderRadius: 12, color: '#111827', fontSize: 14, fontWeight: 600, cursor: 'pointer', marginTop: 8 },
-  btnVoltar:       { padding: '13px 32px', background: '#1F2937', border: '1px solid #374151', borderRadius: 12, color: '#9CA3AF', fontSize: 14, cursor: 'pointer', marginTop: 8 },
+  sucessoIcone:       { width: 72, height: 72, borderRadius: '50%', background: '#065F46', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 700 },
+  btnProximo:         { padding: '13px 32px', background: '#fff', border: 'none', borderRadius: 12, color: '#111827', fontSize: 14, fontWeight: 600, cursor: 'pointer', marginTop: 8 },
+  btnVoltar:          { padding: '13px 32px', background: '#1F2937', border: '1px solid #374151', borderRadius: 12, color: '#9CA3AF', fontSize: 14, cursor: 'pointer', marginTop: 8 },
 }
