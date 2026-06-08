@@ -1,20 +1,13 @@
 'use client'
 
-/**
- * DASHBOARD DE ANÁLISES — REUNIÕES DE OBREIROS
- * AD Vinhedo
- *
- * Coloque em: app/reunioes/dashboard/page.jsx
- *
- * Dependências:
- *   npm install recharts
- */
-
 import { useState, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
+import { useReuniaoAuth } from '@/hooks/useReuniaoAuth'
+
 import { createClient } from '@supabase/supabase-js'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
+  PieChart, Pie, Cell,
   LineChart, Line,
 } from 'recharts'
 
@@ -22,9 +15,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
-
-// ── Paleta ────────────────────────────────────────────────────────────────────
-const CORES = ['#111827','#34D399','#60A5FA','#FBBF24','#F87171','#A78BFA','#FB923C','#2DD4BF']
 
 const COR_CARGO = {
   'Pastor':      '#111827',
@@ -35,25 +25,19 @@ const COR_CARGO = {
   'Membro':      '#6B7280',
 }
 
-// ── Utilitários ───────────────────────────────────────────────────────────────
 function fmtData(iso) {
   if (!iso) return '—'
-  return new Date(iso + 'T12:00:00').toLocaleDateString('pt-BR', {
-    day: '2-digit', month: 'short', year: 'numeric'
-  })
+  return new Date(iso + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 function fmtMes(iso) {
   if (!iso) return '—'
-  return new Date(iso + 'T12:00:00').toLocaleDateString('pt-BR', {
-    month: 'short', year: '2-digit'
-  })
+  return new Date(iso + 'T12:00:00').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
 }
 
 function calcIdade(dataNasc) {
   if (!dataNasc) return null
-  const hoje = new Date()
-  const nasc = new Date(dataNasc)
+  const hoje = new Date(), nasc = new Date(dataNasc)
   let idade = hoje.getFullYear() - nasc.getFullYear()
   const m = hoje.getMonth() - nasc.getMonth()
   if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--
@@ -62,17 +46,16 @@ function calcIdade(dataNasc) {
 
 function faixaEtaria(idade) {
   if (idade === null) return null
-  if (idade < 18)  return '< 18'
-  if (idade < 30)  return '18–29'
-  if (idade < 45)  return '30–44'
-  if (idade < 60)  return '45–59'
+  if (idade < 18) return '< 18'
+  if (idade < 30) return '18–29'
+  if (idade < 45) return '30–44'
+  if (idade < 60) return '45–59'
   return '60+'
 }
 
 const ORDEM_FAIXA = ['< 18', '18–29', '30–44', '45–59', '60+']
 const ORDEM_CARGO = ['Pastor', 'Evangelista', 'Presbítero', 'Diácono', 'Cooperador', 'Membro']
 
-// ── Tooltip customizado ───────────────────────────────────────────────────────
 function TooltipCustom({ active, payload, label }) {
   if (!active || !payload?.length) return null
   return (
@@ -88,50 +71,41 @@ function TooltipCustom({ active, payload, label }) {
   )
 }
 
-// ── Componente principal ──────────────────────────────────────────────────────
 export default function Dashboard() {
-  const [reunioes, setReunioes]         = useState([])
-  const [obreiros, setObreiros]         = useState([])
-  const [presencaMap, setPresencaMap]   = useState({}) // { reuniao_id: Set(obreiro_id) }
-  const [loading, setLoading]           = useState(true)
+  const router = useRouter()
+  useReuniaoAuth()
 
-  // Filtros
-  const [modoFiltro, setModoFiltro]     = useState('ultima')   // 'ultima' | 'escolher' | 'comparar'
-  const [reuniaoSel, setReuniaoSel]     = useState(null)       // para modo 'escolher'
-  const [reunioesSel, setReunioesSel]   = useState([])         // para modo 'comparar'
+  const [reunioes, setReunioes]       = useState([])
+  const [obreiros, setObreiros]       = useState([])
+  const [presencaMap, setPresencaMap] = useState({})
+  const [loading, setLoading]         = useState(true)
+  const [modoFiltro, setModoFiltro]   = useState('ultima')
+  const [reuniaoSel, setReuniaoSel]   = useState(null)
+  const [reunioesSel, setReunioesSel] = useState([])
 
-  // ── Carrega tudo de uma vez ───────────────────────────────────────────────
   useEffect(() => {
     async function carregar() {
       setLoading(true)
-
       const [{ data: reuns }, { data: obs }, { data: pres }] = await Promise.all([
         supabase.from('reunioes').select('id, titulo, data_reuniao, aberta').order('data_reuniao', { ascending: false }),
         supabase.from('obreiros').select('id, nome, data_nascimento, congregacoes(nome), cargos(nome)').eq('situacao', 'Ativo'),
         supabase.from('presencas').select('reuniao_id, obreiro_id, presente'),
       ])
-
-      // Monta mapa: reuniao_id → Set de obreiro_ids presentes
       const mapa = {}
       pres?.forEach(p => {
         if (!p.presente) return
         if (!mapa[p.reuniao_id]) mapa[p.reuniao_id] = new Set()
         mapa[p.reuniao_id].add(p.obreiro_id)
       })
-
       setReunioes(reuns || [])
       setObreiros(obs || [])
       setPresencaMap(mapa)
-
-      // Seleciona a última reunião por padrão
       if (reuns?.length) setReuniaoSel(reuns[0])
-
       setLoading(false)
     }
     carregar()
   }, [])
 
-  // ── Reuniões relevantes para o filtro atual ───────────────────────────────
   const reunioesFiltradas = useMemo(() => {
     if (modoFiltro === 'ultima')   return reunioes.slice(0, 1)
     if (modoFiltro === 'escolher') return reuniaoSel ? [reuniaoSel] : []
@@ -139,12 +113,9 @@ export default function Dashboard() {
     return []
   }, [modoFiltro, reunioes, reuniaoSel, reunioesSel])
 
-  // IDs de obreiros presentes no filtro atual (união de todas as reuniões selecionadas)
   const presentesSet = useMemo(() => {
     const s = new Set()
-    reunioesFiltradas.forEach(r => {
-      presencaMap[r.id]?.forEach(id => s.add(id))
-    })
+    reunioesFiltradas.forEach(r => { presencaMap[r.id]?.forEach(id => s.add(id)) })
     return s
   }, [reunioesFiltradas, presencaMap])
 
@@ -152,7 +123,6 @@ export default function Dashboard() {
   const totalObreiros  = obreiros.length
   const pctGeral       = totalObreiros ? Math.round(totalPresentes / totalObreiros * 100) : 0
 
-  // ── Dados: por congregação ────────────────────────────────────────────────
   const dadosCongregacao = useMemo(() => {
     const mapa = {}
     obreiros.forEach(o => {
@@ -161,19 +131,14 @@ export default function Dashboard() {
       mapa[cong].total++
       if (presentesSet.has(o.id)) mapa[cong].presentes++
     })
-    return Object.entries(mapa)
-      .map(([nome, d]) => ({
-        nome: nome.length > 12 ? nome.substring(0, 12) + '…' : nome,
-        nomeCompleto: nome,
-        presentes: d.presentes,
-        ausentes:  d.total - d.presentes,
-        total:     d.total,
-        pct:       Math.round(d.presentes / d.total * 100),
-      }))
-      .sort((a, b) => b.presentes - a.presentes)
+    return Object.entries(mapa).map(([nome, d]) => ({
+      nome: nome.length > 12 ? nome.substring(0, 12) + '…' : nome,
+      nomeCompleto: nome, presentes: d.presentes,
+      ausentes: d.total - d.presentes, total: d.total,
+      pct: Math.round(d.presentes / d.total * 100),
+    })).sort((a, b) => b.presentes - a.presentes)
   }, [obreiros, presentesSet])
 
-  // ── Dados: por cargo ──────────────────────────────────────────────────────
   const dadosCargo = useMemo(() => {
     const mapa = {}
     obreiros.forEach(o => {
@@ -182,67 +147,43 @@ export default function Dashboard() {
       mapa[cargo].total++
       if (presentesSet.has(o.id)) mapa[cargo].presentes++
     })
-    return ORDEM_CARGO
-      .filter(c => mapa[c])
-      .map(c => ({
-        nome:      c,
-        value:     mapa[c].presentes,
-        total:     mapa[c].total,
-        ausentes:  mapa[c].total - mapa[c].presentes,
-        pct:       Math.round(mapa[c].presentes / mapa[c].total * 100),
-        fill:      COR_CARGO[c] || '#9CA3AF',
-      }))
+    return ORDEM_CARGO.filter(c => mapa[c]).map(c => ({
+      nome: c, value: mapa[c].presentes, total: mapa[c].total,
+      ausentes: mapa[c].total - mapa[c].presentes,
+      pct: Math.round(mapa[c].presentes / mapa[c].total * 100),
+      fill: COR_CARGO[c] || '#9CA3AF',
+    }))
   }, [obreiros, presentesSet])
 
-  // ── Dados: por faixa etária ───────────────────────────────────────────────
   const dadosFaixa = useMemo(() => {
     const mapa = {}
     obreiros.forEach(o => {
-      const idade = calcIdade(o.data_nascimento)
-      const faixa = faixaEtaria(idade)
+      const faixa = faixaEtaria(calcIdade(o.data_nascimento))
       if (!faixa) return
       if (!mapa[faixa]) mapa[faixa] = { total: 0, presentes: 0 }
       mapa[faixa].total++
       if (presentesSet.has(o.id)) mapa[faixa].presentes++
     })
-    return ORDEM_FAIXA
-      .filter(f => mapa[f])
-      .map(f => ({
-        faixa:    f,
-        presentes: mapa[f].presentes,
-        ausentes:  mapa[f].total - mapa[f].presentes,
-        total:     mapa[f].total,
-        pct:       Math.round(mapa[f].presentes / mapa[f].total * 100),
-      }))
+    return ORDEM_FAIXA.filter(f => mapa[f]).map(f => ({
+      faixa: f, presentes: mapa[f].presentes,
+      ausentes: mapa[f].total - mapa[f].presentes, total: mapa[f].total,
+      pct: Math.round(mapa[f].presentes / mapa[f].total * 100),
+    }))
   }, [obreiros, presentesSet])
 
-  // ── Dados: evolução mensal ────────────────────────────────────────────────
   const dadosEvolucao = useMemo(() => {
-    return [...reunioes]
-      .reverse()
-      .slice(-12) // últimas 12 reuniões
-      .map(r => {
-        const presentes = presencaMap[r.id]?.size || 0
-        const pct = totalObreiros ? Math.round(presentes / totalObreiros * 100) : 0
-        return {
-          mes:      fmtMes(r.data_reuniao),
-          titulo:   r.titulo,
-          presentes,
-          pct,
-        }
-      })
+    return [...reunioes].reverse().slice(-12).map(r => {
+      const presentes = presencaMap[r.id]?.size || 0
+      return { mes: fmtMes(r.data_reuniao), titulo: r.titulo, presentes,
+        pct: totalObreiros ? Math.round(presentes / totalObreiros * 100) : 0 }
+    })
   }, [reunioes, presencaMap, totalObreiros])
 
-  // ── Toggle de reunião no modo comparar ───────────────────────────────────
   function toggleReuniaoComparar(r) {
     setReunioesSel(prev =>
-      prev.find(x => x.id === r.id)
-        ? prev.filter(x => x.id !== r.id)
-        : [...prev, r]
-    )
+      prev.find(x => x.id === r.id) ? prev.filter(x => x.id !== r.id) : [...prev, r])
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div style={s.loadingWrap}>
@@ -255,8 +196,9 @@ export default function Dashboard() {
   return (
     <div style={s.container}>
 
-      {/* Header */}
+      {/* Header com botão voltar */}
       <div style={s.header}>
+        <button style={s.voltarBtn} onClick={() => router.push('/reunioes/admin')}>←</button>
         <div>
           <div style={s.headerTitulo}>Dashboard</div>
           <div style={s.headerSub}>Análise de presenças — AD Vinhedo</div>
@@ -265,7 +207,6 @@ export default function Dashboard() {
 
       <div style={s.body}>
 
-        {/* ── Seletor de filtro ── */}
         <div style={s.secao}>
           <div style={s.filtroTabs}>
             {[
@@ -281,20 +222,15 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {/* Escolher reunião */}
           {modoFiltro === 'escolher' && (
-            <select style={s.select}
-              value={reuniaoSel?.id || ''}
+            <select style={s.select} value={reuniaoSel?.id || ''}
               onChange={e => setReuniaoSel(reunioes.find(r => r.id === e.target.value))}>
               {reunioes.map(r => (
-                <option key={r.id} value={r.id}>
-                  {fmtData(r.data_reuniao)} — {r.titulo}
-                </option>
+                <option key={r.id} value={r.id}>{fmtData(r.data_reuniao)} — {r.titulo}</option>
               ))}
             </select>
           )}
 
-          {/* Comparar reuniões */}
           {modoFiltro === 'comparar' && (
             <div style={s.compararLista}>
               {reunioes.map(r => {
@@ -312,7 +248,6 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* ── Reunião(ões) selecionada(s) ── */}
         {reunioesFiltradas.length > 0 && (
           <div style={s.reuniaoInfo}>
             {reunioesFiltradas.map(r => (
@@ -324,35 +259,18 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* ── Cards de resumo ── */}
         <div style={s.cards}>
-          <div style={s.card}>
-            <div style={s.cardNum}>{totalPresentes}</div>
-            <div style={s.cardLabel}>Presentes</div>
-          </div>
-          <div style={s.card}>
-            <div style={{ ...s.cardNum, color: '#6B7280' }}>{totalObreiros - totalPresentes}</div>
-            <div style={s.cardLabel}>Ausentes</div>
-          </div>
-          <div style={{ ...s.card, ...s.cardDestaque }}>
-            <div style={{ ...s.cardNum, color: '#065F46' }}>{pctGeral}%</div>
-            <div style={s.cardLabel}>Presença geral</div>
-          </div>
-          <div style={s.card}>
-            <div style={{ ...s.cardNum, color: '#6B7280' }}>{totalObreiros}</div>
-            <div style={s.cardLabel}>Total obreiros</div>
-          </div>
+          <div style={s.card}><div style={s.cardNum}>{totalPresentes}</div><div style={s.cardLabel}>Presentes</div></div>
+          <div style={s.card}><div style={{ ...s.cardNum, color: '#6B7280' }}>{totalObreiros - totalPresentes}</div><div style={s.cardLabel}>Ausentes</div></div>
+          <div style={{ ...s.card, ...s.cardDestaque }}><div style={{ ...s.cardNum, color: '#065F46' }}>{pctGeral}%</div><div style={s.cardLabel}>Presença geral</div></div>
+          <div style={s.card}><div style={{ ...s.cardNum, color: '#6B7280' }}>{totalObreiros}</div><div style={s.cardLabel}>Total obreiros</div></div>
         </div>
 
-        {/* ── Barra geral ── */}
         <div style={s.barraGeralWrap}>
-          <div style={s.barraGeral}>
-            <div style={{ ...s.barraGeralFill, width: `${pctGeral}%` }} />
-          </div>
+          <div style={s.barraGeral}><div style={{ ...s.barraGeralFill, width: `${pctGeral}%` }} /></div>
           <span style={s.barraGeralTxt}>{pctGeral}% de presença geral</span>
         </div>
 
-        {/* ── Gráfico: por congregação ── */}
         <div style={s.graficoCard}>
           <h3 style={s.graficoTitulo}>Presença por congregação</h3>
           <ResponsiveContainer width="100%" height={220}>
@@ -365,57 +283,40 @@ export default function Dashboard() {
               <Bar dataKey="ausentes"  name="Ausentes"  fill="#E5E7EB" radius={[4,4,0,0]} />
             </BarChart>
           </ResponsiveContainer>
-          {/* Tabela compacta */}
           <div style={s.tabelinha}>
             {dadosCongregacao.map(d => (
               <div key={d.nomeCompleto} style={s.tabelinhaRow}>
                 <span style={s.tabelinhaNome}>{d.nomeCompleto}</span>
-                <div style={s.miniBarra}>
-                  <div style={{ ...s.miniBarraFill, width: `${d.pct}%` }} />
-                </div>
+                <div style={s.miniBarra}><div style={{ ...s.miniBarraFill, width: `${d.pct}%` }} /></div>
                 <span style={s.tabelinhaPct}>{d.presentes}/{d.total} ({d.pct}%)</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* ── Gráfico: por cargo (pizza) ── */}
         <div style={s.graficoCard}>
           <h3 style={s.graficoTitulo}>Presença por cargo eclesiástico</h3>
           <ResponsiveContainer width="100%" height={220}>
             <PieChart>
-              <Pie
-                data={dadosCargo}
-                dataKey="value"
-                nameKey="nome"
-                cx="50%" cy="50%"
-                outerRadius={80}
-                label={({ nome, pct }) => `${nome} ${pct}%`}
-                labelLine={false}
-              >
-                {dadosCargo.map((d, i) => (
-                  <Cell key={i} fill={d.fill} />
-                ))}
+              <Pie data={dadosCargo} dataKey="value" nameKey="nome" cx="50%" cy="50%"
+                outerRadius={80} label={({ nome, pct }) => `${nome} ${pct}%`} labelLine={false}>
+                {dadosCargo.map((d, i) => <Cell key={i} fill={d.fill} />)}
               </Pie>
               <Tooltip formatter={(v, n, p) => [`${v} presentes (${p.payload.pct}%)`, n]} />
             </PieChart>
           </ResponsiveContainer>
-          {/* Legenda com detalhes */}
           <div style={s.tabelinha}>
             {dadosCargo.map(d => (
               <div key={d.nome} style={s.tabelinhaRow}>
                 <span style={{ ...s.dot, background: d.fill }} />
                 <span style={s.tabelinhaNome}>{d.nome}</span>
-                <div style={s.miniBarra}>
-                  <div style={{ ...s.miniBarraFill, width: `${d.pct}%`, background: d.fill }} />
-                </div>
+                <div style={s.miniBarra}><div style={{ ...s.miniBarraFill, width: `${d.pct}%`, background: d.fill }} /></div>
                 <span style={s.tabelinhaPct}>{d.value}/{d.total} ({d.pct}%)</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* ── Gráfico: por faixa etária ── */}
         <div style={s.graficoCard}>
           <h3 style={s.graficoTitulo}>Presença por faixa etária</h3>
           {dadosFaixa.length === 0 ? (
@@ -436,9 +337,7 @@ export default function Dashboard() {
                 {dadosFaixa.map(d => (
                   <div key={d.faixa} style={s.tabelinhaRow}>
                     <span style={s.tabelinhaNome}>{d.faixa} anos</span>
-                    <div style={s.miniBarra}>
-                      <div style={{ ...s.miniBarraFill, width: `${d.pct}%`, background: '#34D399' }} />
-                    </div>
+                    <div style={s.miniBarra}><div style={{ ...s.miniBarraFill, width: `${d.pct}%`, background: '#34D399' }} /></div>
                     <span style={s.tabelinhaPct}>{d.presentes}/{d.total} ({d.pct}%)</span>
                   </div>
                 ))}
@@ -447,7 +346,6 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* ── Gráfico: evolução mensal ── */}
         <div style={s.graficoCard}>
           <h3 style={s.graficoTitulo}>Evolução mensal de presença</h3>
           {dadosEvolucao.length < 2 ? (
@@ -460,50 +358,35 @@ export default function Dashboard() {
                 <YAxis tick={{ fontSize: 11, fill: '#6B7280' }} domain={[0, 100]} unit="%" />
                 <Tooltip
                   formatter={(v, n, p) => [`${p.payload.presentes} presentes (${v}%)`, 'Presença']}
-                  labelFormatter={l => `Reunião: ${l}`}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="pct"
-                  name="% presença"
-                  stroke="#111827"
-                  strokeWidth={2}
-                  dot={{ fill: '#111827', r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
+                  labelFormatter={l => `Reunião: ${l}`} />
+                <Line type="monotone" dataKey="pct" name="% presença" stroke="#111827"
+                  strokeWidth={2} dot={{ fill: '#111827', r: 4 }} activeDot={{ r: 6 }} />
               </LineChart>
             </ResponsiveContainer>
           )}
         </div>
 
-        {/* ── Ausentes desta reunião ── */}
         {modoFiltro !== 'comparar' && reunioesFiltradas.length === 1 && (
           <div style={s.graficoCard}>
             <h3 style={s.graficoTitulo}>
-              Ausentes
-              <span style={s.graficoSubTitulo}> — {totalObreiros - totalPresentes} obreiros</span>
+              Ausentes <span style={s.graficoSubTitulo}>— {totalObreiros - totalPresentes} obreiros</span>
             </h3>
             <div style={s.ausentesList}>
-              {obreiros
-                .filter(o => !presentesSet.has(o.id))
-                .map(o => (
-                  <div key={o.id} style={s.ausenteItem}>
-                    <div style={s.ausenteAvatar}>
-                      {o.nome.split(' ').slice(0,2).map(p => p[0]).join('')}
-                    </div>
-                    <div>
-                      <div style={s.ausenteNome}>{o.nome}</div>
-                      <div style={s.ausenteSub}>
-                        {o.congregacoes?.nome || '—'}
-                        {o.cargos?.nome && o.cargos.nome !== 'Membro' &&
-                          <span style={{ ...s.badgeCargo, background: COR_CARGO[o.cargos.nome] + '22', color: COR_CARGO[o.cargos.nome] }}>
-                            {o.cargos.nome}
-                          </span>
-                        }
-                      </div>
+              {obreiros.filter(o => !presentesSet.has(o.id)).map(o => (
+                <div key={o.id} style={s.ausenteItem}>
+                  <div style={s.ausenteAvatar}>{o.nome.split(' ').slice(0,2).map(p => p[0]).join('')}</div>
+                  <div>
+                    <div style={s.ausenteNome}>{o.nome}</div>
+                    <div style={s.ausenteSub}>
+                      {o.congregacoes?.nome || '—'}
+                      {o.cargos?.nome && o.cargos.nome !== 'Membro' &&
+                        <span style={{ ...s.badgeCargo, background: COR_CARGO[o.cargos.nome] + '22', color: COR_CARGO[o.cargos.nome] }}>
+                          {o.cargos.nome}
+                        </span>}
                     </div>
                   </div>
-                ))}
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -513,56 +396,42 @@ export default function Dashboard() {
   )
 }
 
-// ── Estilos ───────────────────────────────────────────────────────────────────
 const s = {
   container:       { minHeight: '100dvh', background: '#F9FAFB', fontFamily: "'Geist','Inter',sans-serif", maxWidth: 640, margin: '0 auto', paddingBottom: 48 },
   loadingWrap:     { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh' },
   spinner:         { width: 32, height: 32, border: '3px solid #E5E7EB', borderTopColor: '#111827', borderRadius: '50%', animation: 'spin 0.8s linear infinite' },
   loadingTxt:      { color: '#9CA3AF', fontSize: 14, marginTop: 12 },
-  header:          { background: '#111827', color: '#fff', padding: '20px 20px 16px', position: 'sticky', top: 0, zIndex: 10 },
+  header:          { background: '#111827', color: '#fff', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 10 },
+  voltarBtn:       { background: 'none', border: 'none', color: '#9CA3AF', fontSize: 20, cursor: 'pointer', padding: '0 4px', flexShrink: 0, lineHeight: 1 },
   headerTitulo:    { fontSize: 17, fontWeight: 600 },
   headerSub:       { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
   body:            { padding: '16px' },
   secao:           { marginBottom: 16 },
-
-  // Filtro tabs
   filtroTabs:      { display: 'flex', gap: 6, marginBottom: 12, overflowX: 'auto' },
   filtroTab:       { flexShrink: 0, padding: '7px 14px', background: '#fff', border: '1px solid #E5E7EB', borderRadius: 20, fontSize: 13, color: '#6B7280', cursor: 'pointer', whiteSpace: 'nowrap' },
   filtroTabAtivo:  { background: '#111827', borderColor: '#111827', color: '#fff', fontWeight: 500 },
   select:          { width: '100%', padding: '10px 14px', border: '1px solid #D1D5DB', borderRadius: 10, fontSize: 14, color: '#111827', background: '#fff', outline: 'none' },
-
-  // Comparar
   compararLista:   { display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 200, overflowY: 'auto' },
   compararItem:    { display: 'flex', gap: 10, alignItems: 'center', padding: '8px 12px', background: '#fff', border: '1px solid #E5E7EB', borderRadius: 10, cursor: 'pointer', textAlign: 'left' },
   compararItemAtivo: { borderColor: '#111827', background: '#F9FAFB' },
   compararData:    { fontSize: 12, color: '#6B7280', whiteSpace: 'nowrap' },
   compararTitulo:  { fontSize: 13, color: '#111827', fontWeight: 500 },
-
-  // Reunião info
   reuniaoInfo:     { display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 16 },
   reuniaoTag:      { fontSize: 12, color: '#374151', background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8, padding: '5px 10px' },
   tagAberta:       { color: '#065F46', fontWeight: 600 },
-
-  // Cards resumo
   cards:           { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginBottom: 12 },
   card:            { background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '12px', textAlign: 'center' },
   cardDestaque:    { borderColor: '#86EFAC', background: '#F0FDF4' },
   cardNum:         { fontSize: 22, fontWeight: 700, color: '#111827', lineHeight: 1 },
   cardLabel:       { fontSize: 11, color: '#9CA3AF', marginTop: 4 },
-
-  // Barra geral
   barraGeralWrap:  { marginBottom: 20 },
   barraGeral:      { height: 8, background: '#E5E7EB', borderRadius: 99, overflow: 'hidden', marginBottom: 6 },
   barraGeralFill:  { height: '100%', background: '#111827', borderRadius: 99, transition: 'width 0.6s ease' },
   barraGeralTxt:   { fontSize: 12, color: '#6B7280' },
-
-  // Gráficos
   graficoCard:     { background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, padding: '16px', marginBottom: 14 },
   graficoTitulo:   { fontSize: 14, fontWeight: 600, color: '#111827', margin: '0 0 14px' },
   graficoSubTitulo:{ fontWeight: 400, color: '#9CA3AF' },
   semDados:        { fontSize: 13, color: '#9CA3AF', textAlign: 'center', margin: '20px 0' },
-
-  // Tabelinha
   tabelinha:       { marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 },
   tabelinhaRow:    { display: 'flex', alignItems: 'center', gap: 8 },
   tabelinhaNome:   { fontSize: 12, color: '#374151', minWidth: 80, flexShrink: 0 },
@@ -570,8 +439,6 @@ const s = {
   miniBarraFill:   { height: '100%', background: '#111827', borderRadius: 99, transition: 'width 0.5s ease' },
   tabelinhaPct:    { fontSize: 12, color: '#6B7280', minWidth: 90, textAlign: 'right', flexShrink: 0 },
   dot:             { width: 8, height: 8, borderRadius: '50%', flexShrink: 0 },
-
-  // Ausentes
   ausentesList:    { display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 320, overflowY: 'auto' },
   ausenteItem:     { display: 'flex', alignItems: 'center', gap: 10 },
   ausenteAvatar:   { width: 36, height: 36, borderRadius: 10, background: '#F3F4F6', color: '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 },
