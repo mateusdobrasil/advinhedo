@@ -152,6 +152,15 @@ export default function AdminPage() {
 
         {/* Botões de navegação */}
         <div style={s.navBtns}>
+          <button style={s.navBtn} onClick={() => router.push('/reunioes/admin/obreiros')}>
+          <div style={{ ...s.navIcone, background: '#EDE9FE', color: '#5B21B6' }}>◉</div>
+          <div>
+            <div style={s.navTitulo}>Cadastro</div>
+            <div style={s.navSub}>Dados e Reconhecimento facial</div>
+          </div>
+          <span style={s.navSeta}>›</span>
+        </button>
+        
           <button style={s.navBtn} onClick={() => router.push('/reunioes/admin/checkin')}>
             <div style={{ ...s.navIcone, background: '#D1FAE5', color: '#065F46' }}>✓</div>
             <div>
@@ -169,15 +178,6 @@ export default function AdminPage() {
             </div>
             <span style={s.navSeta}>›</span>
           </button>
-
-          <button style={s.navBtn} onClick={() => router.push('/reunioes/admin/obreiros')}>
-          <div style={{ ...s.navIcone, background: '#EDE9FE', color: '#5B21B6' }}>◉</div>
-          <div>
-            <div style={s.navTitulo}>Fotos</div>
-            <div style={s.navSub}>Reconhecimento facial</div>
-          </div>
-          <span style={s.navSeta}>›</span>
-        </button>
         </div>
 
         {/* Reuniões abertas */}

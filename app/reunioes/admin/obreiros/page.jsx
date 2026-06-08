@@ -66,10 +66,13 @@ export default function ObreirosPage() {
       {/* Header */}
       <div style={s.header}>
         <button style={s.voltarBtn} onClick={() => router.push('/reunioes/admin')}>←</button>
-        <div>
-          <div style={s.headerTitulo}>Cadastro de fotos</div>
-          <div style={s.headerSub}>Reconhecimento facial</div>
+        <div style={{ flex: 1 }}>
+          <div style={s.headerTitulo}>Dados Cadastrais</div>
+          <div style={s.headerSub}>Dados e Reconhecimento facial</div>
         </div>
+        <button style={s.btnNovo} onClick={() => router.push('/reunioes/admin/obreiros/novo')}>
+          + Novo
+        </button>
       </div>
 
       <div style={s.body}>
@@ -169,7 +172,8 @@ export default function ObreirosPage() {
 
 const s = {
   container:      { minHeight: '100dvh', background: '#F9FAFB', fontFamily: "'Geist','Inter',sans-serif", maxWidth: 480, margin: '0 auto', paddingBottom: 40 },
-  header:         { background: '#111827', color: '#fff', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 10 },
+  header:         { background: '#111827', color: '#fff', padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 10 },
+  btnNovo:        { background: '#fff', color: '#111827', border: 'none', borderRadius: 10, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', flexShrink: 0 },
   voltarBtn:      { background: 'none', border: 'none', color: '#9CA3AF', fontSize: 20, cursor: 'pointer', padding: '0 4px', flexShrink: 0 },
   headerTitulo:   { fontSize: 15, fontWeight: 600 },
   headerSub:      { fontSize: 11, color: '#9CA3AF', marginTop: 2 },
