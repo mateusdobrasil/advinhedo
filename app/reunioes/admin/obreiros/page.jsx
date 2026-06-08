@@ -150,7 +150,14 @@ export default function ObreirosPage() {
                   </div>
                 </div>
 
-                <span style={s.chevron}>›</span>
+                <div style={s.cardAcoes}>
+                  <button
+                    style={s.btnEditar}
+                    onClick={e => { e.stopPropagation(); router.push(`/reunioes/admin/obreiros/${o.id}/editar`) }}>
+                    Editar
+                  </button>
+                  <span style={s.chevron}>›</span>
+                </div>
               </button>
             )
           })
@@ -190,6 +197,8 @@ const s = {
   cardSub:        { fontSize: 12, color: '#6B7280', marginTop: 2 },
   cardStatus:     { fontSize: 11, marginTop: 3, fontWeight: 500 },
   chevron:        { fontSize: 20, color: '#D1D5DB', flexShrink: 0 },
+  cardAcoes:      { display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 },
+  btnEditar:      { background: '#F3F4F6', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, color: '#374151', cursor: 'pointer', fontWeight: 500 },
   loadingWrap:    { display: 'flex', justifyContent: 'center', padding: '60px 0' },
   spinner:        { width: 28, height: 28, border: '3px solid #E5E7EB', borderTopColor: '#111827', borderRadius: '50%', animation: 'spin 0.8s linear infinite' },
   emptyBox:       { background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '32px', textAlign: 'center' },
