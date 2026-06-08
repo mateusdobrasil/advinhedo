@@ -1,42 +1,31 @@
 'use client'
 
-/**
- * /reunioes/page.jsx
- * Tela de login — redireciona para /reunioes/admin após autenticação
- */
-
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-
-const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'advinhedo2025'
+import { loginReuniao } from '@/app/actions/reunioes-auth'
 
 export default function LoginReunioes() {
   const router = useRouter()
-  const [senha, setSenha]       = useState('')
-  const [erro, setErro]         = useState(false)
-  const [carregando, setCarregando] = useState(true)
+  const [senha, setSenha]           = useState('')
+  const [erro, setErro]             = useState(false)
+  const [carregando, setCarregando] = useState(false)
 
-  // Se já autenticado, redireciona direto
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const autenticado = sessionStorage.getItem('reunioes_auth')
-      if (autenticado === 'true') router.replace('/reunioes/admin')
-      else setCarregando(false)
-    }
-  }, [router])
+  async function logar() {
+    if (!senha || carregando) return
+    setCarregando(true)
+    setErro(false)
 
-  function logar() {
-    if (senha === ADMIN_PASSWORD) {
-      sessionStorage.setItem('reunioes_auth', 'true')
+    const { ok } = await loginReuniao(senha)
+
+    if (ok) {
       router.push('/reunioes/admin')
     } else {
       setErro(true)
       setSenha('')
+      setCarregando(false)
     }
   }
-
-  if (carregando) return null
 
   return (
     <div style={s.wrap}>
@@ -63,16 +52,22 @@ export default function LoginReunioes() {
           onChange={e => { setSenha(e.target.value); setErro(false) }}
           onKeyDown={e => e.key === 'Enter' && logar()}
           autoFocus
+          disabled={carregando}
         />
         {erro && <p style={s.erroMsg}>Senha incorreta</p>}
 
-        <button style={s.btn} onClick={logar}>Entrar</button>
+        <button
+          style={{ ...s.btn, opacity: carregando ? 0.7 : 1 }}
+          onClick={logar}
+          disabled={carregando}>
+          {carregando ? 'Verificando...' : 'Entrar'}
+        </button>
       </div>
     </div>
   )
 }
 
-const s = {
+const s: Record<string, React.CSSProperties> = {
   wrap:     { minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F9FAFB', padding: 24 },
   card:     { background: '#fff', border: '1px solid #E5E7EB', borderRadius: 16, padding: '40px 32px', width: '100%', maxWidth: 360, display: 'flex', flexDirection: 'column', alignItems: 'center' },
   logoWrap: { marginBottom: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' },

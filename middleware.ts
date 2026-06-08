@@ -6,19 +6,28 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
   const supabase = createMiddlewareClient({ req, res })
 
-  // 1. Apenas atualiza a sessão
+  // 1. Atualiza a sessão Supabase
   const { data: { session } } = await supabase.auth.getSession()
 
   const url = req.nextUrl.clone()
   const path = url.pathname
 
-  // 2. PROTEÇÃO BÁSICA: Se não estiver logado e tentar entrar no dashboard, vai para a Home (/)
+  // 2. Proteção das rotas /reunioes/admin via cookie de senha
+  if (path.startsWith('/reunioes/admin')) {
+    const auth = req.cookies.get('reunioes_auth')?.value
+    if (auth !== 'true') {
+      url.pathname = '/reunioes'
+      return NextResponse.redirect(url)
+    }
+  }
+
+  // 3. Proteção do IBV: sem sessão Supabase → vai para Home
   if (!session && path.startsWith('/ibv')) {
     url.pathname = '/'
     return NextResponse.redirect(url)
   }
 
-  // 3. Se já estiver logado e tentar ir para a Home (/), manda para o distribuidor
+  // 4. Já logado no Supabase e tenta ir para Home → vai para IBV
   if (session && path === '/') {
     url.pathname = '/ibv'
     return NextResponse.redirect(url)

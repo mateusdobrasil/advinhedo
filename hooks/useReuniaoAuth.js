@@ -1,17 +1,23 @@
 /**
- * hooks/useReuniaoAuth.js
- * Redireciona para /reunioes se não autenticado
- * Use em todas as páginas de /reunioes/admin/*
+ * hooks/useReuniaoAuth.ts  (versão 2 — sem sessionStorage)
+ *
+ * O middleware já bloqueia rotas não autenticadas no servidor.
+ * Este hook agora só garante o redirecionamento no lado cliente
+ * em caso de perda de sessão (cookie expirado durante navegação).
  */
+
+'use client'
+
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { verificarAuthReuniao } from '@/app/actions/reunioes-auth'
 
 export function useReuniaoAuth() {
   const router = useRouter()
+
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const auth = sessionStorage.getItem('reunioes_auth')
-      if (auth !== 'true') router.replace('/reunioes')
-    }
+    verificarAuthReuniao().then(autenticado => {
+      if (!autenticado) router.replace('/reunioes')
+    })
   }, [router])
 }

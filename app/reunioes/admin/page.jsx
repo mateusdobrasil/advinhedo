@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { createClient } from '@supabase/supabase-js'
+import { logoutReuniao } from '@/app/actions/reunioes-auth'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -45,7 +46,7 @@ export default function AdminPage() {
   const [reunioes, setReunioes]       = useState([])
   const [loading, setLoading]         = useState(true)
   const [salvando, setSalvando]       = useState(false)
-  const [modal, setModal]             = useState(null)   // 'nova' | 'encerrar' | 'detalhes'
+  const [modal, setModal]             = useState(null)
   const [reuniaoAlvo, setReuniaoAlvo] = useState(null)
   const [toast, setToast]             = useState(null)
   const [form, setForm] = useState({
@@ -56,14 +57,6 @@ export default function AdminPage() {
     local:        'Sede — AD Vinhedo',
     descricao:    '',
   })
-
-  // Guarda de autenticação
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const auth = sessionStorage.getItem('reunioes_auth')
-      if (auth !== 'true') router.replace('/reunioes')
-    }
-  }, [router])
 
   useEffect(() => { carregar() }, [])
 
@@ -122,12 +115,12 @@ export default function AdminPage() {
     setTimeout(() => setToast(null), 3000)
   }
 
-  function sair() {
-    sessionStorage.removeItem('reunioes_auth')
+  async function sair() {
+    await logoutReuniao()
     router.push('/reunioes')
   }
 
-  const reunioesAbertas   = reunioes.filter(r => r.aberta)
+  const reunioesAbertas    = reunioes.filter(r => r.aberta)
   const reunioesEncerradas = reunioes.filter(r => !r.aberta)
 
   return (
@@ -150,17 +143,8 @@ export default function AdminPage() {
 
       <div style={s.body}>
 
-        {/* Botões de navegação */}
+        {/* Botões de navegação — 3 botões em grid 2+1 */}
         <div style={s.navBtns}>
-          <button style={s.navBtn} onClick={() => router.push('/reunioes/admin/obreiros')}>
-          <div style={{ ...s.navIcone, background: '#EDE9FE', color: '#5B21B6' }}>◉</div>
-          <div>
-            <div style={s.navTitulo}>Cadastro</div>
-            <div style={s.navSub}>Dados e Reconhecimento facial</div>
-          </div>
-          <span style={s.navSeta}>›</span>
-        </button>
-        
           <button style={s.navBtn} onClick={() => router.push('/reunioes/admin/checkin')}>
             <div style={{ ...s.navIcone, background: '#D1FAE5', color: '#065F46' }}>✓</div>
             <div>
@@ -175,6 +159,15 @@ export default function AdminPage() {
             <div>
               <div style={s.navTitulo}>Dashboard</div>
               <div style={s.navSub}>Análises e gráficos</div>
+            </div>
+            <span style={s.navSeta}>›</span>
+          </button>
+
+          <button style={{ ...s.navBtn, ...s.navBtnFull, borderColor: '#EDE9FE', background: '#F5F3FF' }} onClick={() => router.push('/reunioes/admin/obreiros')}>
+            <div style={{ ...s.navIcone, background: '#EDE9FE', color: '#7C3AED' }}>◉</div>
+            <div>
+              <div style={s.navTitulo}>Obreiros</div>
+              <div style={s.navSub}>Cadastros e fotos</div>
             </div>
             <span style={s.navSeta}>›</span>
           </button>
@@ -222,7 +215,7 @@ export default function AdminPage() {
           })
         )}
 
-        {/* Reuniões encerradas */}
+        {/* Histórico */}
         {reunioesEncerradas.length > 0 && (
           <>
             <div style={{ ...s.secaoTitulo, marginTop: 20 }}>Histórico</div>
@@ -335,6 +328,7 @@ const s = {
   body:         { padding: '16px' },
   navBtns:      { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 },
   navBtn:       { display: 'flex', alignItems: 'center', gap: 10, padding: '14px', background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, cursor: 'pointer', textAlign: 'left' },
+  navBtnFull:   { gridColumn: '1 / -1' },  // ocupa as 2 colunas
   navIcone:     { width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 },
   navTitulo:    { fontSize: 13, fontWeight: 600, color: '#111827' },
   navSub:       { fontSize: 11, color: '#9CA3AF', marginTop: 2 },
