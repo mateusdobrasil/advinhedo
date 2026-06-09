@@ -1,199 +1,239 @@
-import Link from 'next/link'
-import { Analytics } from "@vercel/analytics/next"
+import Link from "next/link";
+import Header from "@/components/site/SiteHeader";
+import Footer from "@/components/site/SiteFooter";
+import { igreja, pilares, programacao } from "@/data/site";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans selection:bg-blue-200">
-
-      <Analytics />
-      
-      {/* HEADER / NAVBAR PUBLICA */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl sm:text-3xl">🏛️</span>
-            <div>
-              <h1 className="font-black text-lg sm:text-xl text-blue-800 tracking-tight leading-none">IBV</h1>
-              <p className="text-[9px] sm:text-[10px] font-bold text-gray-500 uppercase tracking-widest">Escola Teológica</p>
-            </div>
-          </div>
-          
-          {/* 👇 Área dos Botões Corrigida e Responsiva 👇 */}
-          <div className="flex items-center gap-3 sm:gap-4">
-            <Link 
-              href="/cadastro" 
-              className="text-blue-600 font-bold hover:text-blue-800 transition text-xs sm:text-sm whitespace-nowrap"
-            >
-              Criar Conta
-            </Link>
-            <Link 
-              href="/login" 
-              className="bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-semibold hover:bg-blue-700 transition shadow-sm text-xs sm:text-sm whitespace-nowrap"
-            >
-              Login
-            </Link>
-          </div>
-          {/* 👆 Fim da Área dos Botões 👆 */}
-          
-        </div>
-      </header>
-
-      <main>
-        {/* HERO SECTION */}
-        <section className="bg-gradient-to-b from-blue-900 to-indigo-900 text-white py-20 sm:py-24 px-6 text-center">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-tight">
-              Instituto Bíblico de Vinhedo
-            </h2>
-            <p className="text-lg md:text-xl text-blue-100 font-light mb-10 max-w-2xl mx-auto italic leading-relaxed">
-              "Com o propósito de aperfeiçoar os santos para a obra do ministério, para que o Corpo de Cristo seja edificado."<br/>
-              <span className="font-bold text-blue-300 mt-2 block">— Efésios 4:12</span>
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <a href="#cursos" className="bg-white text-blue-900 px-8 py-3.5 rounded-full font-bold hover:bg-gray-100 transition shadow-lg">
-                Conhecer os Cursos
-              </a>
-            </div>
-          </div>
-        </section>
-
-        {/* SOBRE O IBV & OBJETIVOS */}
-        <section className="py-16 sm:py-20 px-6 bg-white">
-          <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 sm:gap-16 items-center">
-            <div>
-              <h3 className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-2">Nossa História</h3>
-              <h2 className="text-3xl font-bold text-gray-800 mb-6">14 Anos Formando Vidas na Palavra</h2>
-              <p className="text-gray-600 mb-4 leading-relaxed">
-                O IBV nasceu no coração de Deus em Vinhedo. Ao longo de 14 anos, o Senhor tem abençoado este trabalho, trazendo alunos e professores dedicados a aprender e a se aprofundar no conhecimento da Palavra.
+    <>
+      <Header />
+      <main className="church">
+        {/* ============== HERO ============== */}
+        <section className="relative overflow-hidden bg-midnight text-sand">
+          {/* Assinatura visual: luz vinda do alto */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-1/2 top-[-30%] h-[120%] w-[140%] -translate-x-1/2 opacity-70"
+            style={{
+              background:
+                "radial-gradient(60% 50% at 50% 0%, rgba(227,195,133,0.35) 0%, rgba(19,41,75,0) 60%)",
+            }}
+          />
+          <div className="container-page relative grid gap-10 py-24 md:py-32 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+            <div className="animate-rise">
+              <span className="eyebrow text-gold-light">{igreja.nomeCompleto}</span>
+              <h1 className="mt-5 font-display text-4xl leading-[1.1] sm:text-5xl lg:text-6xl">
+                Um lugar para crescer na{" "}
+                <span className="italic text-gold-light">fé</span>, na{" "}
+                <span className="italic text-gold-light">Palavra</span> e na comunhão.
+              </h1>
+              <p className="mt-6 max-w-xl text-lg text-sand/80">
+                Somos uma igreja dedicada a anunciar o evangelho de Jesus Cristo,
+                fundamentados nas verdades da Bíblia Sagrada. Venha nos visitar — há
+                um lugar para você.
               </p>
-              <p className="text-gray-600 leading-relaxed italic border-l-4 border-blue-200 pl-4">
-                "Ensine-as com persistência a seus filhos. Converse sobre elas quando estiver sentado em casa, quando estiver andando pelo caminho..." (Dt 6:5-9)
+              <div className="mt-9 flex flex-wrap gap-3">
+                <Link href="#programacao" className="btn-primary">
+                  Horários de culto
+                </Link>
+                <Link href="/como-chegar" className="btn-ghost border-sand/30 text-sand hover:bg-sand hover:text-midnight">
+                  Como chegar
+                </Link>
+              </div>
+            </div>
+
+            <div className="relative animate-rise">
+              {/* Troque por uma foto da igreja em /public/images/ */}
+              <div className="aspect-[4/5] overflow-hidden rounded-3xl border border-sand/15 bg-gradient-to-br from-midnight-soft to-midnight-deep shadow-soft">
+                <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center text-sand/40">
+                  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 2v20M5 9h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                  <p className="text-sm">Espaço para foto do templo</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ============== PILARES ============== */}
+        <section className="container-page py-20">
+          <div className="grid gap-8 md:grid-cols-3">
+            {pilares.map((p) => (
+              <article
+                key={p.titulo}
+                className="rounded-2xl border border-midnight/10 bg-white/60 p-8 transition hover:shadow-soft"
+              >
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">
+                  {p.titulo}
+                </span>
+                <p className="mt-4 text-stone leading-relaxed">{p.texto}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* ============== SOBRE ============== */}
+        <section className="bg-sand-warm">
+          <div className="container-page grid gap-12 py-20 lg:grid-cols-2 lg:items-center">
+            <div>
+              <span className="eyebrow">Nossa história</span>
+              <h2 className="mt-4 text-3xl sm:text-4xl">Sobre a {igreja.nome}</h2>
+              <p className="mt-6 text-lg leading-relaxed text-stone">
+                Desde {igreja.fundacao} semeamos o evangelho com alegria na cidade de{" "}
+                {igreja.cidade}. Nosso fundamento é a Palavra de Deus: sobre ela nos
+                firmamos e cremos em suas promessas.
+              </p>
+              <p className="mt-4 leading-relaxed text-stone">
+                Ao longo de décadas, Deus tem sustentado esta igreja e formado uma
+                família de fé comprometida com a oração, com o ensino da Bíblia e com o
+                cuidado mútuo. Você é bem-vindo para fazer parte dessa caminhada.
+              </p>
+              <Link
+                href="/igreja"
+                className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-midnight transition hover:text-gold"
+              >
+                Conheça nossa história
+                <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+            <div className="aspect-video overflow-hidden rounded-3xl border border-midnight/10 bg-gradient-to-br from-midnight-soft to-midnight shadow-soft">
+              <div className="flex h-full items-center justify-center text-sand/40">
+                <p className="text-sm">Espaço para foto do templo</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ============== PASTOR ============== */}
+        <section className="container-page py-20">
+          <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+            <div className="mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-3xl border border-midnight/10 bg-gradient-to-br from-sand-warm to-gold-soft shadow-soft">
+              <div className="flex h-full items-center justify-center text-stone-light">
+                <p className="text-sm">Espaço para foto do pastor</p>
+              </div>
+            </div>
+            <div>
+              <span className="eyebrow">Liderança</span>
+              <h2 className="mt-4 text-3xl sm:text-4xl">Conheça o pastor</h2>
+              {/* SUBSTITUA pelo texto biográfico real do seu pastor */}
+              <p className="mt-6 leading-relaxed text-stone">
+                Aqui você apresenta a história do pastor da igreja: sua trajetória de
+                fé, sua família, o tempo de ministério e o coração com que conduz o
+                rebanho. Edite este texto no arquivo{" "}
+                <code className="rounded bg-sand-warm px-1.5 py-0.5 text-sm">app/page.js</code>.
+              </p>
+              <p className="mt-4 leading-relaxed text-stone">
+                Um parágrafo a mais pode falar sobre o chamado ministerial, os valores
+                que orientam a liderança e o convite para que cada pessoa se sinta
+                acolhida na comunidade.
               </p>
             </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                <div className="text-3xl mb-3">📖</div>
-                <h4 className="font-bold text-gray-800 mb-2">Escrituras</h4>
-                <p className="text-sm text-gray-500">Educação cristã baseada inteiramente no conhecimento bíblico.</p>
-              </div>
-              <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                <div className="text-3xl mb-3">🌱</div>
-                <h4 className="font-bold text-gray-800 mb-2">Caráter</h4>
-                <p className="text-sm text-gray-500">Desenvolvimento contínuo do caráter cristão.</p>
-              </div>
-              <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                <div className="text-3xl mb-3">🛡️</div>
-                <h4 className="font-bold text-gray-800 mb-2">Ministério</h4>
-                <p className="text-sm text-gray-500">Preparação sólida para o exercício ministerial.</p>
-              </div>
-              <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                <div className="text-3xl mb-3">👑</div>
-                <h4 className="font-bold text-gray-800 mb-2">Liderança</h4>
-                <p className="text-sm text-gray-500">Formação de líderes para edificar a Igreja de Cristo.</p>
-              </div>
+          </div>
+        </section>
+
+        {/* ============== PROGRAMAÇÃO ============== */}
+        <section id="programacao" className="bg-midnight text-sand">
+          <div className="container-page py-20">
+            <div className="max-w-2xl">
+              <span className="eyebrow text-gold-light">Programação</span>
+              <h2 className="mt-4 text-3xl sm:text-4xl">Nossos cultos</h2>
+              <p className="mt-4 text-sand/75">
+                Reúna-se conosco durante a semana. Todas as pessoas são bem-vindas.
+              </p>
+            </div>
+
+            <div className="mt-10 grid gap-6 md:grid-cols-3">
+              {programacao.map((bloco) => (
+                <div
+                  key={bloco.dia}
+                  className="rounded-2xl border border-sand/15 bg-midnight-soft/40 p-7"
+                >
+                  <p className="font-display text-xl text-gold-light">{bloco.dia}</p>
+                  <ul className="mt-5 space-y-3">
+                    {bloco.cultos.map((c) => (
+                      <li key={c.nome} className="flex items-baseline gap-3">
+                        <span className="w-14 shrink-0 font-semibold tabular-nums text-sand">
+                          {c.hora}
+                        </span>
+                        <span className="text-sand/80">{c.nome}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-10">
+              <Link href="/eventos" className="btn-primary">
+                Ver todos os eventos
+              </Link>
             </div>
           </div>
         </section>
 
-        {/* CURSOS */}
-        <section id="cursos" className="py-16 sm:py-20 px-6 bg-gray-50">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12 sm:mb-16">
-              <h3 className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-2">Formação Teológica</h3>
-              <h2 className="text-3xl font-bold text-gray-800">Conheça Nossos Cursos (2026)</h2>
+        {/* ============== CONTRIBUIÇÃO ============== */}
+        <section id="contribuir" className="container-page py-20">
+          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-gold to-gold-light p-10 text-midnight-deep sm:p-14">
+            <div className="max-w-2xl">
+              <h2 className="text-3xl sm:text-4xl">Faça uma contribuição</h2>
+              <p className="mt-4 text-lg text-midnight-deep/80">
+                Contribua com seu dízimo ou oferta e participe da obra de Deus. Cada
+                gesto sustenta o trabalho da igreja e o cuidado com a comunidade.
+              </p>
+              <Link
+                href={igreja.linkCadastro}
+                className="mt-8 inline-flex items-center justify-center rounded-full bg-midnight px-7 py-3 text-sm font-semibold text-sand transition hover:bg-midnight-deep"
+              >
+                Contribuir agora
+              </Link>
             </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-              
-              {/* Curso Básico */}
-              <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-200 hover:shadow-lg transition group">
-                <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block">Nível Discipulado</span>
-                <h3 className="text-2xl font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition">Básico em Teologia</h3>
-                <p className="text-gray-500 text-sm mb-6 lg:h-16">Destinado a novos convertidos ou irmãos que queiram iniciar os estudos teológicos.</p>
-                <div className="space-y-3 mb-8">
-                  <div className="flex items-center gap-3 text-sm text-gray-600"><span className="text-lg">⏳</span> Duração: 1 ano (8 módulos)</div>
-                  <div className="flex items-center gap-3 text-sm text-gray-600"><span className="text-lg">📅</span> Início: Março 2027</div>
-                </div>
-                <div className="border-t border-gray-100 pt-6">
-                  <p className="text-sm text-gray-500 uppercase font-bold">Mensalidade</p>
-                  <p className="text-3xl font-black text-gray-800">R$ 120<span className="text-lg font-medium text-gray-400">/mês</span></p>
-                </div>
-              </div>
-
-              {/* Curso Médio */}
-              <div className="bg-blue-900 p-8 rounded-3xl shadow-xl transform lg:-translate-y-4 relative mt-4 lg:mt-0">
-                <div className="absolute top-0 right-8 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-b-lg uppercase tracking-wider">Mais Procurado</div>
-                <span className="bg-blue-800 text-blue-200 border border-blue-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block mt-4 lg:mt-0">Intermediário</span>
-                <h3 className="text-2xl font-bold text-white mb-2">Médio em Teologia</h3>
-                <p className="text-blue-200 text-sm mb-6 lg:h-16">Para quem busca um aprofundamento sólido nas doutrinas e história da Igreja.</p>
-                <div className="space-y-3 mb-8">
-                  <div className="flex items-center gap-3 text-sm text-blue-100"><span className="text-lg">⏳</span> Duração: 2 anos (18 módulos)</div>
-                  <div className="flex items-center gap-3 text-sm text-blue-100"><span className="text-lg">📅</span> Início: Imediato</div>
-                </div>
-                <div className="border-t border-blue-800 pt-6">
-                  <p className="text-sm text-blue-300 uppercase font-bold">Mensalidade</p>
-                  <p className="text-3xl font-black text-white">R$ 150<span className="text-lg font-medium text-blue-400">/mês</span></p>
-                </div>
-              </div>
-
-              {/* Curso Avançado */}
-              <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-200 hover:shadow-lg transition group mt-4 lg:mt-0">
-                <span className="bg-purple-100 text-purple-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block">Aprofundamento</span>
-                <h3 className="text-2xl font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition">Avançado em Teologia</h3>
-                <p className="text-gray-500 text-sm mb-6 lg:h-16">Para líderes, professores e alunos que buscam a excelência no conhecimento bíblico.</p>
-                <div className="space-y-3 mb-8">
-                  <div className="flex items-center gap-3 text-sm text-gray-600"><span className="text-lg">⏳</span> Duração: 2 anos (18 módulos)</div>
-                  <div className="flex items-center gap-3 text-sm text-gray-600"><span className="text-lg">📅</span> Início: Imediato</div>
-                </div>
-                <div className="border-t border-gray-100 pt-6">
-                  <p className="text-sm text-gray-500 uppercase font-bold">Mensalidade</p>
-                  <p className="text-3xl font-black text-gray-800">R$ 150<span className="text-lg font-medium text-gray-400">/mês</span></p>
-                </div>
-              </div>
-
-            </div>
-
-            {/* Cursos Especiais (CFO e Português) */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-              <div className="bg-white border border-gray-200 rounded-2xl p-6 flex flex-col sm:flex-row gap-4 sm:gap-6 items-center text-center sm:text-left">
-                <div className="bg-blue-50 p-4 rounded-full text-3xl shrink-0">🔥</div>
-                <div>
-                  <h4 className="font-bold text-gray-800 text-lg">CFO - Formação de Obreiro</h4>
-                  <p className="text-sm text-gray-500 mt-1">Turmas presenciais e 100% virtuais. Segundas-feiras, 19:30h às 22:00h.</p>
-                  <p className="text-sm font-bold text-blue-600 mt-2">Mensalidade: R$ 120 | Início: Março/2026</p>
-                </div>
-              </div>
-              <div className="bg-white border border-gray-200 rounded-2xl p-6 flex flex-col sm:flex-row gap-4 sm:gap-6 items-center text-center sm:text-left">
-                <div className="bg-yellow-50 p-4 rounded-full text-3xl shrink-0">📝</div>
-                <div>
-                  <h4 className="font-bold text-gray-800 text-lg">Português Instrumental</h4>
-                  <p className="text-sm text-gray-500 mt-1">Duração de 8 meses. Quintas-feiras, 19:30h às 22:00h. Matrículas abertas!</p>
-                  <p className="text-sm font-bold text-yellow-600 mt-2">Envie um e-mail para reservar sua vaga.</p>
-                </div>
-              </div>
-            </div>
-
           </div>
         </section>
 
+        {/* ============== CONTATO RÁPIDO ============== */}
+        <section className="bg-sand-warm">
+          <div className="container-page grid gap-10 py-20 md:grid-cols-2">
+            <div>
+              <span className="eyebrow">Fale conosco</span>
+              <h2 className="mt-4 text-3xl sm:text-4xl">Estamos por perto</h2>
+              <p className="mt-4 leading-relaxed text-stone">
+                Tem alguma dúvida ou gostaria de uma oração? Entre em contato — nossa
+                equipe responderá assim que possível.
+              </p>
+              <dl className="mt-8 space-y-5 text-sm">
+                <div>
+                  <dt className="font-semibold text-midnight">E-mail</dt>
+                  <dd className="mt-1 text-stone">
+                    <a href={`mailto:${igreja.email}`} className="hover:text-gold">
+                      {igreja.email}
+                    </a>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-semibold text-midnight">Endereço</dt>
+                  <dd className="mt-1 text-stone">
+                    {igreja.endereco.linha1} — {igreja.endereco.bairro},{" "}
+                    {igreja.endereco.cidade}, CEP {igreja.endereco.cep}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
+            <div className="overflow-hidden rounded-3xl border border-midnight/10 shadow-soft">
+              <iframe
+                src={igreja.mapaEmbed}
+                title="Localização da igreja no mapa"
+                className="h-full min-h-[320px] w-full"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </section>
       </main>
-
-      {/* FOOTER */}
-      <footer className="bg-gray-900 text-gray-400 py-12 px-6 text-center text-sm">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-6 flex justify-center items-center gap-2 text-white">
-            <span className="text-2xl">🏛️</span>
-            <span className="font-black text-xl tracking-tight">IBV</span>
-          </div>
-          <p className="mb-2">📍 Sede: Vinhedo, SP</p>
-          <p className="mb-6">✉️ ibv.vinhedo@gmail.com</p>
-          <div className="border-t border-gray-800 pt-8 mt-8">
-            <p>© {new Date().getFullYear()} Instituto Bíblico de Vinhedo. Todos os direitos reservados.</p>
-          </div>
-        </div>
-      </footer>
-
-    </div>
-  )
+      <Footer />
+    </>
+  );
 }

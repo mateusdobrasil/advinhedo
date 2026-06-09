@@ -36,7 +36,7 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts",
     "next.config.mjs"
-, "app/reunioes/page.tsx"  ],
+, "app/aplicacao/reunioes/page.tsx", "components/Footer.js", "components/Header.js"  ],
   "exclude": [
     "node_modules"
   ]

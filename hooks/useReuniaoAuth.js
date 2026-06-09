@@ -10,14 +10,14 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { verificarAuthReuniao } from '@/app/actions/reunioes-auth'
+import { verificarAuthReuniao } from '@/app/aplicacao/actions/reunioes-auth'
 
 export function useReuniaoAuth() {
   const router = useRouter()
 
   useEffect(() => {
     verificarAuthReuniao().then(autenticado => {
-      if (!autenticado) router.replace('/reunioes')
+      if (!autenticado) router.replace('/aplicacao/reunioes')
     })
   }, [router])
 }

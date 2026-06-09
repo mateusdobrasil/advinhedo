@@ -2,7 +2,44 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Se quiser garantir que o fundo geral seja sempre aquele cinza claro que usamos nos layouts: */
+/* Fundo padrão do portal — preservado */
 body {
-  background-color: #f9fafb; /* gray-50 do Tailwind */
-} 
+  background-color: #f9fafb; /* gray-50 */
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-6xl px-5 sm:px-8;
+  }
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-gold;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-full bg-gold px-7 py-3 text-sm font-semibold text-midnight-deep transition hover:bg-gold-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-full border border-midnight/20 px-7 py-3 text-sm font-semibold text-midnight transition hover:border-midnight hover:bg-midnight hover:text-sand;
+  }
+
+  /* Estilo da página da igreja — isolado para não mexer no resto do portal */
+  .church {
+    @apply bg-sand font-body text-midnight-deep;
+  }
+  .church h1,
+  .church h2,
+  .church h3,
+  .church h4 {
+    @apply font-display;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
