@@ -21,13 +21,23 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // 3. Proteção do IBV: sem sessão Supabase → vai para Home
+  // 3. Proteção das rotas /recepcao via cookie de senha
+  //    Exclui /recepcao/login para não criar loop de redirecionamento
+  if (path.startsWith('/recepcao') && path !== '/recepcao/login') {
+    const auth = req.cookies.get('recepcao_auth')?.value
+    if (auth !== 'true') {
+      url.pathname = '/recepcao/login'
+      return NextResponse.redirect(url)
+    }
+  }
+
+  // 4. Proteção do IBV: sem sessão Supabase → vai para Home
   if (!session && path.startsWith('/ibv')) {
     url.pathname = '/'
     return NextResponse.redirect(url)
   }
 
-  // 4. Já logado no Supabase e tenta ir para Home → vai para IBV
+  // 5. Já logado no Supabase e tenta ir para Home → vai para IBV
   if (session && path === '/') {
     url.pathname = '/ibv'
     return NextResponse.redirect(url)
