@@ -27,7 +27,7 @@ export default function EventosPage() {
         {/* Programação semanal */}
         <section className="container-page py-20">
           <h2 className="text-3xl sm:text-4xl">Programação semanal</h2>
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
+          <div className="mt-10 grid gap-6 md:grid-cols-4">
             {programacao.map((bloco) => (
               <div
                 key={bloco.dia}
