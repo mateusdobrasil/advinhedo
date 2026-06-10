@@ -1,16 +1,27 @@
 import Link from "next/link";
-import Header from "@/components/site/SiteHeader";
-import Footer from "@/components/site/SiteFooter";
-import { igreja, pilares, programacao } from "@/data/site";
+import Image from "next/image";
+import SiteHeader from "@/components/site/SiteHeader";
+import SiteFooter from "@/components/site/SiteFooter";
+import {
+  igreja as igrejaPadrao,
+  conteudo as conteudoPadrao,
+  pilares,
+  programacao,
+} from "@/data/site";
+import { carregarConteudo } from "@/app/actions/site-conteudo";
 
-export default function Home() {
+export default async function Home() {
+  // Lê do banco; se vazio, usa o conteúdo padrão do data/site.ts
+  const dados = await carregarConteudo();
+  const igreja = dados?.igreja ?? igrejaPadrao;
+  const conteudo = dados?.conteudo ?? conteudoPadrao;
+
   return (
     <>
-      <Header />
+      <SiteHeader />
       <main className="church">
         {/* ============== HERO ============== */}
         <section className="relative overflow-hidden bg-midnight text-sand">
-          {/* Assinatura visual: luz vinda do alto */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute left-1/2 top-[-30%] h-[120%] w-[140%] -translate-x-1/2 opacity-70"
@@ -27,30 +38,30 @@ export default function Home() {
                 <span className="italic text-gold-light">fé</span>, na{" "}
                 <span className="italic text-gold-light">Palavra</span> e na comunhão.
               </h1>
-              <p className="mt-6 max-w-xl text-lg text-sand/80">
-                Somos uma igreja dedicada a anunciar o evangelho de Jesus Cristo,
-                fundamentados nas verdades da Bíblia Sagrada. Venha nos visitar — há
-                um lugar para você.
-              </p>
+              <p className="mt-6 max-w-xl text-lg text-sand/80">{conteudo.hero.subtitulo}</p>
               <div className="mt-9 flex flex-wrap gap-3">
                 <Link href="#programacao" className="btn-primary">
                   Horários de culto
                 </Link>
-                <Link href="/como-chegar" className="btn-ghost border-sand/30 text-sand hover:bg-sand hover:text-midnight">
+                <Link
+                  href="/como-chegar"
+                  className="btn-ghost border-sand/30 text-sand hover:bg-sand hover:text-midnight"
+                >
                   Como chegar
                 </Link>
               </div>
             </div>
 
             <div className="relative animate-rise">
-              {/* Troque por uma foto da igreja em /public/images/ */}
               <div className="aspect-[4/5] overflow-hidden rounded-3xl border border-sand/15 bg-gradient-to-br from-midnight-soft to-midnight-deep shadow-soft">
-                <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center text-sand/40">
-                  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M12 2v20M5 9h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                  <p className="text-sm">Espaço para foto do templo</p>
-                </div>
+                <Image
+                  src={conteudo.imagens.heroTemplo}
+                  alt={`Templo da ${igreja.nome}`}
+                  width={900}
+                  height={1125}
+                  priority
+                  className="h-full w-full object-cover"
+                />
               </div>
             </div>
           </div>
@@ -67,7 +78,7 @@ export default function Home() {
                 <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">
                   {p.titulo}
                 </span>
-                <p className="mt-4 text-stone leading-relaxed">{p.texto}</p>
+                <p className="mt-4 leading-relaxed text-stone">{p.texto}</p>
               </article>
             ))}
           </div>
@@ -80,15 +91,9 @@ export default function Home() {
               <span className="eyebrow">Nossa história</span>
               <h2 className="mt-4 text-3xl sm:text-4xl">Sobre a {igreja.nome}</h2>
               <p className="mt-6 text-lg leading-relaxed text-stone">
-                Desde {igreja.fundacao} semeamos o evangelho com alegria na cidade de{" "}
-                {igreja.cidade}. Nosso fundamento é a Palavra de Deus: sobre ela nos
-                firmamos e cremos em suas promessas.
+                {conteudo.sobre.paragrafo1}
               </p>
-              <p className="mt-4 leading-relaxed text-stone">
-                Ao longo de décadas, Deus tem sustentado esta igreja e formado uma
-                família de fé comprometida com a oração, com o ensino da Bíblia e com o
-                cuidado mútuo. Você é bem-vindo para fazer parte dessa caminhada.
-              </p>
+              <p className="mt-4 leading-relaxed text-stone">{conteudo.sobre.paragrafo2}</p>
               <Link
                 href="/igreja"
                 className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-midnight transition hover:text-gold"
@@ -97,10 +102,14 @@ export default function Home() {
                 <span aria-hidden="true">→</span>
               </Link>
             </div>
-            <div className="aspect-video overflow-hidden rounded-3xl border border-midnight/10 bg-gradient-to-br from-midnight-soft to-midnight shadow-soft">
-              <div className="flex h-full items-center justify-center text-sand/40">
-                <p className="text-sm">Espaço para foto do templo</p>
-              </div>
+            <div className="aspect-video overflow-hidden rounded-3xl border border-midnight/10 shadow-soft">
+              <Image
+                src={conteudo.imagens.sobreTemplo}
+                alt={`Templo da ${igreja.nome}`}
+                width={1280}
+                height={720}
+                className="h-full w-full object-cover"
+              />
             </div>
           </div>
         </section>
@@ -108,26 +117,21 @@ export default function Home() {
         {/* ============== PASTOR ============== */}
         <section className="container-page py-20">
           <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
-            <div className="mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-3xl border border-midnight/10 bg-gradient-to-br from-sand-warm to-gold-soft shadow-soft">
-              <div className="flex h-full items-center justify-center text-stone-light">
-                <p className="text-sm">Espaço para foto do pastor</p>
-              </div>
+            <div className="mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-3xl border border-midnight/10 shadow-soft">
+              <Image
+                src={conteudo.imagens.pastor}
+                alt={conteudo.pastor.nome}
+                width={640}
+                height={640}
+                className="h-full w-full object-cover"
+              />
             </div>
             <div>
               <span className="eyebrow">Liderança</span>
               <h2 className="mt-4 text-3xl sm:text-4xl">Conheça o pastor</h2>
-              {/* SUBSTITUA pelo texto biográfico real do seu pastor */}
-              <p className="mt-6 leading-relaxed text-stone">
-                Aqui você apresenta a história do pastor da igreja: sua trajetória de
-                fé, sua família, o tempo de ministério e o coração com que conduz o
-                rebanho. Edite este texto no arquivo{" "}
-                <code className="rounded bg-sand-warm px-1.5 py-0.5 text-sm">app/page.js</code>.
-              </p>
-              <p className="mt-4 leading-relaxed text-stone">
-                Um parágrafo a mais pode falar sobre o chamado ministerial, os valores
-                que orientam a liderança e o convite para que cada pessoa se sinta
-                acolhida na comunidade.
-              </p>
+              <p className="mt-2 text-lg font-semibold text-midnight">{conteudo.pastor.nome}</p>
+              <p className="mt-6 leading-relaxed text-stone">{conteudo.pastor.bio1}</p>
+              <p className="mt-4 leading-relaxed text-stone">{conteudo.pastor.bio2}</p>
             </div>
           </div>
         </section>
@@ -233,7 +237,7 @@ export default function Home() {
           </div>
         </section>
       </main>
-      <Footer />
+      <SiteFooter />
     </>
   );
 }
