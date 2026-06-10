@@ -9,16 +9,21 @@ export default function GerenciadorAgendaPage() {
   
   const [eventosDB, setEventosDB] = useState<any[]>([]);
   const [bannersDB, setBannersDB] = useState<any[]>([]);
+  
+  // Estados para as tabelas de suporte
+  const [congregacoesDB, setCongregacoesDB] = useState<any[]>([]);
+  const [departamentosDB, setDepartamentosDB] = useState<any[]>([]);
+  
   const [carregando, setCarregando] = useState(true);
   
-  // Estados para Busca e Formulário de Eventos
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [busca, setBusca] = useState("");
+  
   const [salvandoEvento, setSalvandoEvento] = useState(false);
   const [novoEvento, setNovoEvento] = useState({
     data_evento: "", dia_semana: "Domingo", horario: "", titulo: "", departamento: "AD Vinhedo", abrangencia: "Local", congregacao: "Sede"
   });
 
-  // Estados para Formulário de Banners
   const [salvandoBanner, setSalvandoBanner] = useState(false);
   const [erroBanner, setErroBanner] = useState("");
   const [novoBanner, setNovoBanner] = useState({
@@ -27,35 +32,29 @@ export default function GerenciadorAgendaPage() {
 
   const supabase = createClientComponentClient();
 
-  // =========================================================================
-  // CARREGAMENTO DE DADOS E EXCLUSÃO AUTOMÁTICA
-  // =========================================================================
   const buscarDados = async () => {
     setCarregando(true);
     const hoje = new Date().toISOString().split("T")[0];
 
     // Busca Eventos
-    const { data: eventos } = await supabase
-      .from("agenda_eventos")
-      .select("*")
-      .order("data_evento", { ascending: true });
-
+    const { data: eventos } = await supabase.from("agenda_eventos").select("*").order("data_evento", { ascending: true });
     if (eventos) setEventosDB(eventos);
 
-    // Busca Banners
-    const { data: banners } = await supabase
-      .from("banners")
-      .select("*")
-      .order("data_inicio", { ascending: true });
+    // Busca Congregações (Usando a sua tabela existente "congregacoes")
+    const { data: congregacoes } = await supabase.from("congregacoes").select("*").order("nome");
+    if (congregacoes) setCongregacoesDB(congregacoes);
 
+    // Busca Departamentos
+    const { data: departamentos } = await supabase.from("departamento").select("*").order("nome");
+    if (departamentos) setDepartamentosDB(departamentos);
+
+    // Busca Banners com Exclusão Automática
+    const { data: banners } = await supabase.from("banners").select("*").order("data_inicio", { ascending: true });
     if (banners) {
-      // Lógica de exclusão automática: verifica quais banners já passaram da data fim
       const bannersValidos = [];
       for (const banner of banners) {
         if (banner.data_fim < hoje) {
-          // Exclui automaticamente do banco
           await supabase.from("banners").delete().eq("id", banner.id);
-          // Opcional: Aqui você também poderia excluir a imagem do storage para economizar espaço
         } else {
           bannersValidos.push(banner);
         }
@@ -82,7 +81,8 @@ export default function GerenciadorAgendaPage() {
     if (!error && data) {
       setEventosDB([...eventosDB, data[0]].sort((a, b) => a.data_evento.localeCompare(b.data_evento)));
       setNovoEvento({ data_evento: "", dia_semana: "Domingo", horario: "", titulo: "", departamento: "AD Vinhedo", abrangencia: "Local", congregacao: "Sede" });
-      alert("Evento adicionado!");
+      setMostrarFormulario(false);
+      alert("Evento adicionado com sucesso!");
     } else {
       alert("Erro ao adicionar evento.");
     }
@@ -97,7 +97,6 @@ export default function GerenciadorAgendaPage() {
     }
   };
 
-  // Filtra eventos pela busca (ignora os cultos regulares fixos para a tabela focar nos especiais)
   const cultosRegularesNomes = ["Culto de Ensino", "Culto da Família", "Culto de Louvor e Palavra", "EBD"];
   const eventosEspeciais = eventosDB.filter(ev => !cultosRegularesNomes.includes(ev.titulo));
   
@@ -107,7 +106,7 @@ export default function GerenciadorAgendaPage() {
   );
 
   // =========================================================================
-  // AÇÕES DE BANNERS (UPLOAD E CADASTRO)
+  // AÇÕES DE BANNERS
   // =========================================================================
   const handleUploadBanner = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -125,10 +124,7 @@ export default function GerenciadorAgendaPage() {
       const ext = file.name.split(".").pop();
       const nomeArquivo = `banner-${Date.now()}.${ext}`;
 
-      const { error: upErro } = await supabase.storage
-        .from("site")
-        .upload(nomeArquivo, file, { cacheControl: "3600" });
-
+      const { error: upErro } = await supabase.storage.from("site").upload(nomeArquivo, file, { cacheControl: "3600" });
       if (upErro) throw upErro;
 
       const { data } = supabase.storage.from("site").getPublicUrl(nomeArquivo);
@@ -170,7 +166,6 @@ export default function GerenciadorAgendaPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
-      {/* CABEÇALHO */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
         <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
@@ -186,7 +181,6 @@ export default function GerenciadorAgendaPage() {
           </Link>
         </div>
         
-        {/* NAVEGAÇÃO ABAS */}
         <div className="max-w-6xl mx-auto px-6 flex gap-8 border-t border-slate-100 pt-2">
           <button 
             onClick={() => setAbaAtiva("eventos")}
@@ -209,26 +203,75 @@ export default function GerenciadorAgendaPage() {
         {abaAtiva === "eventos" && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
             
-            {/* ADICIONAR NOVO EVENTO */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-              <h2 className="text-lg font-black text-slate-800 mb-4">Cadastrar Novo Evento</h2>
-              <form onSubmit={adicionarEvento} className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="col-span-2 sm:col-span-4">
-                  <input type="text" placeholder="Título do Evento (ex: Conferência Jovem)" required value={novoEvento.titulo} onChange={e => setNovoEvento({...novoEvento, titulo: e.target.value})} className="w-full bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-slate-400" />
-                </div>
-                <input type="date" required value={novoEvento.data_evento} onChange={e => setNovoEvento({...novoEvento, data_evento: e.target.value})} className="bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-slate-400" />
-                <input type="time" required value={novoEvento.horario} onChange={e => setNovoEvento({...novoEvento, horario: e.target.value})} className="bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-slate-400" />
-                <select value={novoEvento.dia_semana} onChange={e => setNovoEvento({...novoEvento, dia_semana: e.target.value})} className="bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-slate-400">
-                  {["Segunda-Feira", "Terca-Feira", "Quarta-Feira", "Quinta-Feira", "Sexta-Feira", "Sabado", "Domingo"].map(d => <option key={d} value={d}>{d}</option>)}
-                </select>
-                <button type="submit" disabled={salvandoEvento} className="bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition disabled:opacity-50">
-                  {salvandoEvento ? "Salvando..." : "+ Adicionar"}
-                </button>
-              </form>
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-lg font-black text-slate-800">Eventos Cadastrados</h2>
+              <button 
+                onClick={() => setMostrarFormulario(!mostrarFormulario)}
+                className="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-800 transition shadow-sm flex items-center gap-2"
+              >
+                {mostrarFormulario ? "✕ Cancelar" : "+ Novo Evento"}
+              </button>
             </div>
 
-            {/* LISTA E BUSCA */}
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            {mostrarFormulario && (
+              <div className="bg-slate-100 p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-inner mb-6 animate-in fade-in slide-in-from-top-4">
+                <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-6">Cadastrar Novo Evento na Agenda</h3>
+                <form onSubmit={adicionarEvento} className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                  
+                  <div className="sm:col-span-3">
+                    <label className="block text-xs font-bold text-slate-600 mb-1.5">Título do Evento *</label>
+                    <input type="text" placeholder="Ex: Congresso de Jovens UMADEVI" required value={novoEvento.titulo} onChange={e => setNovoEvento({...novoEvento, titulo: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1.5">Data *</label>
+                    <input type="date" required value={novoEvento.data_evento} onChange={e => setNovoEvento({...novoEvento, data_evento: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1.5">Horário * (Ex: 19h30)</label>
+                    <input type="text" required placeholder="19h30" value={novoEvento.horario} onChange={e => setNovoEvento({...novoEvento, horario: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1.5">Dia da Semana *</label>
+                    <select value={novoEvento.dia_semana} onChange={e => setNovoEvento({...novoEvento, dia_semana: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                      {["Domingo", "Segunda-Feira", "Terca-Feira", "Quarta-Feira", "Quinta-Feira", "Sexta-Feira", "Sabado"].map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1.5">Departamento</label>
+                    <select value={novoEvento.departamento} onChange={e => setNovoEvento({...novoEvento, departamento: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                      <option value="" disabled>Selecione...</option>
+                      {departamentosDB.map(d => <option key={d.id} value={d.nome}>{d.nome}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1.5">Abrangência</label>
+                    <select value={novoEvento.abrangencia} onChange={e => setNovoEvento({...novoEvento, abrangencia: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                      <option value="Local">Local</option>
+                      <option value="Campo">Campo</option>
+                      <option value="Estadual">Estadual</option>
+                      <option value="Nacional">Nacional</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1.5">Congregação</label>
+                    <select value={novoEvento.congregacao} onChange={e => setNovoEvento({...novoEvento, congregacao: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                      <option value="" disabled>Selecione...</option>
+                      {congregacoesDB.map(c => <option key={c.id} value={c.nome}>{c.nome}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="sm:col-span-3 flex justify-end mt-4">
+                    <button type="submit" disabled={salvandoEvento} className="bg-blue-600 text-white px-8 py-3.5 font-black rounded-xl hover:bg-blue-700 transition disabled:opacity-50 shadow-md">
+                      {salvandoEvento ? "Salvando..." : "Salvar Evento no Banco"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden mt-4">
               <div className="p-4 border-b border-slate-100 bg-slate-50">
                 <input 
                   type="text" 
@@ -263,7 +306,7 @@ export default function GerenciadorAgendaPage() {
                             </td>
                             <td className="px-6 py-4 align-top">
                               <p className="font-black text-base text-slate-800">{ev.titulo}</p>
-                              <p className="text-xs text-slate-500">{ev.departamento} • {ev.congregacao}</p>
+                              <p className="text-xs text-slate-500">{ev.departamento} • {ev.congregacao} ({ev.abrangencia})</p>
                             </td>
                             <td className="px-6 py-4 align-top text-right">
                               <button onClick={() => deletarEvento(ev.id)} className="text-[10px] font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 uppercase tracking-wider transition opacity-0 group-hover:opacity-100">
@@ -285,27 +328,26 @@ export default function GerenciadorAgendaPage() {
         {abaAtiva === "banners" && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
             
-            {/* ADICIONAR NOVO BANNER */}
-            <div className="bg-amber-50/50 p-6 rounded-3xl border border-amber-200/50 shadow-sm">
+            <div className="bg-amber-50/50 p-6 sm:p-8 rounded-3xl border border-amber-200/50 shadow-sm">
               <h2 className="text-lg font-black text-slate-800 mb-2">Cadastrar Novo Banner</h2>
               <p className="text-sm text-slate-500 mb-6">Banners vencidos (data fim menor que hoje) são removidos automaticamente do sistema para manter o site atualizado.</p>
               
               <form onSubmit={adicionarBanner} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                   <div className="sm:col-span-3">
-                    <label className="block text-xs font-bold text-slate-600 mb-1">Título do Cartaz</label>
+                    <label className="block text-xs font-bold text-slate-600 mb-1.5">Título do Cartaz</label>
                     <input type="text" required placeholder="Ex: Congresso de Jovens 2026" value={novoBanner.titulo} onChange={e => setNovoBanner({...novoBanner, titulo: e.target.value})} className="w-full bg-white border border-amber-200 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-amber-400" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">Exibir a partir de:</label>
+                    <label className="block text-xs font-bold text-slate-600 mb-1.5">Exibir a partir de:</label>
                     <input type="date" required value={novoBanner.data_inicio} onChange={e => setNovoBanner({...novoBanner, data_inicio: e.target.value})} className="w-full bg-white border border-amber-200 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-amber-400" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">Parar de exibir em:</label>
+                    <label className="block text-xs font-bold text-slate-600 mb-1.5">Parar de exibir em:</label>
                     <input type="date" required value={novoBanner.data_fim} onChange={e => setNovoBanner({...novoBanner, data_fim: e.target.value})} className="w-full bg-white border border-amber-200 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-amber-400" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">Imagem do Cartaz</label>
+                    <label className="block text-xs font-bold text-slate-600 mb-1.5">Imagem do Cartaz</label>
                     <label className="cursor-pointer w-full bg-white border border-amber-200 px-4 py-3 rounded-xl text-sm font-bold text-amber-700 hover:bg-amber-100 transition flex justify-center items-center">
                       {salvandoBanner ? "Enviando..." : novoBanner.imagem_url ? "Imagem Anexada ✓" : "Upload de Imagem"}
                       <input type="file" accept="image/*" onChange={handleUploadBanner} disabled={salvandoBanner} className="hidden" />
@@ -315,16 +357,15 @@ export default function GerenciadorAgendaPage() {
                 
                 {erroBanner && <p className="text-xs font-bold text-red-600 bg-red-50 p-2 rounded-lg">{erroBanner}</p>}
                 
-                <div className="flex justify-end pt-2">
-                  <button type="submit" disabled={salvandoBanner || !novoBanner.imagem_url} className="bg-amber-500 text-white font-black px-8 py-3 rounded-xl hover:bg-amber-600 transition disabled:opacity-50">
+                <div className="flex justify-end pt-4">
+                  <button type="submit" disabled={salvandoBanner || !novoBanner.imagem_url} className="bg-amber-500 text-white font-black px-8 py-3.5 rounded-xl hover:bg-amber-600 transition disabled:opacity-50 shadow-md">
                     Cadastrar Banner
                   </button>
                 </div>
               </form>
             </div>
 
-            {/* LISTA DE BANNERS ATIVOS */}
-            <h3 className="text-lg font-black text-slate-800 mt-8 mb-4">Banners Ativos ({bannersDB.length})</h3>
+            <h3 className="text-lg font-black text-slate-800 mt-10 mb-4">Banners Ativos ({bannersDB.length})</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {bannersDB.map(banner => (
                 <div key={banner.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col">
