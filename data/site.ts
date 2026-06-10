@@ -38,7 +38,7 @@ export const navegacao = [
 
 // Aplicações internas (dropdown "Aplicações" do header)
 export const aplicacoes = [
-//  { label: "Cadastro", href: "/aplicacao/cadastro" },
+  { label: "Cadastro", href: "https://web.sistemaigrejadigital.com.br/public/registration/d36e3fd6-590c-4a32-9fc8-20f16967c135", target:"_blank" },
   { label: "IBV", href: "/aplicacao" },
   { label: "EBD", href: "/aplicacao/ebd" },
   { label: "IBUC", href: "/aplicacao/ibuc" },
