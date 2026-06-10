@@ -132,7 +132,7 @@ export default function NovoObreiroPage() {
     } else {
       mostrarToast('Obreiro cadastrado!', 'sucesso')
       // Redireciona para a foto após cadastrar
-      setTimeout(() => router.push(`/reunioes/admin/obreiros/${novo.id}/foto`), 1200)
+      setTimeout(() => router.push(`/aplicacao/reunioes/admin/obreiros/${novo.id}/foto`), 1200)
     }
   }
 
