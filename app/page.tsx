@@ -34,9 +34,8 @@ export default async function Home() {
             <div className="animate-rise">
               <span className="eyebrow text-gold-light">{igreja.nomeCompleto}</span>
               <h1 className="mt-5 font-display text-4xl leading-[1.1] sm:text-5xl lg:text-6xl">
-                Um lugar para crescer na{" "}
-                <span className="italic text-gold-light">fé</span>, na{" "}
-                <span className="italic text-gold-light">Palavra</span> e na comunhão.
+                Anunciamos o <br/>{" "}
+                <span className="italic text-gold-light">Reino de Deus</span>através da pregação do evangelho.
               </h1>
               <p className="mt-6 max-w-xl text-lg text-sand/80">{conteudo.hero.subtitulo}</p>
               <div className="mt-9 flex flex-wrap gap-3">

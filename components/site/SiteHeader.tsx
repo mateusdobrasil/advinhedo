@@ -28,14 +28,12 @@ export default function SiteHeader() {
           <Image
             src="/imgs/logo.png"
             alt={igreja.nomeCompleto}
-            width={50}
-            height={50}
+            width={40}
+            height={40}
             priority
-            className="h-14 w-auto"
+            className="h-16 w-auto"
           />
-          <span className="font-display text-lg font-semibold tracking-tight text-midnight">
-            {igreja.nome}
-          </span>
+          
         </Link>
 
         {/* Navegação desktop */}

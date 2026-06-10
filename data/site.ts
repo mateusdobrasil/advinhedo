@@ -133,3 +133,63 @@ export const conteudo = {
     bio2: "Um segundo parágrafo sobre o chamado ministerial e os valores da liderança.",
   },
 };
+
+// Linha do tempo da história da igreja
+export const historia = [
+  {
+    ano: "1940",
+    titulo: "O Início",
+    subtitulo: "Início da jornada missionária de Joaquim Ribeiro em Rocinha, levando o evangelho aos quilombolas.",
+    imagem: "/imgs/historia-1940.jpg",
+    texto: "Foi por volta da década de 1940 que um homem muito simples, sem muito estudo e com uma caixa de pintinhos, embarcava na estação de trens da Antiga Companhia Paulista em direção a Rocinha. Seu objetivo era levar o evangelho do Senhor Jesus aos quilombolas da Fazenda Cachoeira. Mas o que tem a ver a caixa com pintinhos? A oportunidade de falar de Jesus às almas que iriam embarcar naquele trem. O nome deste ilustre homem era Joaquim Ribeiro, um cooperador da Igreja em Jundiaí que fazia este trajeto para ganhar seu sustento e ganhar almas para o Senhor Jesus. Uma pessoa desprendida de tudo, conta a nossa irmã Dirce Pinheiro, que teve a oportunidade de conhecer o nobre cooperador, que ao chegar em uma vila e observar que alguém estava com fome, ele dava a marmita que tinha para suprir a fome daquele necessitado. A primeira família a ser evangelizada pelo irmão Joaquim foi a família do irmão João Manuel da Silva (In memorian), e ele recebia o irmão Joaquim em sua humilde casa para realizar cultos na Fazenda Cachoeira e ganhar outras almas para o Senhor Jesus.",
+  },
+  {
+    ano: "1950",
+    titulo: "Crescimento e Desafios",
+    subtitulo: "Expansão da obra religiosa para Vinhedo, enfrentando desafios para construir o primeiro templo.",
+    imagem: "/imgs/historia-1950.jpg",
+    texto: "Com a emancipação de Rocinha para Vinhedo, e consequentemente o crescimento, o Irmão Joaquim contou com a ajuda de outro cooperador, o Pastor Ariano Ferreira, conhecido do Pastor Elizeu Queiroz de Jundiaí, para iniciar os trabalhos nas casas dos irmãos pelo Bairro da Barra Funda, Jardim Brasil e Nova Vinhedo. O Pastor Ariano ficou pouco tempo e o Pastor Norestildes Falcão e sua Família deram início aos trabalhos na rua da Formiga, no Jardim Brasil e com a ajuda dos irmãos que se ajuntavam ao evangelho decidiram comprar um lote para construir o primeiro templo na década de 1950.",
+  },
+  {
+    ano: "1960",
+    titulo: "Expansão para Outras Regiões",
+    subtitulo: "Ampliação da evangelização para fazendas e bairros, superando dificuldades com apoio de novos cooperadores.",
+    imagem: "/imgs/historia-1960.jpg",
+    texto: "Muitos desafios foram superados, com a vinda de muitos outros cooperadores para ajudar na obra do Senhor, como o Maestro Paulo Ferreira, filho do Pastor Ariano Ferreira, para ajudar com a música e o coral da Igreja. Muitos outros já passaram por esta obra, na Fazenda Monte Alegre, Fazenda Bahia, Fazenda Santa Cândida e o Bairro da Capela, foram desbravados pelo poder do evangelho na década de 1960. Nada pode parar o crescimento da Igreja, disse o Pastor Alberto Nicácio, que apenas um irmão tinha carro na igreja, e disponibilizava para ajudar na evangelização dessa região, era o saudoso José Bertaglia. Saíam do centro em direção às referidas fazendas e ao bairro da Capela para evangelizar com Willys Itamaty, colocava os irmãos no carro e saíam para o evangelismo.",
+  },
+  {
+    ano: "1970",
+    titulo: "Novos Desafios e Mudanças",
+    subtitulo: "Necessidade de um novo templo devido ao crescimento da congregação, resultando na troca por um terreno maior em 1978.",
+    imagem: "/imgs/historia-1970.jpg",
+    texto: "Agora um desafio novo, um templo maior em um lugar onde a força da natureza não fosse um problema. Toda vez que chovia a Igreja ficava alagada. Em 1978, não comportando mais o número de membros que estava em franco crescimento, o Pastor Norestildes de Góis Leite Falcão propôs à prefeitura da cidade a permuta do prédio da igreja por um terreno muito maior no Jardim Alba.",
+  },
+  {
+    ano: "1980",
+    titulo: "Inauguração do Novo Templo",
+    subtitulo: "Celebração da inauguração do novo templo em 1980, marcando um marco na história da igreja.",
+    imagem: "/imgs/historia-1980.jpg",
+    texto: "A inauguração do novo templo aconteceu no dia 02 de Abril de 1980, com a presença de várias autoridades.",
+  },
+  {
+    ano: "1993",
+    titulo: "Autonomia da Igreja",
+    subtitulo: "Conquista da autonomia da igreja em 1993, tornando-se uma congregação independente.",
+    imagem: "/imgs/historia-1993.jpg",
+    texto: "Em 1993 a igreja ganhou autonomia, e tornou-se campo independente, pois até então era congregação da Igreja Evangélica Assembleia de Deus – Vianelo – Jundiaí.",
+  },
+  {
+    ano: "1997",
+    titulo: "Continuidade e Crescimento",
+    subtitulo: "Continuidade da liderança pastoral com o Pastor Sílvio Donizete Pereira e crescimento da igreja com múltiplas congregações.",
+    imagem: "/imgs/historia-1997.jpg",
+    texto: "Após a presidência do Pastor Angelo Francisco dos Santos, assumiu o Pastor Sílvio Donizete Pereira. Desde a sua fundação, nos anos 40, a igreja vem expandindo.",
+  },
+  {
+    ano: "2025",
+    titulo: "Novos Desafios e Oportunidades",
+    subtitulo: "O pastor Heber Souza, vindo de São Paulo, assume com o desafio de liderar a igreja em um novo ciclo de crescimento.",
+    imagem: "/imgs/historia-2025.jpg",
+    texto: "A igreja ganha uma nova fase de expansão, agora com a sede e mais 7 congregações espalhadas pela cidade, a igreja segue trabalhando com a liderança e visão ministerial do pastor Heber Souza.",
+  },
+];

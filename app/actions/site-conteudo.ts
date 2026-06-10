@@ -1,16 +1,14 @@
-// app/actions/site-conteudo.ts
 "use server";
 
-import { createServerActionClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
 export async function salvarConteudo(dados: { igreja: unknown; conteudo: unknown }) {
-  const supabase = createServerActionClient({ cookies });
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { ok: false, erro: "Não autenticado" };
-
   const { error } = await supabase
     .from("site_conteudo")
     .update({ dados, atualizado_em: new Date().toISOString() })
@@ -19,11 +17,12 @@ export async function salvarConteudo(dados: { igreja: unknown; conteudo: unknown
   if (error) return { ok: false, erro: error.message };
 
   revalidatePath("/");
+  revalidatePath("/igreja");
+  revalidatePath("/contato");
   return { ok: true };
 }
 
 export async function carregarConteudo() {
-  const supabase = createServerActionClient({ cookies });
   const { data } = await supabase
     .from("site_conteudo")
     .select("dados")

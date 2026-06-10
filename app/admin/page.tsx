@@ -3,6 +3,7 @@
 import { useState, useEffect, ChangeEvent, ReactNode } from "react";
 import { igreja as igrejaPadrao, conteudo as conteudoPadrao } from "@/data/site";
 import { salvarConteudo, carregarConteudo } from "@/app/actions/site-conteudo";
+import { supabaseBrowser } from "@/lib/supabase-browser";
 
 export default function AdminPage() {
   const [igreja, setIgreja] = useState(igrejaPadrao);
@@ -74,8 +75,8 @@ export default function AdminPage() {
           <span className="eyebrow">Painel</span>
           <h1 className="mt-2 text-3xl">Editar conteúdo do site</h1>
           <p className="mt-2 text-stone">
-            Altere os textos e os caminhos das imagens. As mudanças são salvas no banco
-            e refletem no site após salvar.
+            Altere os textos e envie as imagens. As mudanças são salvas no banco e
+            refletem no site após salvar.
           </p>
         </header>
 
@@ -94,8 +95,8 @@ export default function AdminPage() {
           {/* ---------- IMAGENS ---------- */}
           <Secao titulo="Imagens">
             <p className="text-sm text-stone-light">
-              Suba os arquivos em <code className="rounded bg-sand-warm px-1 py-0.5">public/imgs/</code> e
-              informe o caminho (ex: <code className="rounded bg-sand-warm px-1 py-0.5">/imgs/templo.jpg</code>).
+              Envie as imagens (JPG, PNG, WEBP ou GIF, até 5 MB). Elas são salvas no
+              Storage e o link fica registrado automaticamente.
             </p>
             <CampoImagem label="Foto do hero (templo)" value={conteudo.imagens.heroTemplo} onChange={(v) => setImagem("heroTemplo", v)} />
             <CampoImagem label="Foto da seção sobre" value={conteudo.imagens.sobreTemplo} onChange={(v) => setImagem("sobreTemplo", v)} />
@@ -193,20 +194,81 @@ function CampoImagem({
   value: string;
   onChange: (v: string) => void;
 }) {
+  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  const enviar = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setErro("Selecione um arquivo de imagem.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setErro("Imagem muito grande (máx. 5 MB).");
+      return;
+    }
+
+    setErro(null);
+    setEnviando(true);
+    try {
+      // === LOG 1: confirma se há sessão autenticada no cliente de browser ===
+      const {
+        data: { session },
+      } = await supabaseBrowser.auth.getSession();
+      console.log("[upload] Sessão:", session?.user?.email ?? "ANÔNIMO");
+      console.log("[upload] Arquivo:", { nome: file.name, tipo: file.type, tamanho: file.size });
+
+      const ext = file.name.split(".").pop();
+      const nome = `${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}.${ext}`;
+
+      const { data: upData, error: upErro } = await supabaseBrowser.storage
+        .from("site")
+        .upload(nome, file, { cacheControl: "3600", upsert: false });
+
+      // === LOG 2: mostra o resultado completo do upload ===
+      console.log("[upload] Resultado:", { upData, upErro });
+
+      if (upErro) {
+        setErro(`Falha no upload: ${upErro.message}`);
+        return;
+      }
+
+      const { data } = supabaseBrowser.storage.from("site").getPublicUrl(nome);
+      console.log("[upload] URL pública:", data.publicUrl);
+      onChange(data.publicUrl);
+    } catch (err) {
+      console.error("[upload] Erro inesperado:", err);
+      setErro("Erro inesperado no upload.");
+    } finally {
+      setEnviando(false);
+      e.target.value = "";
+    }
+  };
+
   return (
     <div>
-      <Campo label={label} value={value} onChange={onChange} />
+      <span className="block text-sm font-semibold text-midnight">{label}</span>
+
       {value && (
         <div className="mt-2 overflow-hidden rounded-lg border border-midnight/10 bg-sand-warm">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={value}
             alt="Prévia"
-            className="h-32 w-full object-cover"
-            onError={(e) => ((e.target as HTMLImageElement).style.opacity = "0.3")}
+            className="h-40 w-full object-cover"
+            onError={(ev) => ((ev.target as HTMLImageElement).style.opacity = "0.3")}
           />
         </div>
       )}
+
+      <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-midnight/15 bg-white px-4 py-2.5 text-sm font-medium text-midnight transition hover:border-gold">
+        {enviando ? "Enviando..." : value ? "Trocar imagem" : "Enviar imagem"}
+        <input type="file" accept="image/*" onChange={enviar} disabled={enviando} className="hidden" />
+      </label>
+
+      {erro && <p className="mt-2 text-sm text-red-600">{erro}</p>}
     </div>
   );
 }
