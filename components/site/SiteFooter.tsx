@@ -43,16 +43,16 @@ export default function SiteFooter() {
             <p>{igreja.endereco.linha1}</p>
             <p>{igreja.endereco.bairro}, {igreja.endereco.cidade}</p>
             <p>CEP {igreja.endereco.cep}</p>
-            <p>
-              <a href={`mailto:${igreja.email}`} className="transition hover:text-gold-light">
-                {igreja.email}
-              </a>
-            </p>
-            <p>
-              <a href={igreja.redes.instagram} target="_blank" rel="noopener noreferrer" className="transition hover:text-gold-light">
-                Instagram
-              </a>
-            </p>
+              <p>
+                <a href={igreja.redes.youtube} target="_blank" rel="noopener noreferrer" className="transition hover:text-gold-light">
+                  Youtube
+                </a> 
+              </p>
+              <p>
+                <a href={igreja.redes.instagram} target="_blank" rel="noopener noreferrer" className="transition hover:text-gold-light">
+                  Instagram
+                </a>
+              </p>
           </address>
         </div>
       </div>

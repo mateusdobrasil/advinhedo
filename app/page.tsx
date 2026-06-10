@@ -202,10 +202,32 @@ export default async function Home() {
               </p>
               <dl className="mt-8 space-y-5 text-sm">
                 <div>
-                  <dt className="font-semibold text-midnight">E-mail</dt>
-                  <dd className="mt-1 text-stone">
-                    <a href={`mailto:${igreja.email}`} className="hover:text-gold">
-                      {igreja.email}
+                  <dt className="font-semibold text-midnight">Redes sociais</dt>
+                  <dd className="mt-1 flex flex-wrap gap-4 text-stone">
+                    
+                    <a  href="https://www.youtube.com/channel/UCivfHM9Eqqsi93cmmIkEqRw"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 hover:text-gold"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <rect x="2" y="5" width="20" height="14" rx="4" stroke="currentColor" strokeWidth="1.8" />
+                        <path d="M10 9.2v5.6l5-2.8-5-2.8z" fill="currentColor" />
+                      </svg>
+                      YouTube
+                    </a>
+                    
+                    <a  href={igreja.redes.instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 hover:text-gold"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="currentColor" strokeWidth="1.8" />
+                        <circle cx="12" cy="12" r="4.2" stroke="currentColor" strokeWidth="1.8" />
+                        <circle cx="17.6" cy="6.4" r="1.2" fill="currentColor" />
+                      </svg>
+                      Instagram
                     </a>
                   </dd>
                 </div>

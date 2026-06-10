@@ -14,14 +14,16 @@ export const igreja = {
     bairro: "Jardim Alba",
     cidade: "Vinhedo - SP",
   },
+
   // Link de incorporação do Google Maps (Compartilhar > Incorporar um mapa > copiar o src do iframe)
   mapaEmbed:
     "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3671.801087881607!2d-46.98437412381711!3d-23.03107457916781!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94cf32a0b6cfa535%3A0x422e90d3240d09f1!2sIgreja%20Evang%C3%A9lica%20Assembl%C3%A9ia%20de%20Deus!5e0!3m2!1spt-BR!2sbr",
   redes: {
-    instagram: "https://instagram.com/advinhedo",
+    instagram: "https://www.instagram.com/advinhedo/",
+    youtube: "https://www.youtube.com/channel/UCivfHM9Eqqsi93cmmIkEqRw",
   },
+
   // Link da plataforma de cadastro/contribuição
-  linkCadastro: "/aplicacao/cadastro",
   linkContribuir: "#contribuir",
 };
 
@@ -37,9 +39,12 @@ export const navegacao = [
 // Aplicações internas (dropdown "Aplicações" do header)
 export const aplicacoes = [
   { label: "Cadastro", href: "/aplicacao/cadastro" },
-  { label: "Educacional", href: "/aplicacao/login" },
+  { label: "IBV", href: "/aplicacao/ibv" },
+  { label: "EBD", href: "/aplicacao/ebd" },
+  { label: "IBUC", href: "/aplicacao/ibuc" },
   { label: "Recepção", href: "/aplicacao/recepcao" },
   { label: "Obreiros", href: "/aplicacao/reunioes" },
+
 ];
 
 // Pilares / valores

@@ -48,6 +48,28 @@ export default function SiteHeader() {
             </Link>
           ))}
 
+          {/* Ícones de redes sociais */}
+          <div className="flex items-center gap-3">
+            
+            <a  href={igreja.redes.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+              className="transition hover:opacity-70"
+            >
+              <Image src="/imgs/instagram.png" alt="Instagram" width={24} height={24} className="h-6 w-auto" />
+            </a>
+            
+            <a  href={igreja.redes.youtube}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="YouTube ao vivo"
+              className="transition hover:opacity-70"
+            >
+              <Image src="/imgs/youtube-live.png" alt="YouTube ao vivo" width={32} height={24} className="h-6 w-auto" />
+            </a>
+          </div>
+
           {/* Dropdown Aplicações */}
           <div className="relative" ref={appsRef}>
             <button
@@ -119,6 +141,16 @@ export default function SiteHeader() {
                 {item.label}
               </Link>
             ))}
+
+            {/* Redes sociais no mobile */}
+            <div className="mt-4 flex items-center gap-4 px-3">
+              <a href={igreja.redes.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" onClick={() => setOpen(false)}>
+                <Image src="/imgs/instagram.png" alt="Instagram" width={26} height={26} className="h-7 w-auto" />
+              </a>
+              <a href={igreja.redes.youtube} target="_blank" rel="noopener noreferrer" aria-label="YouTube ao vivo" onClick={() => setOpen(false)}>
+                <Image src="/imgs/youtube-live.png" alt="YouTube ao vivo" width={36} height={26} className="h-7 w-auto" />
+              </a>
+            </div>
 
             {/* Seção Aplicações no mobile */}
             <p className="mt-3 px-3 text-xs font-semibold uppercase tracking-[0.2em] text-gold">
