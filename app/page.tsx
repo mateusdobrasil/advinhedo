@@ -53,14 +53,9 @@ export default async function Home() {
               </div>
             </div>
 
+            {/* CONTAINER LIMPO: O componente HeroCarousel agora cuida da proporção 16:9 internamente */}
             <div className="relative animate-rise">
-              {/* CORREÇÃO AQUI: Mudado de aspect-[4/5] para aspect-video (16:9) */}
-              <div className="relative aspect-video overflow-hidden rounded-3xl border border-sand/15 bg-gradient-to-br from-midnight-soft to-midnight-deep shadow-soft">
-                
-                {/* CARROSSEL DINÂMICO ENTRANDO NO LUGAR DA IMAGEM ESTÁTICA */}
-                <HeroCarousel fallbackImage={conteudo.imagens.heroTemplo} />
-                
-              </div>
+              <HeroCarousel fallbackImage={conteudo.imagens.heroTemplo} />
             </div>
           </div>
         </section>

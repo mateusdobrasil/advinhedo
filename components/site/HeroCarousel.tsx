@@ -38,58 +38,69 @@ export default function HeroCarousel({ fallbackImage }: { fallbackImage: string 
     return () => clearInterval(intervalo);
   }, [bannersDB.length]);
 
-  // Se estiver carregando ou não houver banners ativos, mostra a imagem padrão do Templo
+  // Fallback: Se estiver a carregar ou não houver banners ativos, mostra a imagem padrão
   if (carregando || bannersDB.length === 0) {
     return (
-      <Image
-        src={fallbackImage}
-        alt="Templo"
-        fill
-        priority
-        className="object-cover"
-      />
+      <div className="relative w-full aspect-video overflow-hidden rounded-3xl border border-sand/15 shadow-soft">
+        <Image
+          src={fallbackImage}
+          alt="Templo AD Vinhedo"
+          fill
+          priority
+          className="object-cover"
+        />
+      </div>
     );
   }
 
   return (
-    <>
-      {bannersDB.map((banner, index) => (
-        <div
-          key={banner.id}
-          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-            index === bannerAtual ? "opacity-100 z-10" : "opacity-0 z-0"
-          }`}
-        >
-          <Image
-            src={banner.imagem_url}
-            alt={banner.titulo}
-            fill
-            className="object-cover"
-            priority={index === 0}
-          />
-          {/* Sombra suave para o texto do banner ficar legível se necessário */}
-          <div className="absolute inset-0 bg-gradient-to-t from-midnight-deep/80 via-transparent to-transparent"></div>
-          
-          <div className="absolute bottom-10 left-0 w-full text-center px-4">
-            <p className="text-white font-display text-xl sm:text-2xl drop-shadow-lg">{banner.titulo}</p>
-          </div>
-        </div>
-      ))}
-
-      {/* Controles do Carrossel */}
-      {bannersDB.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-1.5 bg-midnight/30 backdrop-blur-md px-3 py-1.5 rounded-full">
-          {bannersDB.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setBannerAtual(idx)}
-              className={`w-2 h-2 rounded-full transition-all ${
-                idx === bannerAtual ? "bg-gold w-5" : "bg-white/70 hover:bg-white"
-              }`}
+    <div className="flex flex-col w-full">
+      
+      {/* 1. Área da Imagem (Agora com aspect-video para garantir a altura da imagem) */}
+      <div className="relative w-full aspect-video overflow-hidden rounded-3xl border border-sand/15 bg-midnight-soft/30 shadow-inner">
+        {bannersDB.map((banner, index) => (
+          <div
+            key={banner.id}
+            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+              index === bannerAtual ? "opacity-100 scale-100 z-10" : "opacity-0 scale-105 z-0"
+            }`}
+          >
+            <Image
+              src={banner.imagem_url}
+              alt={banner.titulo}
+              fill
+              className="object-cover"
+              priority={index === 0}
             />
-          ))}
-        </div>
-      )}
-    </>
+          </div>
+        ))}
+
+        {/* Controles do Carrossel (Bolinhas) */}
+        {bannersDB.length > 1 && (
+          <div className="absolute bottom-3 right-3 z-20 flex gap-1.5 bg-midnight/40 backdrop-blur-sm px-2.5 py-1.5 rounded-full">
+            {bannersDB.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setBannerAtual(idx)}
+                aria-label={`Ver slide ${idx + 1}`}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  idx === bannerAtual ? "bg-gold w-5" : "bg-white/60 hover:bg-white"
+                }`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 2. Área do Título */}
+      <div className="mt-5 text-center px-2 animate-rise">
+        <span className="block text-xs font-semibold uppercase tracking-[0.2em] text-gold-light opacity-80 mb-1">
+          Próximo Evento
+        </span>
+        <p className="text-white font-display text-xl sm:text-2xl leading-tight">
+          {bannersDB[bannerAtual]?.titulo}
+        </p>
+      </div>
+    </div>
   );
 }
