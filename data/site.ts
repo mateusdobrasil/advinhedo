@@ -45,7 +45,7 @@ export const aplicacoes = [
   { label: "Recepção", href: "/aplicacao/recepcao/login" },
   { label: "Obreiros", href: "/aplicacao/reunioes" },
   { label: "Sistema WEB", href: "https://web.sistemaigrejadigital.com.br/auth/signin", target:"_blank" },
-
+  { label: "Gerenciamento", href: "/admin/login" },
 ];
 
 // Pilares / valores
