@@ -72,7 +72,7 @@ export const programacao = [
   {
     dia: "Domingo",
     cultos: [
-      { hora: "09h00", nome: "Escola Dominical" },
+      { hora: "08h45", nome: "Escola Dominical" },
       { hora: "10h15", nome: "Culto da Família" },
       { hora: "18h30", nome: "Culto de Louvor e Palavra" },
     ],
