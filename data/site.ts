@@ -38,12 +38,13 @@ export const navegacao = [
 
 // Aplicações internas (dropdown "Aplicações" do header)
 export const aplicacoes = [
-  { label: "Cadastro", href: "/aplicacao/cadastro" },
+//  { label: "Cadastro", href: "/aplicacao/cadastro" },
   { label: "IBV", href: "/aplicacao" },
   { label: "EBD", href: "/aplicacao/ebd" },
   { label: "IBUC", href: "/aplicacao/ibuc" },
   { label: "Recepção", href: "/aplicacao/recepcao/login" },
   { label: "Obreiros", href: "/aplicacao/reunioes" },
+  { label: "Sistema WEB", href: "https://web.sistemaigrejadigital.com.br/auth/signin", target:"_blank" },
 
 ];
 

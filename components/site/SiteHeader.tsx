@@ -98,6 +98,7 @@ export default function SiteHeader() {
                   <Link
                     key={app.href}
                     href={app.href}
+                    target={app.target}
                     onClick={() => setApps(false)}
                     className="block px-4 py-2.5 text-sm font-medium text-stone transition hover:bg-sand-warm hover:text-midnight"
                   >
