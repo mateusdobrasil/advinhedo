@@ -1,6 +1,6 @@
 import Header from "@/components/site/SiteHeader";
 import Footer from "@/components/site/SiteFooter";
-import { igreja } from "@/data/site";
+import { igreja, congregacoes } from "@/data/site";
 
 export const metadata = {
   title: "Como chegar",
@@ -11,7 +11,7 @@ export default function ComoChegarPage() {
   return (
     <>
       <Header />
-      <main>
+      <main className="church">
         <section className="bg-midnight text-sand">
           <div className="container-page py-20">
             <span className="eyebrow text-gold-light">Como chegar</span>
@@ -22,6 +22,7 @@ export default function ComoChegarPage() {
           </div>
         </section>
 
+        {/* Sede */}
         <section className="container-page py-20">
           <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
             <div>
@@ -34,8 +35,8 @@ export default function ComoChegarPage() {
               </address>
 
               <div className="mt-8 flex flex-wrap gap-3">
-                <a
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                
+                <a  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
                     `${igreja.endereco.linha1}, ${igreja.endereco.bairro}, ${igreja.endereco.cidade}`
                   )}`}
                   target="_blank"
@@ -67,6 +68,42 @@ export default function ComoChegarPage() {
                 referrerPolicy="no-referrer-when-downgrade"
                 allowFullScreen
               />
+            </div>
+          </div>
+        </section>
+
+        {/* Congregações */}
+        <section className="bg-sand-warm">
+          <div className="container-page py-20">
+            <span className="eyebrow">Nossas congregações</span>
+            <h2 className="mt-4 text-3xl sm:text-4xl">Onde também estamos</h2>
+            <p className="mt-4 max-w-2xl text-stone">
+              Além da sede, a {igreja.nome} está presente em diversos bairros da cidade.
+              Encontre a congregação mais próxima de você.
+            </p>
+
+            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {congregacoes.map((c) => (
+                <article
+                  key={c.nome + c.endereco}
+                  className="flex flex-col rounded-2xl border border-midnight/10 bg-white/60 p-6 transition hover:shadow-soft"
+                >
+                  <h3 className="font-display text-xl text-midnight">{c.nome}</h3>
+                  <span className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-gold">
+                    {c.bairro}
+                  </span>
+                  <p className="mt-3 flex-1 leading-relaxed text-stone">{c.endereco}</p>
+                  
+                  <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.endereco)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-midnight transition hover:text-gold"
+                  >
+                    Ver no mapa
+                    <span aria-hidden="true">→</span>
+                  </a>
+                </article>
+              ))}
             </div>
           </div>
         </section>

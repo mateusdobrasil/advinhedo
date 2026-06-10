@@ -20,10 +20,7 @@ export default function IgrejaPage() {
             <h1 className="mt-4 max-w-3xl font-display text-4xl sm:text-5xl">
               Nossa história, desde {igreja.fundacao}
             </h1>
-            <p className="mt-6 max-w-2xl text-lg text-sand/80">
-              Uma caminhada de fé que começou com um cooperador, uma caixa de pintinhos
-              e o desejo de anunciar o evangelho. Acompanhe os marcos da {igreja.nome}.
-            </p>
+            
           </div>
         </section>
 

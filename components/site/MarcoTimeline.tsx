@@ -22,14 +22,14 @@ export default function MarcoTimeline({ marco }: { marco: Marco }) {
       </span>
 
       <div className="rounded-2xl border border-midnight/10 bg-white/60 p-6 transition hover:shadow-soft sm:p-8">
-        <div className="grid gap-6 sm:grid-cols-[180px_1fr] sm:items-start">
+        <div className="grid gap-6 sm:grid-cols-[320px_1fr] sm:items-start">
           {/* Foto */}
-          <div className="aspect-[4/3] overflow-hidden rounded-xl border border-midnight/10 bg-sand-warm sm:aspect-square">
+          <div className="aspect-[4/4] overflow-hidden rounded-xl border border-midnight/10 bg-sand-warm">
             <Image
               src={marco.imagem}
               alt={`${marco.ano} — ${marco.titulo}`}
-              width={400}
-              height={400}
+              width={520}
+              height={390}
               className="h-full w-full object-cover"
             />
           </div>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import BotaoContribuir from "@/components/site/BotaoContribuir";
 import SiteHeader from "@/components/site/SiteHeader";
 import SiteFooter from "@/components/site/SiteFooter";
 import {
@@ -35,7 +36,7 @@ export default async function Home() {
               <span className="eyebrow text-gold-light">{igreja.nomeCompleto}</span>
               <h1 className="mt-5 font-display text-4xl leading-[1.1] sm:text-5xl lg:text-6xl">
                 Anunciamos o <br/>{" "}
-                <span className="italic text-gold-light">Reino de Deus</span>através da pregação do evangelho.
+                <span className="italic text-gold-light">Reino de Deus </span>através da <br/> pregação do evangelho.
               </h1>
               <p className="mt-6 max-w-xl text-lg text-sand/80">{conteudo.hero.subtitulo}</p>
               <div className="mt-9 flex flex-wrap gap-3">
@@ -146,7 +147,7 @@ export default async function Home() {
               </p>
             </div>
 
-            <div className="mt-10 grid gap-6 md:grid-cols-3">
+            <div className="mt-10 grid gap-6 md:grid-cols-4">
               {programacao.map((bloco) => (
                 <div
                   key={bloco.dia}
@@ -184,12 +185,7 @@ export default async function Home() {
                 Contribua com seu dízimo ou oferta e participe da obra de Deus. Cada
                 gesto sustenta o trabalho da igreja e o cuidado com a comunidade.
               </p>
-              <Link
-                href={igreja.linkCadastro}
-                className="mt-8 inline-flex items-center justify-center rounded-full bg-midnight px-7 py-3 text-sm font-semibold text-sand transition hover:bg-midnight-deep"
-              >
-                Contribuir agora
-              </Link>
+              <BotaoContribuir />
             </div>
           </div>
         </section>

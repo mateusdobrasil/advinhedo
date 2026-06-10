@@ -76,8 +76,12 @@ export const programacao = [
     cultos: [{ hora: "19h30", nome: "Culto de Ensino" }],
   },
   {
-    dia: "1º domingo do mês",
+    dia: "1º Domingo do mês",
     cultos: [{ hora: "10h15", nome: "Santa Ceia" }],
+  },
+  {
+    dia: "1ª Sexta-feira do mês",
+    cultos: [{ hora: "19h30", nome: "Reunião de Obreiros" }],
   },
 ];
 
@@ -140,7 +144,7 @@ export const historia = [
     ano: "1940",
     titulo: "O Início",
     subtitulo: "Início da jornada missionária de Joaquim Ribeiro em Rocinha, levando o evangelho aos quilombolas.",
-    imagem: "/imgs/historia-1940.jpg",
+    imagem: "/imgs/logo.jpg",
     texto: "Foi por volta da década de 1940 que um homem muito simples, sem muito estudo e com uma caixa de pintinhos, embarcava na estação de trens da Antiga Companhia Paulista em direção a Rocinha. Seu objetivo era levar o evangelho do Senhor Jesus aos quilombolas da Fazenda Cachoeira. Mas o que tem a ver a caixa com pintinhos? A oportunidade de falar de Jesus às almas que iriam embarcar naquele trem. O nome deste ilustre homem era Joaquim Ribeiro, um cooperador da Igreja em Jundiaí que fazia este trajeto para ganhar seu sustento e ganhar almas para o Senhor Jesus. Uma pessoa desprendida de tudo, conta a nossa irmã Dirce Pinheiro, que teve a oportunidade de conhecer o nobre cooperador, que ao chegar em uma vila e observar que alguém estava com fome, ele dava a marmita que tinha para suprir a fome daquele necessitado. A primeira família a ser evangelizada pelo irmão Joaquim foi a família do irmão João Manuel da Silva (In memorian), e ele recebia o irmão Joaquim em sua humilde casa para realizar cultos na Fazenda Cachoeira e ganhar outras almas para o Senhor Jesus.",
   },
   {
@@ -154,7 +158,7 @@ export const historia = [
     ano: "1960",
     titulo: "Expansão para Outras Regiões",
     subtitulo: "Ampliação da evangelização para fazendas e bairros, superando dificuldades com apoio de novos cooperadores.",
-    imagem: "/imgs/historia-1960.jpg",
+    imagem: "/imgs/logo.jpg",
     texto: "Muitos desafios foram superados, com a vinda de muitos outros cooperadores para ajudar na obra do Senhor, como o Maestro Paulo Ferreira, filho do Pastor Ariano Ferreira, para ajudar com a música e o coral da Igreja. Muitos outros já passaram por esta obra, na Fazenda Monte Alegre, Fazenda Bahia, Fazenda Santa Cândida e o Bairro da Capela, foram desbravados pelo poder do evangelho na década de 1960. Nada pode parar o crescimento da Igreja, disse o Pastor Alberto Nicácio, que apenas um irmão tinha carro na igreja, e disponibilizava para ajudar na evangelização dessa região, era o saudoso José Bertaglia. Saíam do centro em direção às referidas fazendas e ao bairro da Capela para evangelizar com Willys Itamaty, colocava os irmãos no carro e saíam para o evangelismo.",
   },
   {
@@ -189,7 +193,20 @@ export const historia = [
     ano: "2025",
     titulo: "Novos Desafios e Oportunidades",
     subtitulo: "O pastor Heber Souza, vindo de São Paulo, assume com o desafio de liderar a igreja em um novo ciclo de crescimento.",
-    imagem: "/imgs/historia-2025.jpg",
+    imagem: "/imgs/pastor-square.png",
     texto: "A igreja ganha uma nova fase de expansão, agora com a sede e mais 7 congregações espalhadas pela cidade, a igreja segue trabalhando com a liderança e visão ministerial do pastor Heber Souza.",
   },
+];
+
+// Congregações (além da sede)
+export const congregacoes = [
+  { nome: "AD Vinhedo - Capela", bairro: "Capela", endereco: "Rua José Ferragut, 166 - Vinhedo - SP" },
+  { nome: "AD Vinhedo - Vila Fátima", bairro: "Vila Fátima", endereco: "Rua Blumenau, 34 - Vinhedo - SP" },
+  { nome: "AD Vinhedo - Jardim Três Irmãos", bairro: "Jardim Três Irmãos", endereco: "Rua dos Jatobás, 285 - Vinhedo - SP" },
+  { nome: "AD Vinhedo - Vida Nova", bairro: "Jardim Vida Nova I", endereco: "Rua Alberto Zanon, 235 - Vinhedo - SP" },
+  { nome: "AD Vinhedo - Vida Nova III", bairro: "Jardim Vida Nova III", endereco: "Rua Fábio Junqueira Meirelles, 534 - Vinhedo - SP" },
+  { nome: "AD Vinhedo - Santo Antônio", bairro: "Jardim Santo Antônio", endereco: "Rua Antônia Cremonesi Marciano, 35 - Vinhedo - SP" },
+  { nome: "Mirian", bairro: "Santa Rosa", endereco: "Rua Antonio Von Zuben, 171 - Vinhedo - SP" },
+  { nome: "Castelo Branco", bairro: "Res. Aquário", endereco: "R. Antonio Von Zuben, 171 - Vinhedo - SP" },
+  { nome: "Palmares", bairro: "Res. Aquário", endereco: "Rua Antonio Von Zuben, 171 - Vinhedo - SP" },
 ];
