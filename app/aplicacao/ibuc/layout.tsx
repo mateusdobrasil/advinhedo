@@ -14,7 +14,7 @@ export default async function DashboardLayout({
 
   // Verifica Autenticação Global do Dashboard
   const { data: { session } } = await supabase.auth.getSession()
-  if (!session) redirect('/aplicacao/login')
+  if (!session) redirect('/')
 
   // Busca os dados do perfil logado
   const { data: perfil } = await supabase

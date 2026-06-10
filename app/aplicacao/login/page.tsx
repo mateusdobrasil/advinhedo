@@ -21,12 +21,10 @@ export default function LoginPage() {
         
         {/* Logo / Título */}
         <div className="text-center mb-8">
-          <Link href="/" className="block group">
-            <div className="bg-indigo-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg group-hover:bg-indigo-700 transition">
-              🎓
-            </div>
-            <h1 className="text-2xl font-black text-gray-800 group-hover:text-indigo-600 transition">Instituto Bíblico</h1>
-          </Link>
+          <div className="bg-indigo-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg group-hover:bg-indigo-700 transition">
+            🎓
+          </div>
+          <h1 className="text-2xl font-black text-gray-800 group-hover:text-indigo-600 transition">Portal Educacional<br/>AD Vinhedo</h1>
           <p className="text-gray-500 text-sm mt-1">Faça login para acessar o seu portal</p>
         </div>
 
