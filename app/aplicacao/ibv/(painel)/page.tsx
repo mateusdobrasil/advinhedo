@@ -11,7 +11,7 @@ export default async function DashboardPage() {
 
   // 1. Verifica sessão
   const { data: { session } } = await supabase.auth.getSession()
-  if (!session) redirect('/aplicacao/login')
+  if (!session) redirect('/aplicacao/ibv/login')
 
   // 2. Busca cargo do perfil logado
   const { data: perfil } = await supabase

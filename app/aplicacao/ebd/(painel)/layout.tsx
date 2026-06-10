@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Analytics } from "@vercel/analytics/next"
-import BotaoSair from '../components/BotaoSair'
+import BotaoSair from '../../components/BotaoSair'
 
 export default async function DashboardLayout({
   children,
@@ -14,7 +14,7 @@ export default async function DashboardLayout({
 
   // Verifica Autenticação Global do Dashboard
   const { data: { session } } = await supabase.auth.getSession()
-  if (!session) redirect('/aplicacao/login')
+  if (!session) redirect('/aplicacao/ebd/login')
 
   // Busca os dados do perfil logado
   const { data: perfil } = await supabase

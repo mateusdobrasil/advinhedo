@@ -15,9 +15,8 @@ export default function SiteFooter() {
               alt={igreja.nomeCompleto}
               width={160}
               height={48}
-              className="h-12 w-auto"
+              className="h-24 w-auto"
             />
-            <span className="font-display text-2xl">{igreja.nome}</span>
           </div>
           <p className="mt-3 max-w-xs text-sm text-sand/70">
             {igreja.nomeCompleto}. Anunciamos o evangelho de Jesus Cristo em {igreja.cidade} desde {igreja.fundacao}.
