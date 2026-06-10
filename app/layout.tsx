@@ -21,8 +21,8 @@ const mulish = Mulish({
 })
 
 export const metadata: Metadata = {
-  title: 'Portal IBV',
-  description: 'Sistema de Gestão Educacional',
+  title: 'AD Vinhedo',
+  description: 'APP AD Vinhedo',
 }
 
 export default function RootLayout({
