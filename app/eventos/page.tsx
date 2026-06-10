@@ -17,6 +17,16 @@ export default function EventosPage() {
 
   const supabase = createClientComponentClient();
 
+  // Função para converter "8h45" em minutos (para o sistema saber quem vem primeiro)
+  const converterHorarioParaMinutos = (horarioStr: string) => {
+    if (!horarioStr) return 0;
+    // Divide pelo "h" ou "H" ou ":"
+    const partes = horarioStr.toLowerCase().replace(":", "h").split("h");
+    const horas = parseInt(partes[0]) || 0;
+    const minutos = parseInt(partes[1]) || 0;
+    return horas * 60 + minutos;
+  };
+
   useEffect(() => {
     async function carregarDados() {
       const hoje = new Date().toISOString().split("T")[0];
@@ -25,9 +35,18 @@ export default function EventosPage() {
         .from("agenda_eventos")
         .select("*")
         .gte("data_evento", hoje)
-        .order("data_evento", { ascending: true });
+        .order("data_evento", { ascending: true }); // Ordena por data
 
-      if (eventosData) setEventosDB(eventosData);
+      if (eventosData) {
+        // Ordena por horário caso a data seja igual
+        const eventosOrdenados = eventosData.sort((a, b) => {
+          if (a.data_evento === b.data_evento) {
+            return converterHorarioParaMinutos(a.horario) - converterHorarioParaMinutos(b.horario);
+          }
+          return 0; // Se a data for diferente, mantém a ordem original do banco
+        });
+        setEventosDB(eventosOrdenados);
+      }
 
       const { data: bannersData } = await supabase
         .from("banners")
@@ -76,10 +95,9 @@ export default function EventosPage() {
           </div>
         </section>
 
-        {/* BANNERS / FOLDERS - ASPECT 16:9 LIMITADO COM MAX-W-5XL */}
+        {/* BANNERS / FOLDERS */}
         {!carregando && bannersDB.length > 0 && (
           <section className="container-page py-12 -mt-16 sm:-mt-24 flex flex-col items-center">
-            {/* O travão max-w-5xl impede que ele expluda na tela no PC */}
             <div className="relative aspect-video w-full max-w-3xl overflow-hidden rounded-[2rem] bg-white shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] border border-white/20 group">
               
               {bannersDB.map((banner, index) => (
@@ -112,7 +130,6 @@ export default function EventosPage() {
               )}
             </div>
             
-            {/* Título do Folder atual (Fica abaixo da imagem, centralizado) */}
             <div className="mt-6 text-center max-w-5xl w-full">
               <h2 className="text-midnight font-display text-xl sm:text-2xl">{bannersDB[bannerAtual]?.titulo}</h2>
             </div>
