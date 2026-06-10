@@ -3,6 +3,7 @@ import Image from "next/image";
 import BotaoContribuir from "@/components/site/BotaoContribuir";
 import SiteHeader from "@/components/site/SiteHeader";
 import SiteFooter from "@/components/site/SiteFooter";
+import HeroCarousel from "@/components/site/HeroCarousel";
 import {
   igreja as igrejaPadrao,
   conteudo as conteudoPadrao,
@@ -53,15 +54,12 @@ export default async function Home() {
             </div>
 
             <div className="relative animate-rise">
-              <div className="aspect-[4/5] overflow-hidden rounded-3xl border border-sand/15 bg-gradient-to-br from-midnight-soft to-midnight-deep shadow-soft">
-                <Image
-                  src={conteudo.imagens.heroTemplo}
-                  alt={`Templo da ${igreja.nome}`}
-                  width={900}
-                  height={1125}
-                  priority
-                  className="h-full w-full object-cover"
-                />
+              {/* CORREÇÃO AQUI: Mudado de aspect-[4/5] para aspect-video (16:9) */}
+              <div className="relative aspect-video overflow-hidden rounded-3xl border border-sand/15 bg-gradient-to-br from-midnight-soft to-midnight-deep shadow-soft">
+                
+                {/* CARROSSEL DINÂMICO ENTRANDO NO LUGAR DA IMAGEM ESTÁTICA */}
+                <HeroCarousel fallbackImage={conteudo.imagens.heroTemplo} />
+                
               </div>
             </div>
           </div>
@@ -102,13 +100,12 @@ export default async function Home() {
                 <span aria-hidden="true">→</span>
               </Link>
             </div>
-            <div className="aspect-video overflow-hidden rounded-3xl border border-midnight/10 shadow-soft">
+            <div className="relative aspect-video overflow-hidden rounded-3xl border border-midnight/10 shadow-soft">
               <Image
                 src={conteudo.imagens.sobreTemplo}
                 alt={`Templo da ${igreja.nome}`}
-                width={1280}
-                height={720}
-                className="h-full w-full object-cover"
+                fill
+                className="object-cover"
               />
             </div>
           </div>
@@ -117,13 +114,12 @@ export default async function Home() {
         {/* ============== PASTOR ============== */}
         <section className="container-page py-20">
           <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
-            <div className="mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-3xl border border-midnight/10 shadow-soft">
+            <div className="relative mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-3xl border border-midnight/10 shadow-soft">
               <Image
                 src={conteudo.imagens.pastor}
                 alt={conteudo.pastor.nome}
-                width={640}
-                height={640}
-                className="h-full w-full object-cover"
+                fill
+                className="object-cover"
               />
             </div>
             <div>
