@@ -446,8 +446,8 @@ export default function CheckinPage() {
         )}
         <div style={m.rodape}>
           <button style={m.rodapeBtn} onClick={() => { setReuniao(null); setBusca('') }}>← Trocar reunião</button>
-          <button style={m.rodapeBtnScanner} onClick={() => router.push(`/reunioes/admin/checkin/scanner?reuniao=${reuniao.id}&titulo=${encodeURIComponent(reuniao.titulo)}`)}>⬡ Cartão</button>
-          <button style={{ ...m.rodapeBtnScanner, background: '#7C3AED' }} onClick={() => router.push(`/reunioes/admin/checkin/facial?reuniao=${reuniao.id}&titulo=${encodeURIComponent(reuniao.titulo)}`)}>◉ Facial</button>
+          <button style={m.rodapeBtnScanner} onClick={() => router.push(`/aplicacao/reunioes/admin/checkin/scanner?reuniao=${reuniao.id}&titulo=${encodeURIComponent(reuniao.titulo)}`)}>⬡ Cartão</button>
+          <button style={{ ...m.rodapeBtnScanner, background: '#7C3AED' }} onClick={() => router.push(`/aplicacao/reunioes/admin/checkin/facial?reuniao=${reuniao.id}&titulo=${encodeURIComponent(reuniao.titulo)}`)}>◉ Facial</button>
         </div>
       </div>
     )

@@ -132,7 +132,7 @@ export default function ObreirosPage() {
             const temFoto = !!o.face_descriptor
             return (
               <button key={o.id} style={s.card}
-                onClick={() => router.push(`/reunioes/admin/obreiros/${o.id}/foto`)}>
+                onClick={() => router.push(`/aplicacao/reunioes/admin/obreiros/${o.id}/foto`)}>
 
                 {/* Avatar ou foto */}
                 <div style={s.avatarWrap}>
@@ -156,7 +156,7 @@ export default function ObreirosPage() {
                 <div style={s.cardAcoes}>
                   <button
                     style={s.btnEditar}
-                    onClick={e => { e.stopPropagation(); router.push(`/reunioes/admin/obreiros/${o.id}/editar`) }}>
+                    onClick={e => { e.stopPropagation(); router.push(`/aplicacao/reunioes/admin/obreiros/${o.id}/editar`) }}>
                     Editar
                   </button>
                   <span style={s.chevron}>›</span>
