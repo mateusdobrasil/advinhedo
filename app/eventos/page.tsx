@@ -14,6 +14,11 @@ export default function EventosPage() {
   const [bannersDB, setBannersDB] = useState<any[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [bannerAtual, setBannerAtual] = useState(0);
+  
+  const [filtroLocal, setFiltroLocal] = useState("");
+  const [filtroDepartamento, setFiltroDepartamento] = useState("");
+  const [tipoFiltroData, setTipoFiltroData] = useState("");
+  const [valorFiltroData, setValorFiltroData] = useState("");
 
   const supabase = createClientComponentClient();
 
@@ -39,7 +44,7 @@ export default function EventosPage() {
 
       if (eventosData) {
         // Ordena por horário caso a data seja igual
-        const eventosOrdenados = eventosData.sort((a, b) => {
+        const eventosOrdenados = [...eventosData].sort((a, b) => {
           if (a.data_evento === b.data_evento) {
             return converterHorarioParaMinutos(a.horario) - converterHorarioParaMinutos(b.horario);
           }
@@ -77,8 +82,25 @@ export default function EventosPage() {
     return `${dia} de ${meses[parseInt(mes) - 1]}`;
   };
 
-  const cultosRegulares = eventosDB.filter((ev) => cultosRegularesNomes.includes(ev.titulo)).slice(0, 8);
-  const eventosEspeciais = eventosDB.filter((ev) => !cultosRegularesNomes.includes(ev.titulo));
+  // Mapeia e organiza de forma alfabética os locais e departamentos para usar no <select>
+  const locaisDisponiveis = Array.from(new Set(eventosDB.map((e) => e.congregacao).filter(Boolean))).sort();
+  const departamentosDisponiveis = Array.from(new Set(eventosDB.map((e) => e.departamento).filter(Boolean))).sort();
+  const anosDisponiveis = Array.from(new Set(eventosDB.map((e) => e.data_evento?.substring(0, 4)).filter(Boolean))).sort().reverse();
+
+  // Filtra de acordo com os inputs preenchidos
+  const eventosFiltrados = eventosDB.filter((ev) => {
+    if (filtroLocal && ev.congregacao !== filtroLocal) return false;
+    if (filtroDepartamento && ev.departamento !== filtroDepartamento) return false;
+    if (tipoFiltroData && valorFiltroData) {
+      if (tipoFiltroData === "dia" && ev.data_evento !== valorFiltroData) return false;
+      if (tipoFiltroData === "mes" && !ev.data_evento.startsWith(valorFiltroData)) return false;
+      if (tipoFiltroData === "ano" && !ev.data_evento.startsWith(valorFiltroData)) return false;
+    }
+    return true;
+  });
+
+  const cultosRegulares = eventosFiltrados.filter((ev) => cultosRegularesNomes.includes(ev.titulo)).slice(0, 8);
+  const eventosEspeciais = eventosFiltrados.filter((ev) => !cultosRegularesNomes.includes(ev.titulo));
 
   return (
     <>
@@ -110,6 +132,7 @@ export default function EventosPage() {
                     alt={banner.titulo} 
                     fill 
                     className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 800px"
                     priority={index === 0}
                   />
                 </div>
@@ -143,14 +166,94 @@ export default function EventosPage() {
             <button onClick={() => setFiltro("semanal")} className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all ${filtro === "semanal" ? "bg-midnight text-gold shadow-lg scale-105" : "bg-white/60 text-stone hover:bg-white"}`}>Cultos Regulares</button>
             <button onClick={() => setFiltro("especiais")} className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all ${filtro === "especiais" ? "bg-midnight text-gold shadow-lg scale-105" : "bg-white/60 text-stone hover:bg-white"}`}>Eventos Especiais</button>
           </div>
+
+          <div className="container-page mt-4 flex flex-wrap items-center justify-center sm:justify-start gap-3">
+            <div className="flex-1 min-w-[150px] max-w-xs">
+              <select 
+                value={filtroLocal} 
+                onChange={(e) => setFiltroLocal(e.target.value)}
+                className="w-full bg-white border border-midnight/10 rounded-lg px-4 py-2 text-sm text-stone focus:outline-none focus:ring-2 focus:ring-gold"
+              >
+                <option value="">Todos os Locais</option>
+                {locaisDisponiveis.map(local => (
+                  <option key={local as string} value={local as string}>{local}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex-1 min-w-[150px] max-w-xs">
+              <select 
+                value={filtroDepartamento} 
+                onChange={(e) => setFiltroDepartamento(e.target.value)}
+                className="w-full bg-white border border-midnight/10 rounded-lg px-4 py-2 text-sm text-stone focus:outline-none focus:ring-2 focus:ring-gold"
+              >
+                <option value="">Todos os Departamentos</option>
+                {departamentosDisponiveis.map(dep => (
+                  <option key={dep as string} value={dep as string}>{dep}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex-1 min-w-[250px] max-w-sm flex gap-2">
+              <select 
+                value={tipoFiltroData}
+                onChange={(e) => {
+                  setTipoFiltroData(e.target.value);
+                  setValorFiltroData("");
+                }}
+                className={`${tipoFiltroData ? 'w-1/2' : 'w-full'} bg-white border border-midnight/10 rounded-lg px-4 py-2 text-sm text-stone focus:outline-none focus:ring-2 focus:ring-gold transition-all`}
+              >
+                <option value="">Qualquer Data</option>
+                <option value="dia">Por Dia</option>
+                <option value="mes">Por Mês</option>
+                <option value="ano">Por Ano</option>
+              </select>
+
+              {tipoFiltroData === "dia" && (
+                <input 
+                  type="date"
+                  value={valorFiltroData}
+                  onChange={(e) => setValorFiltroData(e.target.value)}
+                  className="w-1/2 bg-white border border-midnight/10 rounded-lg px-2 py-2 text-sm text-stone focus:outline-none focus:ring-2 focus:ring-gold"
+                />
+              )}
+
+              {tipoFiltroData === "mes" && (
+                <input 
+                  type="month"
+                  value={valorFiltroData}
+                  onChange={(e) => setValorFiltroData(e.target.value)}
+                  className="w-1/2 bg-white border border-midnight/10 rounded-lg px-2 py-2 text-sm text-stone focus:outline-none focus:ring-2 focus:ring-gold"
+                />
+              )}
+
+              {tipoFiltroData === "ano" && (
+                <select
+                  value={valorFiltroData}
+                  onChange={(e) => setValorFiltroData(e.target.value)}
+                  className="w-1/2 bg-white border border-midnight/10 rounded-lg px-2 py-2 text-sm text-stone focus:outline-none focus:ring-2 focus:ring-gold"
+                >
+                  <option value="">Selecione...</option>
+                  {anosDisponiveis.map(ano => (
+                    <option key={ano as string} value={ano as string}>{ano}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
         </section>
 
         {carregando ? (
           <div className="container-page pb-24 text-center text-midnight font-bold">A carregar eventos...</div>
         ) : (
           <div className="container-page pb-24 space-y-16">
+            {eventosDB.length === 0 && (
+              <div className="text-center py-16 text-stone/70 text-lg">
+                Nenhum evento agendado para os próximos dias.
+              </div>
+            )}
             
-            {(filtro === "todos" || filtro === "semanal") && (
+            {(filtro === "todos" || filtro === "semanal") && cultosRegulares.length > 0 && (
               <section className="animate-rise">
                 <h2 className="text-2xl sm:text-3xl font-display text-midnight mb-8 flex items-center gap-3"><span className="text-gold">●</span> Próximos Cultos Regulares</h2>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -170,7 +273,7 @@ export default function EventosPage() {
               </section>
             )}
 
-            {(filtro === "todos" || filtro === "especiais") && (
+            {(filtro === "todos" || filtro === "especiais") && eventosEspeciais.length > 0 && (
               <section className="animate-rise">
                 <h2 className="text-2xl sm:text-3xl font-display text-midnight mb-8 flex items-center gap-3"><span className="text-gold">★</span> Eventos Especiais do Ano</h2>
                 <div className="flex flex-col gap-4">

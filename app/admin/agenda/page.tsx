@@ -16,7 +16,9 @@ export default function GerenciadorAgendaPage() {
   
   const [carregando, setCarregando] = useState(true);
   
-  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [viewEventos, setViewEventos] = useState<"nenhum" | "form" | "departamentos" | "congregacoes">("nenhum");
+  const [novoNomeDep, setNovoNomeDep] = useState("");
+  const [novoNomeCong, setNovoNomeCong] = useState("");
   const [busca, setBusca] = useState("");
   
   const [salvandoEvento, setSalvandoEvento] = useState(false);
@@ -72,16 +74,26 @@ export default function GerenciadorAgendaPage() {
   // =========================================================================
   // AÇÕES DE EVENTOS
   // =========================================================================
+  const obterDiaSemana = (dataStr: string) => {
+    if (!dataStr) return "";
+    const dias = ["Domingo", "Segunda-Feira", "Terça-Feira", "Quarta-Feira", "Quinta-Feira", "Sexta-Feira", "Sábado"];
+    // Usamos split para contornar problemas de fuso horário na conversão de string para Date
+    const [ano, mes, dia] = dataStr.split("-").map(Number);
+    const data = new Date(ano, mes - 1, dia);
+    return dias[data.getDay()];
+  };
+
   const adicionarEvento = async (e: React.FormEvent) => {
     e.preventDefault();
     setSalvandoEvento(true);
     
-    const { data, error } = await supabase.from("agenda_eventos").insert([novoEvento]).select();
+    const eventoParaSalvar = { ...novoEvento, dia_semana: obterDiaSemana(novoEvento.data_evento) };
+    const { data, error } = await supabase.from("agenda_eventos").insert([eventoParaSalvar]).select();
     
     if (!error && data) {
       setEventosDB([...eventosDB, data[0]].sort((a, b) => a.data_evento.localeCompare(b.data_evento)));
       setNovoEvento({ data_evento: "", dia_semana: "Domingo", horario: "", titulo: "", departamento: "AD Vinhedo", abrangencia: "Local", congregacao: "Sede" });
-      setMostrarFormulario(false);
+      setViewEventos("nenhum");
       alert("Evento adicionado com sucesso!");
     } else {
       alert("Erro ao adicionar evento.");
@@ -94,6 +106,75 @@ export default function GerenciadorAgendaPage() {
     const { error } = await supabase.from("agenda_eventos").delete().eq("id", id);
     if (!error) {
       setEventosDB(eventosDB.filter(ev => ev.id !== id));
+    }
+  };
+
+  // =========================================================================
+  // AÇÕES DE DEPARTAMENTOS E CONGREGAÇÕES
+  // =========================================================================
+  const handleAddDepartamento = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!novoNomeDep) return;
+    const { data, error } = await supabase.from("departamento").insert([{ nome: novoNomeDep }]).select();
+    if (!error && data) {
+      setDepartamentosDB([...departamentosDB, data[0]].sort((a, b) => a.nome.localeCompare(b.nome)));
+      setNovoNomeDep("");
+    } else {
+      alert("Erro ao adicionar departamento.");
+    }
+  };
+
+  const handleEditDepartamento = async (id: string, nomeAtual: string) => {
+    const novoNome = prompt("Digite o novo nome para o departamento:", nomeAtual);
+    if (!novoNome || novoNome === nomeAtual) return;
+    const { error } = await supabase.from("departamento").update({ nome: novoNome }).eq("id", id);
+    if (!error) {
+      setDepartamentosDB(departamentosDB.map(d => d.id === id ? { ...d, nome: novoNome } : d).sort((a, b) => a.nome.localeCompare(b.nome)));
+    } else {
+      alert("Erro ao editar departamento.");
+    }
+  };
+
+  const handleDeleteDepartamento = async (id: string) => {
+    if (!confirm("Tem certeza que deseja excluir este departamento?")) return;
+    const { error } = await supabase.from("departamento").delete().eq("id", id);
+    if (!error) {
+      setDepartamentosDB(departamentosDB.filter(d => d.id !== id));
+    } else {
+      alert("Erro ao excluir. O departamento pode estar vinculado a algum evento.");
+    }
+  };
+
+  const handleAddCongregacao = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!novoNomeCong) return;
+    const { data, error } = await supabase.from("congregacoes").insert([{ nome: novoNomeCong }]).select();
+    if (!error && data) {
+      setCongregacoesDB([...congregacoesDB, data[0]].sort((a, b) => a.nome.localeCompare(b.nome)));
+      setNovoNomeCong("");
+    } else {
+      alert("Erro ao adicionar congregação.");
+    }
+  };
+
+  const handleEditCongregacao = async (id: string, nomeAtual: string) => {
+    const novoNome = prompt("Digite o novo nome para a congregação:", nomeAtual);
+    if (!novoNome || novoNome === nomeAtual) return;
+    const { error } = await supabase.from("congregacoes").update({ nome: novoNome }).eq("id", id);
+    if (!error) {
+      setCongregacoesDB(congregacoesDB.map(c => c.id === id ? { ...c, nome: novoNome } : c).sort((a, b) => a.nome.localeCompare(b.nome)));
+    } else {
+      alert("Erro ao editar congregação.");
+    }
+  };
+
+  const handleDeleteCongregacao = async (id: string) => {
+    if (!confirm("Tem certeza que deseja excluir esta congregação?")) return;
+    const { error } = await supabase.from("congregacoes").delete().eq("id", id);
+    if (!error) {
+      setCongregacoesDB(congregacoesDB.filter(c => c.id !== id));
+    } else {
+      alert("Erro ao excluir. A congregação pode estar vinculada a algum evento.");
     }
   };
 
@@ -205,15 +286,29 @@ export default function GerenciadorAgendaPage() {
             
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-lg font-black text-slate-800">Eventos Cadastrados</h2>
-              <button 
-                onClick={() => setMostrarFormulario(!mostrarFormulario)}
-                className="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-800 transition shadow-sm flex items-center gap-2"
-              >
-                {mostrarFormulario ? "✕ Cancelar" : "+ Novo Evento"}
-              </button>
+              <div className="flex gap-2 flex-wrap justify-end">
+                <button 
+                  onClick={() => setViewEventos(viewEventos === "departamentos" ? "nenhum" : "departamentos")}
+                  className={`px-4 py-2 rounded-xl text-sm font-bold transition shadow-sm ${viewEventos === "departamentos" ? "bg-slate-300 text-slate-800" : "bg-slate-200 text-slate-700 hover:bg-slate-300"}`}
+                >
+                  {viewEventos === "departamentos" ? "✕ Fechar Deptos" : "Departamentos"}
+                </button>
+                <button 
+                  onClick={() => setViewEventos(viewEventos === "congregacoes" ? "nenhum" : "congregacoes")}
+                  className={`px-4 py-2 rounded-xl text-sm font-bold transition shadow-sm ${viewEventos === "congregacoes" ? "bg-slate-300 text-slate-800" : "bg-slate-200 text-slate-700 hover:bg-slate-300"}`}
+                >
+                  {viewEventos === "congregacoes" ? "✕ Fechar Congregações" : "Congregações"}
+                </button>
+                <button 
+                  onClick={() => setViewEventos(viewEventos === "form" ? "nenhum" : "form")}
+                  className="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-800 transition shadow-sm flex items-center gap-2"
+                >
+                  {viewEventos === "form" ? "✕ Cancelar Evento" : "+ Novo Evento"}
+                </button>
+              </div>
             </div>
 
-            {mostrarFormulario && (
+            {viewEventos === "form" && (
               <div className="bg-slate-100 p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-inner mb-6 animate-in fade-in slide-in-from-top-4">
                 <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-6">Cadastrar Novo Evento na Agenda</h3>
                 <form onSubmit={adicionarEvento} className="grid grid-cols-1 sm:grid-cols-3 gap-5">
@@ -230,12 +325,6 @@ export default function GerenciadorAgendaPage() {
                   <div>
                     <label className="block text-xs font-bold text-slate-600 mb-1.5">Horário * (Ex: 19h30)</label>
                     <input type="text" required placeholder="19h30" value={novoEvento.horario} onChange={e => setNovoEvento({...novoEvento, horario: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1.5">Dia da Semana *</label>
-                    <select value={novoEvento.dia_semana} onChange={e => setNovoEvento({...novoEvento, dia_semana: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
-                      {["Domingo", "Segunda-Feira", "Terca-Feira", "Quarta-Feira", "Quinta-Feira", "Sexta-Feira", "Sabado"].map(d => <option key={d} value={d}>{d}</option>)}
-                    </select>
                   </div>
 
                   <div>
@@ -268,6 +357,58 @@ export default function GerenciadorAgendaPage() {
                     </button>
                   </div>
                 </form>
+              </div>
+            )}
+
+            {viewEventos === "departamentos" && (
+              <div className="bg-slate-100 p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-inner mb-6 animate-in fade-in slide-in-from-top-4">
+                <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-6">Gerenciar Departamentos</h3>
+                
+                <form onSubmit={handleAddDepartamento} className="flex gap-3 mb-8">
+                  <input type="text" value={novoNomeDep} onChange={e => setNovoNomeDep(e.target.value)} placeholder="Nome do novo departamento..." className="flex-1 bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" required />
+                  <button type="submit" className="bg-blue-600 text-white px-6 py-3 font-black rounded-xl hover:bg-blue-700 transition shadow-md">Adicionar</button>
+                </form>
+
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                  <ul className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
+                    {departamentosDB.map(dep => (
+                      <li key={dep.id} className="p-4 flex justify-between items-center hover:bg-slate-50">
+                        <span className="font-bold text-slate-700">{dep.nome}</span>
+                        <div className="flex gap-3">
+                          <button onClick={() => handleEditDepartamento(dep.id, dep.nome)} className="text-blue-500 hover:text-blue-700 text-sm font-bold transition">Editar</button>
+                          <button onClick={() => handleDeleteDepartamento(dep.id)} className="text-red-500 hover:text-red-700 text-sm font-bold transition">Excluir</button>
+                        </div>
+                      </li>
+                    ))}
+                    {departamentosDB.length === 0 && <li className="p-4 text-center text-slate-500 text-sm">Nenhum departamento cadastrado.</li>}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {viewEventos === "congregacoes" && (
+              <div className="bg-slate-100 p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-inner mb-6 animate-in fade-in slide-in-from-top-4">
+                <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-6">Gerenciar Congregações</h3>
+                
+                <form onSubmit={handleAddCongregacao} className="flex gap-3 mb-8">
+                  <input type="text" value={novoNomeCong} onChange={e => setNovoNomeCong(e.target.value)} placeholder="Nome da nova congregação..." className="flex-1 bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" required />
+                  <button type="submit" className="bg-blue-600 text-white px-6 py-3 font-black rounded-xl hover:bg-blue-700 transition shadow-md">Adicionar</button>
+                </form>
+
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                  <ul className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
+                    {congregacoesDB.map(cong => (
+                      <li key={cong.id} className="p-4 flex justify-between items-center hover:bg-slate-50">
+                        <span className="font-bold text-slate-700">{cong.nome}</span>
+                        <div className="flex gap-3">
+                          <button onClick={() => handleEditCongregacao(cong.id, cong.nome)} className="text-blue-500 hover:text-blue-700 text-sm font-bold transition">Editar</button>
+                          <button onClick={() => handleDeleteCongregacao(cong.id)} className="text-red-500 hover:text-red-700 text-sm font-bold transition">Excluir</button>
+                        </div>
+                      </li>
+                    ))}
+                    {congregacoesDB.length === 0 && <li className="p-4 text-center text-slate-500 text-sm">Nenhuma congregação cadastrada.</li>}
+                  </ul>
+                </div>
               </div>
             )}
 
