@@ -10,21 +10,38 @@ export default function GerenciadorAgendaPage() {
   const [eventosDB, setEventosDB] = useState<any[]>([]);
   const [bannersDB, setBannersDB] = useState<any[]>([]);
   
-  // Estados para as tabelas de suporte
   const [congregacoesDB, setCongregacoesDB] = useState<any[]>([]);
   const [departamentosDB, setDepartamentosDB] = useState<any[]>([]);
   
   const [carregando, setCarregando] = useState(true);
   
-  const [viewEventos, setViewEventos] = useState<"nenhum" | "form" | "departamentos" | "congregacoes">("nenhum");
+  const [viewEventos, setViewEventos] = useState<"nenhum" | "form" | "departamentos" | "congregacoes" | "lote">("nenhum");
+  
   const [novoNomeDep, setNovoNomeDep] = useState("");
   const [novoNomeCong, setNovoNomeCong] = useState("");
   const [busca, setBusca] = useState("");
   
   const [salvandoEvento, setSalvandoEvento] = useState(false);
   const [novoEvento, setNovoEvento] = useState({
-    data_evento: "", dia_semana: "Domingo", horario: "", titulo: "", departamento: "AD Vinhedo", abrangencia: "Local", congregacao: "Sede"
+    data_evento: "", horario: "", titulo: "", departamento: "", abrangencia: "Local", congregacao: ""
   });
+
+  // =========================================================================
+  // ESTADOS DO CADASTRO EM LOTE (ATUALIZADO)
+  // =========================================================================
+  const [formLote, setFormLote] = useState({
+    ano: new Date().getFullYear().toString(),
+    frequencia: "1",    // "1" a "5" ou "all"
+    diaSemana: "0",     // "0" (Dom) a "6" (Sab)
+    mes: "all",         // "all" ou "0" (Jan) a "11" (Dez)
+    horario: "", 
+    titulo: "", 
+    departamento: "", 
+    abrangencia: "Local", 
+    congregacao: ""
+  });
+  const [previaLote, setPreviaLote] = useState<{data_iso: string; dia_semana: string; data_pt: string; conflitos: any[]}[] | null>(null);
+  const [salvandoLote, setSalvandoLote] = useState(false);
 
   const [salvandoBanner, setSalvandoBanner] = useState(false);
   const [erroBanner, setErroBanner] = useState("");
@@ -38,19 +55,27 @@ export default function GerenciadorAgendaPage() {
     setCarregando(true);
     const hoje = new Date().toISOString().split("T")[0];
 
-    // Busca Eventos
     const { data: eventos } = await supabase.from("agenda_eventos").select("*").order("data_evento", { ascending: true });
     if (eventos) setEventosDB(eventos);
 
-    // Busca Congregações (Usando a sua tabela existente "congregacoes")
     const { data: congregacoes } = await supabase.from("congregacoes").select("*").order("nome");
-    if (congregacoes) setCongregacoesDB(congregacoes);
+    if (congregacoes) {
+      setCongregacoesDB(congregacoes);
+      if (congregacoes.length > 0) {
+        setNovoEvento(prev => ({...prev, congregacao: congregacoes[0].nome}));
+        setFormLote(prev => ({...prev, congregacao: congregacoes[0].nome}));
+      }
+    }
 
-    // Busca Departamentos
     const { data: departamentos } = await supabase.from("departamento").select("*").order("nome");
-    if (departamentos) setDepartamentosDB(departamentos);
+    if (departamentos) {
+      setDepartamentosDB(departamentos);
+      if (departamentos.length > 0) {
+        setNovoEvento(prev => ({...prev, departamento: departamentos[0].nome}));
+        setFormLote(prev => ({...prev, departamento: departamentos[0].nome}));
+      }
+    }
 
-    // Busca Banners com Exclusão Automática
     const { data: banners } = await supabase.from("banners").select("*").order("data_inicio", { ascending: true });
     if (banners) {
       const bannersValidos = [];
@@ -71,16 +96,96 @@ export default function GerenciadorAgendaPage() {
     buscarDados();
   }, [supabase]);
 
-  // =========================================================================
-  // AÇÕES DE EVENTOS
-  // =========================================================================
   const obterDiaSemana = (dataStr: string) => {
     if (!dataStr) return "";
     const dias = ["Domingo", "Segunda-Feira", "Terça-Feira", "Quarta-Feira", "Quinta-Feira", "Sexta-Feira", "Sábado"];
-    // Usamos split para contornar problemas de fuso horário na conversão de string para Date
     const [ano, mes, dia] = dataStr.split("-").map(Number);
     const data = new Date(ano, mes - 1, dia);
     return dias[data.getDay()];
+  };
+
+  // =========================================================================
+  // LÓGICA MATEMÁTICA DO CADASTRO EM LOTE (ATUALIZADA)
+  // =========================================================================
+  const gerarPreviaEmLote = (e: React.FormEvent) => {
+    e.preventDefault();
+    const anoNum = parseInt(formLote.ano);
+    const diaAlvo = parseInt(formLote.diaSemana);
+    const mesAlvo = formLote.mes;
+    const frequencia = formLote.frequencia;
+    
+    let datasGeradas: string[] = [];
+
+    // Define os limites do laço de repetição baseado se é "O Ano Inteiro" ou um mês específico
+    const mesInicial = mesAlvo === "all" ? 0 : parseInt(mesAlvo);
+    const mesFinal = mesAlvo === "all" ? 11 : parseInt(mesAlvo);
+
+    for (let mes = mesInicial; mes <= mesFinal; mes++) {
+      let dataCursor = new Date(anoNum, mes, 1);
+      let contagem = 0;
+      
+      while (dataCursor.getMonth() === mes) {
+        if (dataCursor.getDay() === diaAlvo) {
+          contagem++;
+          if (frequencia === "all" || contagem === parseInt(frequencia)) {
+            const iso = `${anoNum}-${String(mes + 1).padStart(2, "0")}-${String(dataCursor.getDate()).padStart(2, "0")}`;
+            datasGeradas.push(iso);
+            if (frequencia !== "all") break; // Encontrou o dia na semana pretendida (ex: o 2º domingo), pode pular para o próximo mês
+          }
+        }
+        dataCursor.setDate(dataCursor.getDate() + 1);
+      }
+    }
+
+    if (datasGeradas.length === 0) {
+      alert("A regra informada não resultou em nenhuma data válida neste ano. Verifique se escolheu, por exemplo, o 5º Domingo num mês que só tem 4.");
+      return;
+    }
+
+    const previa = datasGeradas.map(iso => {
+      const dataFormatada = iso.split("-").reverse().join("/");
+      const conflitos = eventosDB.filter(ev => ev.data_evento === iso);
+      return {
+        data_iso: iso,
+        data_pt: dataFormatada,
+        dia_semana: obterDiaSemana(iso),
+        conflitos: conflitos
+      };
+    });
+
+    setPreviaLote(previa);
+  };
+
+  const salvarLote = async () => {
+    if (!previaLote) return;
+    setSalvandoLote(true);
+
+    const payload = previaLote.map(item => ({
+      titulo: formLote.titulo,
+      data_evento: item.data_iso,
+      dia_semana: item.dia_semana,
+      horario: formLote.horario,
+      departamento: formLote.departamento,
+      abrangencia: formLote.abrangencia,
+      congregacao: formLote.congregacao
+    }));
+
+    const { data, error } = await supabase.from("agenda_eventos").insert(payload).select();
+
+    if (!error && data) {
+      setEventosDB([...eventosDB, ...data].sort((a, b) => a.data_evento.localeCompare(b.data_evento)));
+      setPreviaLote(null);
+      setFormLote({...formLote, titulo: "", horario: ""});
+      setViewEventos("nenhum");
+      alert(`${data.length} eventos foram agendados com sucesso!`);
+    } else {
+      alert("Erro ao salvar eventos em lote.");
+    }
+    setSalvandoLote(false);
+  };
+
+  const cancelarLote = () => {
+    setPreviaLote(null);
   };
 
   const adicionarEvento = async (e: React.FormEvent) => {
@@ -92,7 +197,7 @@ export default function GerenciadorAgendaPage() {
     
     if (!error && data) {
       setEventosDB([...eventosDB, data[0]].sort((a, b) => a.data_evento.localeCompare(b.data_evento)));
-      setNovoEvento({ data_evento: "", dia_semana: "Domingo", horario: "", titulo: "", departamento: "AD Vinhedo", abrangencia: "Local", congregacao: "Sede" });
+      setNovoEvento({...novoEvento, data_evento: "", horario: "", titulo: ""});
       setViewEventos("nenhum");
       alert("Evento adicionado com sucesso!");
     } else {
@@ -109,9 +214,6 @@ export default function GerenciadorAgendaPage() {
     }
   };
 
-  // =========================================================================
-  // AÇÕES DE DEPARTAMENTOS E CONGREGAÇÕES
-  // =========================================================================
   const handleAddDepartamento = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!novoNomeDep) return;
@@ -119,8 +221,6 @@ export default function GerenciadorAgendaPage() {
     if (!error && data) {
       setDepartamentosDB([...departamentosDB, data[0]].sort((a, b) => a.nome.localeCompare(b.nome)));
       setNovoNomeDep("");
-    } else {
-      alert("Erro ao adicionar departamento.");
     }
   };
 
@@ -130,19 +230,13 @@ export default function GerenciadorAgendaPage() {
     const { error } = await supabase.from("departamento").update({ nome: novoNome }).eq("id", id);
     if (!error) {
       setDepartamentosDB(departamentosDB.map(d => d.id === id ? { ...d, nome: novoNome } : d).sort((a, b) => a.nome.localeCompare(b.nome)));
-    } else {
-      alert("Erro ao editar departamento.");
     }
   };
 
   const handleDeleteDepartamento = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este departamento?")) return;
+    if (!confirm("Excluir este departamento?")) return;
     const { error } = await supabase.from("departamento").delete().eq("id", id);
-    if (!error) {
-      setDepartamentosDB(departamentosDB.filter(d => d.id !== id));
-    } else {
-      alert("Erro ao excluir. O departamento pode estar vinculado a algum evento.");
-    }
+    if (!error) setDepartamentosDB(departamentosDB.filter(d => d.id !== id));
   };
 
   const handleAddCongregacao = async (e: React.FormEvent) => {
@@ -152,8 +246,6 @@ export default function GerenciadorAgendaPage() {
     if (!error && data) {
       setCongregacoesDB([...congregacoesDB, data[0]].sort((a, b) => a.nome.localeCompare(b.nome)));
       setNovoNomeCong("");
-    } else {
-      alert("Erro ao adicionar congregação.");
     }
   };
 
@@ -163,19 +255,13 @@ export default function GerenciadorAgendaPage() {
     const { error } = await supabase.from("congregacoes").update({ nome: novoNome }).eq("id", id);
     if (!error) {
       setCongregacoesDB(congregacoesDB.map(c => c.id === id ? { ...c, nome: novoNome } : c).sort((a, b) => a.nome.localeCompare(b.nome)));
-    } else {
-      alert("Erro ao editar congregação.");
     }
   };
 
   const handleDeleteCongregacao = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir esta congregação?")) return;
+    if (!confirm("Excluir esta congregação?")) return;
     const { error } = await supabase.from("congregacoes").delete().eq("id", id);
-    if (!error) {
-      setCongregacoesDB(congregacoesDB.filter(c => c.id !== id));
-    } else {
-      alert("Erro ao excluir. A congregação pode estar vinculada a algum evento.");
-    }
+    if (!error) setCongregacoesDB(congregacoesDB.filter(c => c.id !== id));
   };
 
   const cultosRegularesNomes = ["Culto de Ensino", "Culto da Família", "Culto de Louvor e Palavra", "EBD"];
@@ -186,28 +272,20 @@ export default function GerenciadorAgendaPage() {
     ev.data_evento.includes(busca)
   );
 
-  // =========================================================================
-  // AÇÕES DE BANNERS
-  // =========================================================================
   const handleUploadBanner = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (!file.type.startsWith("image/")) {
       setErroBanner("Selecione um arquivo de imagem válido.");
       return;
     }
-
     setErroBanner("");
     setSalvandoBanner(true);
-
     try {
       const ext = file.name.split(".").pop();
       const nomeArquivo = `banner-${Date.now()}.${ext}`;
-
       const { error: upErro } = await supabase.storage.from("site").upload(nomeArquivo, file, { cacheControl: "3600" });
       if (upErro) throw upErro;
-
       const { data } = supabase.storage.from("site").getPublicUrl(nomeArquivo);
       setNovoBanner({ ...novoBanner, imagem_url: data.publicUrl });
     } catch (err) {
@@ -219,30 +297,21 @@ export default function GerenciadorAgendaPage() {
 
   const adicionarBanner = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!novoBanner.imagem_url) {
-      setErroBanner("Aguarde o upload da imagem ou envie uma imagem primeiro.");
-      return;
-    }
-
+    if (!novoBanner.imagem_url) return;
     setSalvandoBanner(true);
     const { data, error } = await supabase.from("banners").insert([novoBanner]).select();
-    
     if (!error && data) {
       setBannersDB([...bannersDB, data[0]].sort((a, b) => a.data_inicio.localeCompare(b.data_inicio)));
       setNovoBanner({ titulo: "", data_inicio: "", data_fim: "", imagem_url: "" });
-      alert("Banner cadastrado com sucesso!");
-    } else {
-      setErroBanner("Erro ao salvar o banner no banco.");
+      alert("Banner cadastrado!");
     }
     setSalvandoBanner(false);
   };
 
   const deletarBanner = async (id: string) => {
-    if (!confirm("Excluir este banner? Ele deixará de aparecer no site imediatamente.")) return;
+    if (!confirm("Excluir este banner?")) return;
     const { error } = await supabase.from("banners").delete().eq("id", id);
-    if (!error) {
-      setBannersDB(bannersDB.filter(b => b.id !== id));
-    }
+    if (!error) setBannersDB(bannersDB.filter(b => b.id !== id));
   };
 
   return (
@@ -280,11 +349,10 @@ export default function GerenciadorAgendaPage() {
 
       <main className="max-w-6xl mx-auto px-6 pt-8">
         
-        {/* ================= ABA: TABELA DE EVENTOS ================= */}
         {abaAtiva === "eventos" && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
             
-            <div className="flex justify-between items-center mb-2">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
               <h2 className="text-lg font-black text-slate-800">Eventos Cadastrados</h2>
               <div className="flex gap-2 flex-wrap justify-end">
                 <button 
@@ -300,6 +368,12 @@ export default function GerenciadorAgendaPage() {
                   {viewEventos === "congregacoes" ? "✕ Fechar Congregações" : "Congregações"}
                 </button>
                 <button 
+                  onClick={() => { setViewEventos(viewEventos === "lote" ? "nenhum" : "lote"); setPreviaLote(null); }}
+                  className="bg-amber-500 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-amber-600 transition shadow-sm flex items-center gap-2"
+                >
+                  {viewEventos === "lote" ? "✕ Cancelar Lote" : "↻ Cadastro em Lote"}
+                </button>
+                <button 
                   onClick={() => setViewEventos(viewEventos === "form" ? "nenhum" : "form")}
                   className="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-800 transition shadow-sm flex items-center gap-2"
                 >
@@ -308,16 +382,156 @@ export default function GerenciadorAgendaPage() {
               </div>
             </div>
 
+            {/* ================= TELA: CADASTRO EM LOTE ================= */}
+            {viewEventos === "lote" && (
+              <div className="bg-amber-50/50 p-6 sm:p-8 rounded-3xl border border-amber-200/50 shadow-inner mb-6 animate-in fade-in slide-in-from-top-4">
+                <h3 className="text-sm font-black text-amber-700 uppercase tracking-widest mb-6">Criar Eventos Recorrentes em Lote</h3>
+                
+                {!previaLote ? (
+                  <form onSubmit={gerarPreviaEmLote} className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                    
+                    <div className="sm:col-span-3">
+                      <label className="block text-xs font-bold text-slate-600 mb-1.5">Título do Evento *</label>
+                      <input type="text" placeholder="Ex: Ceia do Senhor, Reunião de Obreiros..." required value={formLote.titulo} onChange={e => setFormLote({...formLote, titulo: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100" />
+                    </div>
+                    
+                    {/* TRÊS SELECTS PARA A REGRA */}
+                    <div className="sm:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-5 bg-amber-100/50 p-5 rounded-2xl border border-amber-200/50">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Frequência *</label>
+                        <select value={formLote.frequencia} onChange={e => setFormLote({...formLote, frequencia: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100">
+                          <option value="all">Todos(as)</option>
+                          <option value="1">Todo 1º(ª)</option>
+                          <option value="2">Todo 2º(ª)</option>
+                          <option value="3">Todo 3º(ª)</option>
+                          <option value="4">Todo 4º(ª)</option>
+                          <option value="5">Todo 5º(ª)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Dia da Semana *</label>
+                        <select value={formLote.diaSemana} onChange={e => setFormLote({...formLote, diaSemana: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100">
+                          <option value="0">Domingo</option>
+                          <option value="1">Segunda-feira</option>
+                          <option value="2">Terça-feira</option>
+                          <option value="3">Quarta-feira</option>
+                          <option value="4">Quinta-feira</option>
+                          <option value="5">Sexta-feira</option>
+                          <option value="6">Sábado</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Mês Específico *</label>
+                        <select value={formLote.mes} onChange={e => setFormLote({...formLote, mes: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100">
+                          <option value="all">O Ano Inteiro</option>
+                          <option value="0">Janeiro</option>
+                          <option value="1">Fevereiro</option>
+                          <option value="2">Março</option>
+                          <option value="3">Abril</option>
+                          <option value="4">Maio</option>
+                          <option value="5">Junho</option>
+                          <option value="6">Julho</option>
+                          <option value="7">Agosto</option>
+                          <option value="8">Setembro</option>
+                          <option value="9">Outubro</option>
+                          <option value="10">Novembro</option>
+                          <option value="11">Dezembro</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1.5">Ano *</label>
+                      <input type="number" min="2024" max="2035" required value={formLote.ano} onChange={e => setFormLote({...formLote, ano: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1.5">Horário * (Ex: 19h30)</label>
+                      <input type="text" required placeholder="19h30" value={formLote.horario} onChange={e => setFormLote({...formLote, horario: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100" />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1.5">Departamento</label>
+                      <select value={formLote.departamento} onChange={e => setFormLote({...formLote, departamento: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100">
+                        <option value="" disabled>Selecione...</option>
+                        {departamentosDB.map(d => <option key={d.id} value={d.nome}>{d.nome}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1.5">Abrangência</label>
+                      <select value={formLote.abrangencia} onChange={e => setFormLote({...formLote, abrangencia: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100">
+                        <option value="Local">Local</option>
+                        <option value="Campo">Campo</option>
+                        <option value="Estadual">Estadual</option>
+                        <option value="Nacional">Nacional</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1.5">Congregação</label>
+                      <select value={formLote.congregacao} onChange={e => setFormLote({...formLote, congregacao: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100">
+                        <option value="" disabled>Selecione...</option>
+                        {congregacoesDB.map(c => <option key={c.id} value={c.nome}>{c.nome}</option>)}
+                      </select>
+                    </div>
+
+                    <div className="sm:col-span-3 flex justify-end mt-4">
+                      <button type="submit" className="bg-amber-500 text-white px-8 py-3.5 font-black rounded-xl hover:bg-amber-600 transition shadow-md">
+                        Gerar Prévia de Datas
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="animate-in fade-in">
+                    <p className="text-slate-600 mb-4">Serão criados <strong>{previaLote.length} eventos</strong> com o título "{formLote.titulo}" às {formLote.horario}. Verifique as datas abaixo antes de salvar.</p>
+                    
+                    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mb-6">
+                      <ul className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
+                        {previaLote.map((item, i) => (
+                          <li key={i} className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 hover:bg-slate-50">
+                            <div>
+                              <span className="font-bold text-slate-800 block sm:inline">{item.data_pt}</span>
+                              <span className="text-xs text-slate-500 ml-0 sm:ml-2 block sm:inline">{item.dia_semana}</span>
+                            </div>
+                            
+                            {item.conflitos.length > 0 ? (
+                              <div className="bg-red-50 border border-red-200 text-red-700 text-xs px-3 py-1.5 rounded-lg font-medium">
+                                ⚠️ Já existem <strong>{item.conflitos.length}</strong> evento(s) neste dia (Ex: {item.conflitos[0].titulo}).
+                              </div>
+                            ) : (
+                              <div className="bg-green-50 text-green-700 text-xs px-3 py-1.5 rounded-lg font-bold">
+                                ✅ Dia livre
+                              </div>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {previaLote.some(i => i.conflitos.length > 0) && (
+                      <p className="text-red-600 text-sm font-bold mb-6">Atenção: Você tem sobreposições de eventos identificadas acima. Deseja criar mesmo assim?</p>
+                    )}
+
+                    <div className="flex justify-end gap-3">
+                      <button onClick={cancelarLote} className="bg-slate-200 text-slate-700 px-6 py-3 font-bold rounded-xl hover:bg-slate-300 transition">
+                        Voltar e Corrigir
+                      </button>
+                      <button onClick={salvarLote} disabled={salvandoLote} className="bg-blue-600 text-white px-8 py-3 font-black rounded-xl hover:bg-blue-700 transition disabled:opacity-50 shadow-md">
+                        {salvandoLote ? "Salvando..." : "Confirmar e Salvar Lote"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* VISÃO: EVENTO ÚNICO */}
             {viewEventos === "form" && (
               <div className="bg-slate-100 p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-inner mb-6 animate-in fade-in slide-in-from-top-4">
-                <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-6">Cadastrar Novo Evento na Agenda</h3>
+                <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-6">Cadastrar Evento Único</h3>
                 <form onSubmit={adicionarEvento} className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                  
                   <div className="sm:col-span-3">
                     <label className="block text-xs font-bold text-slate-600 mb-1.5">Título do Evento *</label>
                     <input type="text" placeholder="Ex: Congresso de Jovens UMADEVI" required value={novoEvento.titulo} onChange={e => setNovoEvento({...novoEvento, titulo: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
                   </div>
-                  
                   <div>
                     <label className="block text-xs font-bold text-slate-600 mb-1.5">Data *</label>
                     <input type="date" required value={novoEvento.data_evento} onChange={e => setNovoEvento({...novoEvento, data_evento: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
@@ -326,7 +540,6 @@ export default function GerenciadorAgendaPage() {
                     <label className="block text-xs font-bold text-slate-600 mb-1.5">Horário * (Ex: 19h30)</label>
                     <input type="text" required placeholder="19h30" value={novoEvento.horario} onChange={e => setNovoEvento({...novoEvento, horario: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
                   </div>
-
                   <div>
                     <label className="block text-xs font-bold text-slate-600 mb-1.5">Departamento</label>
                     <select value={novoEvento.departamento} onChange={e => setNovoEvento({...novoEvento, departamento: e.target.value})} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
@@ -350,7 +563,6 @@ export default function GerenciadorAgendaPage() {
                       {congregacoesDB.map(c => <option key={c.id} value={c.nome}>{c.nome}</option>)}
                     </select>
                   </div>
-
                   <div className="sm:col-span-3 flex justify-end mt-4">
                     <button type="submit" disabled={salvandoEvento} className="bg-blue-600 text-white px-8 py-3.5 font-black rounded-xl hover:bg-blue-700 transition disabled:opacity-50 shadow-md">
                       {salvandoEvento ? "Salvando..." : "Salvar Evento no Banco"}
@@ -360,15 +572,14 @@ export default function GerenciadorAgendaPage() {
               </div>
             )}
 
+            {/* VISÃO: DEPARTAMENTOS */}
             {viewEventos === "departamentos" && (
               <div className="bg-slate-100 p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-inner mb-6 animate-in fade-in slide-in-from-top-4">
                 <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-6">Gerenciar Departamentos</h3>
-                
                 <form onSubmit={handleAddDepartamento} className="flex gap-3 mb-8">
                   <input type="text" value={novoNomeDep} onChange={e => setNovoNomeDep(e.target.value)} placeholder="Nome do novo departamento..." className="flex-1 bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" required />
                   <button type="submit" className="bg-blue-600 text-white px-6 py-3 font-black rounded-xl hover:bg-blue-700 transition shadow-md">Adicionar</button>
                 </form>
-
                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                   <ul className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
                     {departamentosDB.map(dep => (
@@ -380,21 +591,19 @@ export default function GerenciadorAgendaPage() {
                         </div>
                       </li>
                     ))}
-                    {departamentosDB.length === 0 && <li className="p-4 text-center text-slate-500 text-sm">Nenhum departamento cadastrado.</li>}
                   </ul>
                 </div>
               </div>
             )}
 
+            {/* VISÃO: CONGREGAÇÕES */}
             {viewEventos === "congregacoes" && (
               <div className="bg-slate-100 p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-inner mb-6 animate-in fade-in slide-in-from-top-4">
                 <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-6">Gerenciar Congregações</h3>
-                
                 <form onSubmit={handleAddCongregacao} className="flex gap-3 mb-8">
                   <input type="text" value={novoNomeCong} onChange={e => setNovoNomeCong(e.target.value)} placeholder="Nome da nova congregação..." className="flex-1 bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" required />
                   <button type="submit" className="bg-blue-600 text-white px-6 py-3 font-black rounded-xl hover:bg-blue-700 transition shadow-md">Adicionar</button>
                 </form>
-
                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                   <ul className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
                     {congregacoesDB.map(cong => (
@@ -406,12 +615,12 @@ export default function GerenciadorAgendaPage() {
                         </div>
                       </li>
                     ))}
-                    {congregacoesDB.length === 0 && <li className="p-4 text-center text-slate-500 text-sm">Nenhuma congregação cadastrada.</li>}
                   </ul>
                 </div>
               </div>
             )}
 
+            {/* LISTA E BUSCA */}
             <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden mt-4">
               <div className="p-4 border-b border-slate-100 bg-slate-50">
                 <input 
@@ -422,7 +631,6 @@ export default function GerenciadorAgendaPage() {
                   className="w-full bg-white border border-slate-200 px-4 py-3 rounded-xl text-sm font-medium outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition"
                 />
               </div>
-
               {carregando ? (
                 <p className="p-8 text-center text-slate-500 font-medium">Carregando tabela...</p>
               ) : (
@@ -465,14 +673,10 @@ export default function GerenciadorAgendaPage() {
           </div>
         )}
 
-        {/* ================= ABA: BANNERS E CARTAZES ================= */}
         {abaAtiva === "banners" && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
-            
             <div className="bg-amber-50/50 p-6 sm:p-8 rounded-3xl border border-amber-200/50 shadow-sm">
               <h2 className="text-lg font-black text-slate-800 mb-2">Cadastrar Novo Banner</h2>
-              <p className="text-sm text-slate-500 mb-6">Banners vencidos (data fim menor que hoje) são removidos automaticamente do sistema para manter o site atualizado.</p>
-              
               <form onSubmit={adicionarBanner} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                   <div className="sm:col-span-3">
@@ -495,9 +699,7 @@ export default function GerenciadorAgendaPage() {
                     </label>
                   </div>
                 </div>
-                
                 {erroBanner && <p className="text-xs font-bold text-red-600 bg-red-50 p-2 rounded-lg">{erroBanner}</p>}
-                
                 <div className="flex justify-end pt-4">
                   <button type="submit" disabled={salvandoBanner || !novoBanner.imagem_url} className="bg-amber-500 text-white font-black px-8 py-3.5 rounded-xl hover:bg-amber-600 transition disabled:opacity-50 shadow-md">
                     Cadastrar Banner
@@ -511,7 +713,6 @@ export default function GerenciadorAgendaPage() {
               {bannersDB.map(banner => (
                 <div key={banner.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col">
                   <div className="relative aspect-video bg-slate-100">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={banner.imagem_url} alt={banner.titulo} className="object-cover w-full h-full" />
                   </div>
                   <div className="p-5 flex-1 flex flex-col justify-between">
@@ -527,12 +728,6 @@ export default function GerenciadorAgendaPage() {
                   </div>
                 </div>
               ))}
-              
-              {bannersDB.length === 0 && !carregando && (
-                <div className="col-span-full p-8 border border-dashed border-slate-300 rounded-2xl text-center text-slate-400 font-medium">
-                  Nenhum banner ativo no momento.
-                </div>
-              )}
             </div>
           </div>
         )}
