@@ -56,10 +56,10 @@ export default function GerenciadorAgendaPage() {
     setCarregando(true);
     const hoje = new Date().toISOString().split("T")[0];
 
-    const { data: eventos } = await supabase.from("site_agenda_eventos").select("*").order("data_evento", { ascending: true });
+    const { data: eventos } = await supabase.from("agenda_eventos").select("*").order("data_evento", { ascending: true });
     if (eventos) setEventosDB(eventos);
 
-    const { data: congregacoes } = await supabase.from("site_congregacoes").select("*").order("nome");
+    const { data: congregacoes } = await supabase.from("obreiro_congregacoes").select("*").order("nome");
     if (congregacoes) {
       setCongregacoesDB(congregacoes);
       if (congregacoes.length > 0) {
@@ -68,7 +68,7 @@ export default function GerenciadorAgendaPage() {
       }
     }
 
-    const { data: departamentos } = await supabase.from("site_departamentos").select("*").order("nome");
+    const { data: departamentos } = await supabase.from("agenda_departamentos").select("*").order("nome");
     if (departamentos) {
       setDepartamentosDB(departamentos);
       if (departamentos.length > 0) {
@@ -77,7 +77,7 @@ export default function GerenciadorAgendaPage() {
       }
     }
 
-    const { data: banners } = await supabase.from("site_banners").select("*").order("data_inicio", { ascending: true });
+    const { data: banners } = await supabase.from("agenda_banners").select("*").order("data_inicio", { ascending: true });
     if (banners) {
       const bannersValidos = [];
       for (const banner of banners) {
@@ -173,7 +173,7 @@ export default function GerenciadorAgendaPage() {
       congregacao: formLote.congregacao
     }));
 
-    const { data, error } = await supabase.from("site_agenda_eventos").insert(payload).select();
+    const { data, error } = await supabase.from("agenda_eventos").insert(payload).select();
 
     if (!error && data) {
       setEventosDB([...eventosDB, ...data].sort((a, b) => a.data_evento.localeCompare(b.data_evento)));
@@ -196,7 +196,7 @@ export default function GerenciadorAgendaPage() {
     setSalvandoEvento(true);
     
     const eventoParaSalvar = { ...novoEvento, dia_semana: obterDiaSemana(novoEvento.data_evento) };
-    const { data, error } = await supabase.from("site_agenda_eventos").insert([eventoParaSalvar]).select();
+    const { data, error } = await supabase.from("agenda_eventos").insert([eventoParaSalvar]).select();
     
     if (!error && data) {
       setEventosDB([...eventosDB, data[0]].sort((a, b) => a.data_evento.localeCompare(b.data_evento)));
@@ -211,7 +211,7 @@ export default function GerenciadorAgendaPage() {
 
   const deletarEvento = async (id: string) => {
     if (!confirm("Tem certeza que deseja excluir este evento?")) return;
-    const { error } = await supabase.from("site_agenda_eventos").delete().eq("id", id);
+    const { error } = await supabase.from("agenda_eventos").delete().eq("id", id);
     if (!error) {
       setEventosDB(eventosDB.filter(ev => ev.id !== id));
     }
@@ -220,7 +220,7 @@ export default function GerenciadorAgendaPage() {
   const handleAddDepartamento = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!novoNomeDep) return;
-    const { data, error } = await supabase.from("site_departamentos").insert([{ nome: novoNomeDep }]).select();
+    const { data, error } = await supabase.from("agenda_departamentos").insert([{ nome: novoNomeDep }]).select();
     if (!error && data) {
       setDepartamentosDB([...departamentosDB, data[0]].sort((a, b) => a.nome.localeCompare(b.nome)));
       setNovoNomeDep("");
@@ -230,7 +230,7 @@ export default function GerenciadorAgendaPage() {
   const handleEditDepartamento = async (id: string, nomeAtual: string) => {
     const novoNome = prompt("Digite o novo nome para o departamento:", nomeAtual);
     if (!novoNome || novoNome === nomeAtual) return;
-    const { error } = await supabase.from("site_departamentos").update({ nome: novoNome }).eq("id", id);
+    const { error } = await supabase.from("agenda_departamentos").update({ nome: novoNome }).eq("id", id);
     if (!error) {
       setDepartamentosDB(departamentosDB.map(d => d.id === id ? { ...d, nome: novoNome } : d).sort((a, b) => a.nome.localeCompare(b.nome)));
     }
@@ -238,14 +238,14 @@ export default function GerenciadorAgendaPage() {
 
   const handleDeleteDepartamento = async (id: string) => {
     if (!confirm("Excluir este departamento?")) return;
-    const { error } = await supabase.from("site_departamentos").delete().eq("id", id);
+    const { error } = await supabase.from("agenda_departamentos").delete().eq("id", id);
     if (!error) setDepartamentosDB(departamentosDB.filter(d => d.id !== id));
   };
 
   const handleAddCongregacao = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!novoNomeCong) return;
-    const { data, error } = await supabase.from("site_congregacoes").insert([{ nome: novoNomeCong }]).select();
+    const { data, error } = await supabase.from("obreiro_congregacoes").insert([{ nome: novoNomeCong }]).select();
     if (!error && data) {
       setCongregacoesDB([...congregacoesDB, data[0]].sort((a, b) => a.nome.localeCompare(b.nome)));
       setNovoNomeCong("");
@@ -255,7 +255,7 @@ export default function GerenciadorAgendaPage() {
   const handleEditCongregacao = async (id: string, nomeAtual: string) => {
     const novoNome = prompt("Digite o novo nome para a congregação:", nomeAtual);
     if (!novoNome || novoNome === nomeAtual) return;
-    const { error } = await supabase.from("site_congregacoes").update({ nome: novoNome }).eq("id", id);
+    const { error } = await supabase.from("obreiro_congregacoes").update({ nome: novoNome }).eq("id", id);
     if (!error) {
       setCongregacoesDB(congregacoesDB.map(c => c.id === id ? { ...c, nome: novoNome } : c).sort((a, b) => a.nome.localeCompare(b.nome)));
     }
@@ -263,7 +263,7 @@ export default function GerenciadorAgendaPage() {
 
   const handleDeleteCongregacao = async (id: string) => {
     if (!confirm("Excluir esta congregação?")) return;
-    const { error } = await supabase.from("site_congregacoes").delete().eq("id", id);
+    const { error } = await supabase.from("obreiro_congregacoes").delete().eq("id", id);
     if (!error) setCongregacoesDB(congregacoesDB.filter(c => c.id !== id));
   };
 
@@ -302,7 +302,7 @@ export default function GerenciadorAgendaPage() {
     e.preventDefault();
     if (!novoBanner.imagem_url) return;
     setSalvandoBanner(true);
-    const { data, error } = await supabase.from("banners").insert([novoBanner]).select();
+    const { data, error } = await supabase.from("agenda_banners").insert([novoBanner]).select();
     if (!error && data) {
       setBannersDB([...bannersDB, data[0]].sort((a, b) => a.data_inicio.localeCompare(b.data_inicio)));
       setNovoBanner({ titulo: "", data_inicio: "", data_fim: "", imagem_url: "" });
@@ -313,7 +313,7 @@ export default function GerenciadorAgendaPage() {
 
   const deletarBanner = async (id: string) => {
     if (!confirm("Excluir este banner?")) return;
-    const { error } = await supabase.from("site_banners").delete().eq("id", id);
+    const { error } = await supabase.from("agenda_banners").delete().eq("id", id);
     if (!error) setBannersDB(bannersDB.filter(b => b.id !== id));
   };
 
