@@ -17,7 +17,7 @@ export async function salvarMateria(formData: FormData) {
   if (!session) throw new Error('Não autorizado')
 
   const { error } = await supabase
-    .from('materias')
+    .from('ibv_materias')
     .upsert({
       ...(id ? { id } : {}),
       nome,
@@ -30,7 +30,7 @@ export async function salvarMateria(formData: FormData) {
   // Registro na Auditoria com a função centralizada
   await logAction(supabase, session.user, {
     action: id ? 'EDIÇÃO DE MATÉRIA' : 'NOVA MATÉRIA',
-    tableName: 'materias',
+    tableName: 'ibv_materias',
     details: `${id ? 'Alterou' : 'Cadastrou'} a matéria ${nome} como ${status.toUpperCase()}`
   })
 

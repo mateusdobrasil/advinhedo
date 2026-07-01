@@ -1,10 +1,5 @@
 'use server'
 
-/**
- * app/actions/recepcao-auth.ts
- * Server Action para autenticação da recepção.
- */
-
 import { cookies } from 'next/headers'
 
 const COOKIE_NAME = 'recepcao_auth'

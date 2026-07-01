@@ -1,10 +1,5 @@
 'use client'
 
-/**
- * /reunioes/admin/obreiros/page.jsx
- * Lista de obreiros com status de foto cadastrada
- */
-
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
@@ -35,8 +30,8 @@ export default function ObreirosPage() {
   useEffect(() => {
     async function carregar() {
       const { data } = await supabase
-        .from('obreiros')
-        .select('id, nome, foto_url, face_descriptor, congregacoes(nome), cargos(nome)')
+        .from('obreiro_cadastro')
+        .select('id, nome, foto_url, face_descriptor, obreiro_congregacoes(nome), obreiro_cargos(nome)')
         .eq('situacao', 'Ativo')
         .order('nome')
       setObreiros(data || [])
@@ -48,7 +43,7 @@ export default function ObreirosPage() {
   const filtrados = obreiros.filter(o => {
     const buscaNorm = normalizarTexto(busca)
     const nomeNorm  = normalizarTexto(o.nome)
-    const congNorm  = normalizarTexto(o.congregacoes?.nome || '')
+    const congNorm  = normalizarTexto(o.obreiro_congregacoes?.nome || '')
     const corresponde = !busca || nomeNorm.includes(buscaNorm) || congNorm.includes(buscaNorm)
     if (!corresponde) return false
     if (filtro === 'com_foto') return !!o.face_descriptor
@@ -147,7 +142,7 @@ export default function ObreirosPage() {
                 {/* Info */}
                 <div style={s.cardInfo}>
                   <div style={s.cardNome}>{o.nome}</div>
-                  <div style={s.cardSub}>{o.congregacoes?.nome || '—'}</div>
+                  <div style={s.cardSub}>{o.obreiro_congregacoes?.nome || '—'}</div>
                   <div style={{ ...s.cardStatus, color: temFoto ? '#065F46' : '#F59E0B' }}>
                     {temFoto ? 'Foto cadastrada' : 'Sem foto — toque para cadastrar'}
                   </div>

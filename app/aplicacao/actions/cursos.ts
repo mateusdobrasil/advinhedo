@@ -17,7 +17,7 @@ export async function salvarCurso(formData: FormData) {
 
   // 1. Salva ou Atualiza o Curso
   const { error } = await supabase
-    .from('cursos')
+    .from('ibv_cursos')
     .upsert({
       ...(id ? { id } : {}),
       nome,
@@ -33,7 +33,7 @@ export async function salvarCurso(formData: FormData) {
   // 2. Registro na Auditoria com a função centralizada
   await logAction(supabase, session.user, {
     action: id ? 'EDIÇÃO DE CURSO' : 'NOVO CURSO',
-    tableName: 'cursos',
+    tableName: 'ibv_cursos',
     details: `${id ? 'Alterou' : 'Cadastrou'} o curso ${nome} com status: ${status.toUpperCase()}`
   })
 

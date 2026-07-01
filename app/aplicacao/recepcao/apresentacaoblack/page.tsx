@@ -9,7 +9,7 @@ import logo1 from '../../imgs/logo.png';
 import logo2 from '../../imgs/logo_branco.png';
 
 export default function TelaApresentacaoBlack() {
-  const router = useRouter();
+  const router = useRouter(); 
   const supabase = createClientComponentClient();
 
   const [eventoAtivo, setEventoAtivo] = useState<string | null>(null);
@@ -25,11 +25,11 @@ export default function TelaApresentacaoBlack() {
 
   const carregarDados = useCallback(async (eventoId: string) => {
     const { data, error } = await supabase
-      .from('visitantes')
+      .from('recepcao_visitantes')
       .select(`
         id, nome_visitante, setor_trabalho, nome_esposa, representado_por,
         foi_apresentado, tipo, data_aniversario, observacoes, created_at,
-        dependentes_acompanhantes ( nome, tipo )
+        recepcao_dependentes_acompanhantes ( nome, tipo )
       `)
       .eq('evento_id', eventoId)
       .eq('foi_apresentado', false);
@@ -75,7 +75,7 @@ export default function TelaApresentacaoBlack() {
     
     setEventoAtivo(cookieEvento);
 
-    supabase.from('eventos').select('nome_evento').eq('id', cookieEvento).single()
+    supabase.from('recepcao_eventos').select('nome_evento').eq('id', cookieEvento).single()
       .then(({ data }) => {
         if (data) setTituloEvento(data.nome_evento);
       });
@@ -189,8 +189,8 @@ export default function TelaApresentacaoBlack() {
           (() => {
             const visitante = visitantesExibidos[0];
             const tipo = visitante.tipo || 'Visitas';
-            const filhos = visitante.dependentes_acompanhantes?.filter((d: any) => d.tipo === 'FILHO') || [];
-            const acompanhantes = visitante.dependentes_acompanhantes?.filter((d: any) => d.tipo === 'ACOMPANHANTE') || [];
+            const filhos = visitante.recepcao_dependentes_acompanhantes?.filter((d: any) => d.tipo === 'FILHO') || [];
+            const acompanhantes = visitante.recepcao_dependentes_acompanhantes?.filter((d: any) => d.tipo === 'ACOMPANHANTE') || [];
             const nomesFilhos = filhos.map((f: any) => f.nome);
             const nomesAcompanhantes = acompanhantes.map((a: any) => a.nome);
 

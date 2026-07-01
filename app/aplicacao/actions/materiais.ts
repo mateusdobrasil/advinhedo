@@ -22,7 +22,7 @@ export async function enviarMaterial(formData: FormData) {
 
   // 2. Faz o upload para o Storage (Bucket 'materiais')
   const { error: uploadError } = await supabase.storage
-    .from('materiais')
+    .from('ibv_materiais')
     .upload(nomeUnico, arquivo)
 
   if (uploadError) {
@@ -32,11 +32,11 @@ export async function enviarMaterial(formData: FormData) {
 
   // 3. Pega a URL pública (o link de download)
   const { data: { publicUrl } } = supabase.storage
-    .from('materiais')
+    .from('ibv_materiais')
     .getPublicUrl(nomeUnico)
 
   // 4. Salva os dados na tabela do banco
-  const { error: dbError } = await supabase.from('materiais').insert({
+  const { error: dbError } = await supabase.from('ibv_materiais').insert({
     titulo,
     descricao,
     arquivo_url: publicUrl,
@@ -51,7 +51,7 @@ export async function enviarMaterial(formData: FormData) {
   if (session) {
     await logAction(supabase, session.user, {
       action: 'ENVIO DE MATERIAL',
-      tableName: 'materiais',
+      tableName: 'ibv_materiais',
       details: `O material "${titulo}" foi enviado com sucesso. URL: ${publicUrl}`
     })
   }

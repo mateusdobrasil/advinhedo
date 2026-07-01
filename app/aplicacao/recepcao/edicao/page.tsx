@@ -17,7 +17,7 @@ export default function EdicaoVisitante() {
   
   // NOVO ESTADO: Armazena todos os locais existentes históricos do banco de dados
   const [locaisExistentes, setLocaisExistentes] = useState<string[]>([]);
-
+ 
   // Estados para Modal de Evento
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [novoEventoNome, setNovoEventoNome] = useState("");
@@ -54,14 +54,14 @@ export default function EdicaoVisitante() {
     
     // Busca eventos ativos para o select principal
     const { data, error } = await supabase
-      .from('eventos')
+      .from('recepcao_eventos')
       .select('*')
       .eq('ativo', true)
       .order('created_at', { ascending: false });
 
     // BUSCA COMPLEMENTAR: Coleta todos os locais cadastrados na história (ativos e inativos)
     const { data: todosEventos } = await supabase
-      .from('eventos')
+      .from('recepcao_eventos')
       .select('local_evento');
 
     if (todosEventos) {
@@ -89,7 +89,7 @@ export default function EdicaoVisitante() {
       });
 
       if (eventosVencidos.length > 0) {
-        supabase.from('eventos').update({ ativo: false }).in('id', eventosVencidos).then();
+        supabase.from('recepcao_eventos').update({ ativo: false }).in('id', eventosVencidos).then();
       }
 
       setEventos(eventosValidos);
@@ -125,7 +125,7 @@ export default function EdicaoVisitante() {
     if (!confirm("Tem certeza que deseja encerrar este evento? Ele será desativado e não aparecerá mais nas listas.")) return;
 
     setLoadingEventos(true);
-    const { error } = await supabase.from('eventos').update({ ativo: false }).eq('id', eventoAtivoId);
+    const { error } = await supabase.from('recepcao_eventos').update({ ativo: false }).eq('id', eventoAtivoId);
     
     if (error) {
       alert(`Erro ao encerrar evento: ${error.message}`);
@@ -157,7 +157,7 @@ export default function EdicaoVisitante() {
 
     setSalvandoEvento(true);
     const { data, error } = await supabase
-      .from('eventos')
+      .from('recepcao_eventos')
       .insert([{ 
         nome_evento: novoEventoNome, 
         data_evento: novoEventoData, 
@@ -192,8 +192,8 @@ export default function EdicaoVisitante() {
     }
 
     let query = supabase
-      .from("visitantes")
-      .select(`*, dependentes_acompanhantes (*)`)
+      .from("recepcao_visitantes")
+      .select(`*, recepcao_dependentes_acompanhantes (*)`)
       .eq("evento_id", eventoAtivoId)
       .order("created_at", { ascending: false });
 
@@ -252,7 +252,7 @@ export default function EdicaoVisitante() {
   // --- FUNÇÕES DE EDIÇÃO DE VISITANTES ---
   const alternarStatusApresentacao = async (id: string, statusAtual: boolean) => {
     const novoStatus = !statusAtual;
-    const { error } = await supabase.from("visitantes").update({ foi_apresentado: novoStatus }).eq("id", id);
+    const { error } = await supabase.from("recepcao_visitantes").update({ foi_apresentado: novoStatus }).eq("id", id);
     if (error) {
       setMensagem(`Erro ao atualizar status: ${error.message}`);
     } else {
@@ -291,7 +291,7 @@ export default function EdicaoVisitante() {
 
     try {
       const { error: errorVisitante } = await supabase
-        .from("visitantes")
+        .from("recepcao_visitantes")
         .update({
           tipo: tipo,
           nome_visitante: nome,
@@ -308,12 +308,12 @@ export default function EdicaoVisitante() {
 
       if (tipo === 'Visitas') {
         for (const dep of dependentes) {
-          if (dep.excluido && dep.id) await supabase.from("dependentes_acompanhantes").delete().eq("id", dep.id);
-          else if (dep.novo && dep.nome.trim() !== "") await supabase.from("dependentes_acompanhantes").insert([{ visitante_id: visitanteEditando.id, evento_id: eventoAtivoId, nome: dep.nome, tipo: dep.tipo }]);
-          else if (!dep.excluido && dep.id) await supabase.from("dependentes_acompanhantes").update({ nome: dep.nome }).eq("id", dep.id);
+          if (dep.excluido && dep.id) await supabase.from("recepcao_dependentes_acompanhantes").delete().eq("id", dep.id);
+          else if (dep.novo && dep.nome.trim() !== "") await supabase.from("recepcao_dependentes_acompanhantes").insert([{ visitante_id: visitanteEditando.id, evento_id: eventoAtivoId, nome: dep.nome, tipo: dep.tipo }]);
+          else if (!dep.excluido && dep.id) await supabase.from("recepcao_dependentes_acompanhantes").update({ nome: dep.nome }).eq("id", dep.id);
         }
       } else {
-        await supabase.from("dependentes_acompanhantes").delete().eq("visitante_id", visitanteEditando.id);
+        await supabase.from("recepcao_dependentes_acompanhantes").delete().eq("visitante_id", visitanteEditando.id);
       }
 
       setMensagem("Registro atualizado com sucesso!");
@@ -332,7 +332,7 @@ export default function EdicaoVisitante() {
   const handleExcluir = async (id: string) => {
     if (!confirm("Tem certeza que deseja apagar este registro permanentemente?")) return;
     setBuscando(true);
-    const { error } = await supabase.from("visitantes").delete().eq("id", id);
+    const { error } = await supabase.from("recepcao_visitantes").delete().eq("id", id);
     if (error) setMensagem(`Erro ao excluir: ${error.message}`);
     else {
       setMensagem("Registro excluído com sucesso.");

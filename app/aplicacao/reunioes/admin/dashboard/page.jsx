@@ -87,9 +87,9 @@ export default function Dashboard() {
     async function carregar() {
       setLoading(true)
       const [{ data: reuns }, { data: obs }, { data: pres }] = await Promise.all([
-        supabase.from('reunioes').select('id, titulo, data_reuniao, aberta').order('data_reuniao', { ascending: false }),
-        supabase.from('obreiros').select('id, nome, data_nascimento, congregacoes(nome), cargos(nome)').eq('situacao', 'Ativo'),
-        supabase.from('presencas').select('reuniao_id, obreiro_id, presente'),
+        supabase.from('obreiro_reunioes').select('id, titulo, data_reuniao, aberta').order('data_reuniao', { ascending: false }),
+        supabase.from('obreiro_cadastro').select('id, nome, data_nascimento, obreiro_congregacoes(nome), obreiro_cargos(nome)').eq('situacao', 'Ativo'),
+        supabase.from('obreiro_presencas').select('reuniao_id, obreiro_id, presente'),
       ])
       const mapa = {}
       pres?.forEach(p => {
@@ -142,7 +142,7 @@ export default function Dashboard() {
   const dadosCargo = useMemo(() => {
     const mapa = {}
     obreiros.forEach(o => {
-      const cargo = o.cargos?.nome || 'Sem cargo'
+      const cargo = o.obreiro_cargos?.nome || 'Sem cargo'
       if (!mapa[cargo]) mapa[cargo] = { total: 0, presentes: 0 }
       mapa[cargo].total++
       if (presentesSet.has(o.id)) mapa[cargo].presentes++
@@ -378,10 +378,10 @@ export default function Dashboard() {
                   <div>
                     <div style={s.ausenteNome}>{o.nome}</div>
                     <div style={s.ausenteSub}>
-                      {o.congregacoes?.nome || '—'}
-                      {o.cargos?.nome && o.cargos.nome !== 'Membro' &&
-                        <span style={{ ...s.badgeCargo, background: COR_CARGO[o.cargos.nome] + '22', color: COR_CARGO[o.cargos.nome] }}>
-                          {o.cargos.nome}
+                      {o.obreiro_congregacoes?.nome || '—'}
+                      {o.obreiro_cargos?.nome && o.obreiro_cargos.nome !== 'Membro' &&
+                        <span style={{ ...s.badgeCargo, background: COR_CARGO[o.obreiro_cargos.nome] + '22', color: COR_CARGO[o.obreiro_cargos.nome] }}>
+                          {o.obreiro_cargos.nome}
                         </span>}
                     </div>
                   </div>

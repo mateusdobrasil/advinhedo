@@ -81,8 +81,8 @@ function FacialContent() {
       setStatusMsg('Carregando cadastros faciais...')
 
       const { data: obreiros } = await supabase
-        .from('obreiros')
-        .select('id, nome, foto_url, face_descriptor, congregacoes(nome), cargos(nome)')
+        .from('obreiro_cadastro')
+        .select('id, nome, foto_url, face_descriptor, obreiro_congregacoes(nome), obreiro_cargos(nome)')
         .eq('situacao', 'Ativo')
         .not('face_descriptor', 'is', null)
 
@@ -195,13 +195,13 @@ function FacialContent() {
   async function confirmarCheckin() {
     if (!obreiro) return
     const { data: existente } = await supabase
-      .from('presencas').select('id')
+      .from('obreiro_presencas').select('id')
       .eq('reuniao_id', reuniaoId).eq('obreiro_id', obreiro.id)
       .single()
 
     if (existente) { setEtapa('jaPresente'); return }
 
-    const { error } = await supabase.from('presencas').insert({
+    const { error } = await supabase.from('obreiro_presencas').insert({
       reuniao_id: reuniaoId, obreiro_id: obreiro.id,
       presente: true, metodo_checkin: 'facial',
     })
@@ -218,7 +218,7 @@ function FacialContent() {
     if (faceapiRef.current) iniciarReconhecimento(faceapiRef.current)
   }
 
-  const cor = COR_CARGO[obreiro?.cargos?.nome] || COR_CARGO['Membro']
+  const cor = COR_CARGO[obreiro?.obreiro_cargos?.nome] || COR_CARGO['Membro']
 
   return (
     <div style={s.container}>
@@ -266,9 +266,9 @@ function FacialContent() {
               <div style={s.obreiroNome}>{obreiro.nome}</div>
               <div style={s.obreiroSub}>
                 {obreiro.congregacoes?.nome || '—'}
-                {obreiro.cargos?.nome && (
+                {obreiro.obreiro_cargos?.nome && (
                   <span style={{ ...s.badge, background: cor.bg, color: cor.text }}>
-                    {obreiro.cargos.nome}
+                    {obreiro.obreiro_cargos.nome}
                   </span>
                 )}
               </div>

@@ -65,9 +65,9 @@ export default function NovoObreiroPage() {
         { data: cargosData },
         { data: funcoesData },
       ] = await Promise.all([
-        supabase.from('congregacoes').select('id, nome').order('nome'),
-        supabase.from('cargos').select('id, nome, nivel').order('nivel', { ascending: false }),
-        supabase.from('funcoes').select('id, nome').order('nome'),
+        supabase.from('obreiro_congregacoes').select('id, nome').order('nome'),
+        supabase.from('obreiro_cargos').select('id, nome, nivel').order('nivel', { ascending: false }),
+        supabase.from('obreiro_funcoes').select('id, nome').order('nome'),
       ])
       setCongregacoes(congsData || [])
       setCargos(cargosData || [])
@@ -100,7 +100,7 @@ export default function NovoObreiroPage() {
 
     // Pega o próximo número de cadastro
     const { data: ultimo } = await supabase
-      .from('obreiros')
+      .from('obreiro_cadastro')
       .select('cadastro')
       .order('cadastro', { ascending: false })
       .limit(1)
@@ -109,7 +109,7 @@ export default function NovoObreiroPage() {
     const proximoCadastro = (ultimo?.cadastro || 0) + 1
 
     const { data: novo, error } = await supabase
-      .from('obreiros')
+      .from('obreiro_cadastro')
       .insert({
         cadastro:        proximoCadastro,
         situacao:        form.situacao,

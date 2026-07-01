@@ -117,8 +117,8 @@ export function ScannerContent() {
 
     // Busca obreiro pelo CPF (tenta todas as variações de formatação)
     const { data: obreiros } = await supabase
-      .from('obreiros')
-      .select('id, nome, cpf, congregacoes(nome), cargos(nome)')
+      .from('obreiro_cadastro')
+      .select('id, nome, cpf, obreiro_congregacoes(nome), obreiro_cargos(nome)')
       .eq('situacao', 'Ativo')
 
     // Compara CPFs normalizados (remove pontos, traços, etc.)
@@ -133,7 +133,7 @@ export function ScannerContent() {
 
     // Verifica se já fez check-in
     const { data: presencaExistente } = await supabase
-      .from('presencas')
+      .from('obreiro_presencas')
       .select('id')
       .eq('reuniao_id', reuniaoId)
       .eq('obreiro_id', encontrado.id)
@@ -147,7 +147,7 @@ export function ScannerContent() {
     }
 
     // Registra a presença
-    const { error } = await supabase.from('presencas').insert({
+    const { error } = await supabase.from('obreiro_presencas').insert({
       reuniao_id:     reuniaoId,
       obreiro_id:     encontrado.id,
       presente:       true,

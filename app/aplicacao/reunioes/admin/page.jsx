@@ -60,19 +60,27 @@ export default function AdminPage() {
 
   useEffect(() => { carregar() }, [])
 
+  // CORREÇÃO: Capturando 'error' para identificar falhas de relacionamento
   async function carregar() {
     setLoading(true)
-    const { data } = await supabase
-      .from('reunioes')
-      .select('id, titulo, data_reuniao, hora_inicio, local, aberta, presencas(id, presente)')
+    const { data, error } = await supabase
+      .from('obreiro_reunioes')
+      .select('id, titulo, data_reuniao, hora_inicio, local, aberta, obreiro_presencas(id, presente)')
       .order('data_reuniao', { ascending: false })
-    setReunioes(data || [])
+
+    if (error) {
+      console.error("Erro na busca de reuniões:", error.message)
+      mostrarToast(`Erro no banco: ${error.message}`, 'erro')
+      setReunioes([])
+    } else {
+      setReunioes(data || [])
+    }
     setLoading(false)
   }
 
   async function criarReuniao() {
     setSalvando(true)
-    const { error } = await supabase.from('reunioes').insert({
+    const { error } = await supabase.from('obreiro_reunioes').insert({
       titulo:       form.titulo,
       data_reuniao: form.data_reuniao,
       hora_inicio:  form.hora_inicio || null,
@@ -94,25 +102,25 @@ export default function AdminPage() {
 
   async function encerrarReuniao(id) {
     setSalvando(true)
-    const { error } = await supabase.from('reunioes').update({ aberta: false }).eq('id', id)
+    const { error } = await supabase.from('obreiro_reunioes').update({ aberta: false }).eq('id', id)
     setSalvando(false)
     if (!error) { setModal(null); mostrarToast('Reunião encerrada.', 'info'); carregar() }
     else mostrarToast('Erro ao encerrar.', 'erro')
   }
 
   async function reabrirReuniao(id) {
-    const { error } = await supabase.from('reunioes').update({ aberta: true }).eq('id', id)
+    const { error } = await supabase.from('obreiro_reunioes').update({ aberta: true }).eq('id', id)
     if (!error) { mostrarToast('Reunião reaberta!', 'sucesso'); carregar() }
   }
 
   async function excluirReuniao(id) {
-    const { error } = await supabase.from('reunioes').delete().eq('id', id)
+    const { error } = await supabase.from('obreiro_reunioes').delete().eq('id', id)
     if (!error) { setModal(null); mostrarToast('Reunião excluída.', 'info'); carregar() }
   }
 
   function mostrarToast(msg, tipo) {
     setToast({ msg, tipo })
-    setTimeout(() => setToast(null), 3000)
+    setTimeout(() => setToast(null), 4000) // Aumentado para 4s para dar tempo de ler o erro técnico
   }
 
   async function sair() {
@@ -233,7 +241,7 @@ export default function AdminPage() {
                   {total > 0 && (
                     <div style={s.presencaWrap}>
                       <div style={s.presencaBar}><div style={{ ...s.presencaFill, width: `${pct}%`, background: '#9CA3AF' }} /></div>
-                      <span style={s.presencaTxt}>{presentes}/{total} presentes ({pct}%)</span>
+                      <span style={s.presencaTxt}>{presentes}/{total} Bonecos ({pct}%)</span>
                     </div>
                   )}
                   <div style={s.acoes}>
@@ -328,7 +336,7 @@ const s = {
   body:         { padding: '16px' },
   navBtns:      { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 },
   navBtn:       { display: 'flex', alignItems: 'center', gap: 10, padding: '14px', background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, cursor: 'pointer', textAlign: 'left' },
-  navBtnFull:   { gridColumn: '1 / -1' },  // ocupa as 2 colunas
+  navBtnFull:   { gridColumn: '1 / -1' },
   navIcone:     { width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 },
   navTitulo:    { fontSize: 13, fontWeight: 600, color: '#111827' },
   navSub:       { fontSize: 11, color: '#9CA3AF', marginTop: 2 },

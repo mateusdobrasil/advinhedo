@@ -16,10 +16,10 @@ export default async function NotasAlunoPage() {
 
   // 2. INNER JOIN com as tabelas de matérias e turmas
   const { data: boletim, error } = await supabase
-    .from('diario_classe')
+    .from('ibv_diario_classe')
     .select(`
       *,
-      materias!inner(nome),
+      ibv_materias!inner(nome),
       turmas!inner(nome)
     `)
     .eq('aluno_id', session.user.id)

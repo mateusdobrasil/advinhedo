@@ -84,10 +84,10 @@ export default function EditarObreiroPage() {
         { data: cargosData },
         { data: funcoesData },
       ] = await Promise.all([
-        supabase.from('obreiros').select('*').eq('id', id).single(),
-        supabase.from('congregacoes').select('id, nome').order('nome'),
-        supabase.from('cargos').select('id, nome, nivel').order('nivel', { ascending: false }),
-        supabase.from('funcoes').select('id, nome').order('nome'),
+        supabase.from('obreiro_cadastro').select('*').eq('id', id).single(),
+        supabase.from('obreiro_congregacoes').select('id, nome').order('nome'),
+        supabase.from('obreiro_cargos').select('id, nome, nivel').order('nivel', { ascending: false }),
+        supabase.from('obreiro_funcoes').select('id, nome').order('nome'),
       ])
 
       if (obreiro) {
@@ -146,7 +146,7 @@ export default function EditarObreiroPage() {
       situacao:        form.situacao,
     }
 
-    const { error } = await supabase.from('obreiros').update(payload).eq('id', id)
+    const { error } = await supabase.from('obreiro_cadastro').update(payload).eq('id', id)
     setSalvando(false)
 
     if (error) {

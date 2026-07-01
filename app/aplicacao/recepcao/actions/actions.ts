@@ -9,7 +9,7 @@ export async function toggleStatusApresentacao(id: string, statusAtual: boolean)
   const supabase = createServerActionClient({ cookies })
   
   const { error } = await supabase
-    .from('visitantes')
+    .from('recepcao_visitantes') 
     .update({ foi_apresentado: !statusAtual })
     .eq('id', id)
 
@@ -29,7 +29,7 @@ export async function deletarCadastro(id: string) {
   const supabase = createServerActionClient({ cookies })
   
   const { error } = await supabase
-    .from('visitantes')
+    .from('recepcao_visitantes')
     .delete()
     .eq('id', id)
 

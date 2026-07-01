@@ -54,7 +54,7 @@ export default function EventosPage() {
       }
 
       const { data: bannersData } = await supabase
-        .from("banners")
+        .from("agenda_banners")
         .select("*")
         .gte("data_fim", hoje)
         .lte("data_inicio", hoje)

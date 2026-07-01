@@ -16,7 +16,7 @@ export async function lancarNota(formData: FormData) {
   const semestre = formData.get('semestre') as string
 
   // Salva no banco de dados
-  const { error } = await supabase.from('notas').insert({
+  const { error } = await supabase.from('ibv_notas').insert({
     aluno_id,
     disciplina,
     nota,
@@ -36,7 +36,7 @@ export async function lancarNota(formData: FormData) {
 
     await logAction(supabase, session.user, {
       action: 'LANÇAMENTO DE NOTA',
-      tableName: 'notas',
+      tableName: 'ibv_notas',
       details: `Lançou nota ${nota} e ${faltas} faltas para o aluno ${aluno?.nome_completo || aluno_id} na disciplina ${disciplina}.`
     })
   }

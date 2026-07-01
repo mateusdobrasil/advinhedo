@@ -8,7 +8,7 @@ import { toggleStatusApresentacao } from '../actions/actions';
 import logo from '../../imgs/logo.png';
 
 export default function TelaApresentacao() {
-  const router = useRouter();
+  const router = useRouter(); 
   const supabase = createClientComponentClient();
 
   const [eventoAtivo, setEventoAtivo] = useState<string | null>(null);
@@ -20,11 +20,11 @@ export default function TelaApresentacao() {
   // Busca todos os dados
   const carregarDados = useCallback(async (eventoId: string) => {
     const { data, error } = await supabase
-      .from('visitantes')
+      .from('recepcao_visitantes')
       .select(`
         id, nome_visitante, setor_trabalho, nome_esposa, representado_por,
         foi_apresentado, tipo, data_aniversario, observacoes, created_at,
-        dependentes_acompanhantes ( nome, tipo )
+        recepcao_dependentes_acompanhantes ( nome, tipo )
       `)
       .eq('evento_id', eventoId)
       .eq('foi_apresentado', false)
@@ -50,7 +50,7 @@ export default function TelaApresentacao() {
     
     setEventoAtivo(cookieEvento);
 
-    supabase.from('eventos').select('nome_evento').eq('id', cookieEvento).single()
+    supabase.from('recepcao_eventos').select('nome_evento').eq('id', cookieEvento).single()
       .then(({ data }) => {
         if (data) setTituloEvento(data.nome_evento);
       });
@@ -106,6 +106,8 @@ export default function TelaApresentacao() {
       <div className="h-screen flex items-center justify-center bg-gray-50">
         <div className="p-6 bg-red-50 text-red-600 rounded-lg text-2xl">
           Erro ao carregar a fila de apresentação: {erro}
+          <br /><br />
+          <span className="text-sm text-red-400">Dica: Se o erro persistir, vá ao Supabase {">"} Project Settings {">"} API {">"} Reload PostgREST schema.</span>
         </div>
       </div>
     );
@@ -167,8 +169,8 @@ export default function TelaApresentacao() {
                 <div className="bg-blue-600 px-6 py-5 flex justify-between items-center"><h2 className="text-2xl font-bold text-white uppercase tracking-wider">Visitas ({listaVisitas.length})</h2></div>
                 <div className="p-4 md:p-6 space-y-6">
                   {listaVisitas.map(v => {
-                    const filhos = v.dependentes_acompanhantes?.filter((d: any) => d.tipo === 'FILHO').map((f:any)=>f.nome) || [];
-                    const acompanhantes = v.dependentes_acompanhantes?.filter((d: any) => d.tipo === 'ACOMPANHANTE').map((a:any)=>a.nome) || [];
+                    const filhos = v.recepcao_dependentes_acompanhantes?.filter((d: any) => d.tipo === 'FILHO').map((f:any)=>f.nome) || [];
+                    const acompanhantes = v.recepcao_dependentes_acompanhantes?.filter((d: any) => d.tipo === 'ACOMPANHANTE').map((a:any)=>a.nome) || [];
                     return (
                       <div key={v.id} className="bg-blue-50/70 border border-blue-200 rounded-2xl p-6 flex flex-col md:flex-row justify-between gap-6 shadow-sm">
                         <div className="flex-1">

@@ -1,10 +1,5 @@
 'use client'
 
-/**
- * /reunioes/admin/obreiros/[id]/foto/page.jsx
- * Tira/atualiza foto do obreiro e salva descritor facial
- */
-
 import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
@@ -37,8 +32,8 @@ export default function FotoPage() {
   useEffect(() => {
     async function init() {
       const { data } = await supabase
-        .from('obreiros')
-        .select('id, nome, foto_url, face_descriptor, congregacoes(nome)')
+        .from('obreiro_cadastro')
+        .select('id, nome, foto_url, face_descriptor, obreiro_congregacoes(nome)')
         .eq('id', id)
         .single()
       setObreiro(data)
@@ -140,7 +135,7 @@ export default function FotoPage() {
 
       // Salva URL e descritor no banco
       const { error: dbErro } = await supabase
-        .from('obreiros')
+        .from('obreiro_cadastro')
         .update({
           foto_url:        publicUrl,
           face_descriptor: Array.from(deteccao.descriptor), // Float32Array → array normal
@@ -173,7 +168,7 @@ export default function FotoPage() {
         <button style={s.voltarBtn} onClick={() => router.push('/aplicacao/reunioes/admin/obreiros')}>←</button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={s.headerTitulo}>{obreiro?.nome || 'Carregando...'}</div>
-          <div style={s.headerSub}>{obreiro?.congregacoes?.nome || ''}</div>
+          <div style={s.headerSub}>{obreiro?.obreiro_congregacoes?.nome || ''}</div>
         </div>
       </div>
 

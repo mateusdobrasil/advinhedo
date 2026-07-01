@@ -1,11 +1,5 @@
 'use client'
 
-/**
- * app/reunioes/admin/checkin/page.jsx
- * Check-in adaptativo: celular = lista vertical | tablet/notebook = kiosk tela dividida
- * Substitui o checkin-admin-page.jsx atual
- */
-
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
@@ -101,7 +95,7 @@ export default function CheckinPage() {
   useEffect(() => {
     async function carregarReunioes() {
       const { data } = await supabase
-        .from('reunioes').select('id, titulo, data_reuniao')
+        .from('obreiro_reunioes').select('id, titulo, data_reuniao')
         .eq('aberta', true).order('data_reuniao', { ascending: false })
       setReunioes(data || [])
       if (data?.length === 1) setReuniao(data[0])
@@ -116,11 +110,11 @@ export default function CheckinPage() {
     setLoading(true)
     async function carregarDados() {
       const { data: obs } = await supabase
-        .from('obreiros')
-        .select('id, nome, cpf, foto_url, congregacoes(nome), cargos(nome)')
+        .from('obreiro_cadastro')
+        .select('id, nome, cpf, foto_url, obreiro_congregacoes(nome), obreiro_cargos(nome)')
         .eq('situacao', 'Ativo').order('nome')
       const { data: pres } = await supabase
-        .from('presencas').select('id, obreiro_id, presente').eq('reuniao_id', reuniao.id)
+        .from('obreiro_presencas').select('id, obreiro_id, presente').eq('reuniao_id', reuniao.id)
       const mapa = {}
       pres?.forEach(p => { mapa[p.obreiro_id] = p })
       setObreiros(obs || [])
@@ -157,14 +151,14 @@ export default function CheckinPage() {
 
     if (jaPresente) {
       setPresencas(prev => { const n = { ...prev }; delete n[obreiro.id]; return n })
-      const { error } = await supabase.from('presencas').delete().eq('id', jaPresente.id)
+      const { error } = await supabase.from('obreiro_presencas').delete().eq('id', jaPresente.id)
       if (error) setPresencas(prev => ({ ...prev, [obreiro.id]: jaPresente }))
       if (isKiosk) { setObreiroConfirmado({ ...obreiro, tipo: 'removido' }); setPainelDir('sucesso') }
       else setFeedback({ nome: obreiro.nome.split(' ')[0], tipo: 'removido' })
     } else {
       const temp = { id: `temp-${obreiro.id}`, obreiro_id: obreiro.id, presente: true }
       setPresencas(prev => ({ ...prev, [obreiro.id]: temp }))
-      const { data, error } = await supabase.from('presencas').insert({
+      const { data, error } = await supabase.from('obreiro_presencas').insert({
         reuniao_id: reuniao.id, obreiro_id: obreiro.id,
         presente: true, metodo_checkin: 'lista',
       }).select().single()
@@ -223,7 +217,7 @@ export default function CheckinPage() {
       return
     }
 
-    const { data: existente } = await supabase.from('presencas').select('id')
+    const { data: existente } = await supabase.from('obreiro_presencas').select('id')
       .eq('reuniao_id', reuniao.id).eq('obreiro_id', encontrado.id).single()
 
     if (existente) {
@@ -233,7 +227,7 @@ export default function CheckinPage() {
       return
     }
 
-    const { error } = await supabase.from('presencas').insert({
+    const { error } = await supabase.from('obreiro_presencas').insert({
       reuniao_id: reuniao.id, obreiro_id: encontrado.id,
       presente: true, metodo_checkin: 'qrcode',
     })
@@ -276,7 +270,7 @@ export default function CheckinPage() {
     ])
 
     const { data: obs } = await supabase
-      .from('obreiros').select('id, nome, foto_url, face_descriptor, congregacoes(nome), cargos(nome)')
+      .from('obreiro_cadastro').select('id, nome, foto_url, face_descriptor, obreiro_congregacoes(nome), obreiro_cargos(nome)')
       .eq('situacao', 'Ativo').not('face_descriptor', 'is', null)
 
     if (!obs?.length) { setFacialStatus('Nenhuma foto cadastrada.'); return }
@@ -322,12 +316,12 @@ export default function CheckinPage() {
         pararCameraFacial()
 
         const ob = mapaObreiros[res.label]
-        const { data: existente } = await supabase.from('presencas').select('id')
+        const { data: existente } = await supabase.from('obreiro_presencas').select('id')
           .eq('reuniao_id', reuniao.id).eq('obreiro_id', ob.id).single()
 
         if (existente) { setObreiroConfirmado({ ...ob, tipo: 'jaPresente' }); setPainelDir('jaPresente'); return }
 
-        const { error } = await supabase.from('presencas').insert({
+        const { error } = await supabase.from('obreiro_presencas').insert({
           reuniao_id: reuniao.id, obreiro_id: ob.id, presente: true, metodo_checkin: 'facial',
         })
         if (!error) {
@@ -351,7 +345,7 @@ export default function CheckinPage() {
   // ── Filtro de obreiros ──────────────────────────────────────────────────────
   const filtrados = obreiros.filter(o => {
     const buscaNorm = normalizarTexto(busca)
-    const corresponde = !busca || normalizarTexto(o.nome).includes(buscaNorm) || normalizarTexto(o.congregacoes?.nome || '').includes(buscaNorm)
+    const corresponde = !busca || normalizarTexto(o.nome).includes(buscaNorm) || normalizarTexto(o.obreiro_congregacoes?.nome || '').includes(buscaNorm)
     if (!corresponde) return false
     if (filtro === 'presentes') return !!presencas[o.id]
     if (filtro === 'ausentes')  return !presencas[o.id]
@@ -424,7 +418,7 @@ export default function CheckinPage() {
           <div style={m.lista}>
             {filtrados.map(o => {
               const presente = !!presencas[o.id]
-              const cor = COR_CARGO[o.cargos?.nome] || COR_CARGO['Membro']
+              const cor = COR_CARGO[o.obreiro_cargos?.nome] || COR_CARGO['Membro']
               return (
                 <button key={o.id} style={{ ...m.card, ...(presente ? m.cardPresente : {}), opacity: loadingId === o.id ? 0.6 : 1 }}
                   onClick={() => fazerCheckin(o)} disabled={loadingId === o.id}>
@@ -434,8 +428,8 @@ export default function CheckinPage() {
                   <div style={m.cardInfo}>
                     <div style={m.cardNome}>{o.nome}</div>
                     <div style={m.cardSub}>
-                      <span>{o.congregacoes?.nome || '—'}</span>
-                      {o.cargos?.nome && <span style={{ ...m.badgeCargo, background: cor.bg, color: cor.text }}>{o.cargos.nome}</span>}
+                      <span>{o.obreiro_congregacoes?.nome || '—'}</span>
+                      {o.obreiro_cargos?.nome && <span style={{ ...m.badgeCargo, background: cor.bg, color: cor.text }}>{o.obreiro_cargos.nome}</span>}
                     </div>
                   </div>
                   <div style={{ ...m.status, color: presente ? '#065F46' : '#D1D5DB' }}>{presente ? 'Presente' : 'Ausente'}</div>
@@ -502,7 +496,7 @@ export default function CheckinPage() {
             <div style={k.loadingWrap}><div style={k.spinner} /></div>
           ) : filtrados.map(o => {
             const presente = !!presencas[o.id]
-            const cor = COR_CARGO[o.cargos?.nome] || COR_CARGO['Membro']
+            const cor = COR_CARGO[o.obreiro_cargos?.nome] || COR_CARGO['Membro']
             return (
               <button key={o.id} style={{ ...k.card, ...(presente ? k.cardPresente : {}), opacity: loadingId === o.id ? 0.6 : 1 }}
                 onClick={() => fazerCheckin(o)} disabled={loadingId === o.id}>
@@ -512,8 +506,8 @@ export default function CheckinPage() {
                 <div style={k.cardInfo}>
                   <div style={k.cardNome}>{o.nome}</div>
                   <div style={k.cardSub}>
-                    {o.congregacoes?.nome || '—'}
-                    {o.cargos?.nome && <span style={{ ...k.badgeCargo, background: cor.bg, color: cor.text }}>{o.cargos.nome}</span>}
+                    {o.obreiro_congregacoes?.nome || '—'}
+                    {o.obreiro_cargos?.nome && <span style={{ ...k.badgeCargo, background: cor.bg, color: cor.text }}>{o.obreiro_cargos.nome}</span>}
                   </div>
                 </div>
                 <div style={{ ...k.statusBadge, background: presente ? '#D1FAE5' : '#F3F4F6', color: presente ? '#065F46' : '#9CA3AF' }}>
@@ -560,15 +554,15 @@ export default function CheckinPage() {
             {obreiroConfirmado.foto_url ? (
               <img src={obreiroConfirmado.foto_url} alt="" style={k.painelFoto} />
             ) : (
-              <div style={{ ...k.painelAvatar, background: (COR_CARGO[obreiroConfirmado.cargos?.nome] || COR_CARGO['Membro']).bg, color: (COR_CARGO[obreiroConfirmado.cargos?.nome] || COR_CARGO['Membro']).text }}>
+              <div style={{ ...k.painelAvatar, background: (COR_CARGO[obreiroConfirmado.obreiro_cargos?.nome] || COR_CARGO['Membro']).bg, color: (COR_CARGO[obreiroConfirmado.obreiro_cargos?.nome] || COR_CARGO['Membro']).text }}>
                 {iniciais(obreiroConfirmado.nome)}
               </div>
             )}
             <p style={k.painelNome}>{obreiroConfirmado.nome}</p>
-            <p style={k.painelCong}>{obreiroConfirmado.congregacoes?.nome || '—'}</p>
-            {obreiroConfirmado.cargos?.nome && (
-              <span style={{ ...k.painelBadge, background: (COR_CARGO[obreiroConfirmado.cargos.nome] || COR_CARGO['Membro']).bg, color: (COR_CARGO[obreiroConfirmado.cargos.nome] || COR_CARGO['Membro']).text }}>
-                {obreiroConfirmado.cargos.nome}
+            <p style={k.painelCong}>{obreiroConfirmado.obreiro_congregacoes?.nome || '—'}</p>
+            {obreiroConfirmado.obreiro_cargos?.nome && (
+              <span style={{ ...k.painelBadge, background: (COR_CARGO[obreiroConfirmado.obreiro_cargos.nome] || COR_CARGO['Membro']).bg, color: (COR_CARGO[obreiroConfirmado.obreiro_cargos.nome] || COR_CARGO['Membro']).text }}>
+                {obreiroConfirmado.obreiro_cargos.nome}
               </span>
             )}
             <button style={k.btnVoltar} onClick={resetPainel}>← Próximo</button>
@@ -581,7 +575,7 @@ export default function CheckinPage() {
             <div style={{ ...k.painelIcone, background: '#1E3A5F' }}>!</div>
             <p style={k.painelTitulo}>Já registrado</p>
             <p style={k.painelNome}>{obreiroConfirmado.nome}</p>
-            <p style={k.painelCong}>{obreiroConfirmado.congregacoes?.nome}</p>
+            <p style={k.painelCong}>{obreiroConfirmado.obreiro_congregacoes?.nome}</p>
             <p style={{ fontSize: 14, color: '#9CA3AF', textAlign: 'center' }}>Este obreiro já fez check-in nesta reunião.</p>
             <button style={k.btnVoltar} onClick={resetPainel}>← Próximo</button>
           </div>

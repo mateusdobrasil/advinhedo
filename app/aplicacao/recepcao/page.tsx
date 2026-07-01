@@ -21,7 +21,7 @@ export default function ApresentacaoDashboard() {
   useEffect(() => {
     const carregarEventos = async () => {
       const { data } = await supabase
-        .from('eventos')
+        .from('recepcao_eventos')
         .select('*')
         .eq('ativo', true)
         .order('created_at', { ascending: false });
@@ -42,7 +42,7 @@ export default function ApresentacaoDashboard() {
         });
 
         if (eventosVencidos.length > 0) {
-          supabase.from('eventos').update({ ativo: false }).in('id', eventosVencidos).then();
+          supabase.from('recepcao_eventos').update({ ativo: false }).in('id', eventosVencidos).then();
         }
 
         setEventos(eventosValidos);

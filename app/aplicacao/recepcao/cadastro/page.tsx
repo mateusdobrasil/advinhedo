@@ -24,7 +24,7 @@ export default function CadastroVisitante() {
 
       if (cookieEvento) {
         setEventoAtivoId(cookieEvento);
-        const { data } = await supabase.from('eventos').select('nome_evento').eq('id', cookieEvento).single();
+        const { data } = await supabase.from('recepcao_eventos').select('nome_evento').eq('id', cookieEvento).single();
         if (data) setNomeEvento(data.nome_evento);
       } else {
         alert("Nenhum evento selecionado. Redirecionando para o painel principal...");
@@ -72,7 +72,7 @@ export default function CadastroVisitante() {
     try {
       // 1. Inserir no banco de dados com a lógica condicional
       const { data: visitante, error: errorVisitante } = await supabase
-        .from('visitantes')
+        .from('recepcao_visitantes')
         .insert([{
           evento_id: eventoAtivoId, 
           tipo: tipo,
@@ -105,7 +105,7 @@ export default function CadastroVisitante() {
           });
         }
         if (dependentes.length > 0) {
-          const { error: errorDependentes } = await supabase.from('dependentes_acompanhantes').insert(dependentes);
+          const { error: errorDependentes } = await supabase.from('recepcao_dependentes_acompanhantes').insert(dependentes);
           if (errorDependentes) throw errorDependentes;
         }
       }
@@ -145,7 +145,7 @@ export default function CadastroVisitante() {
               <h1 className="text-2xl font-bold text-gray-800">Novo Registro</h1>
               <p className="text-sm font-bold text-blue-600 mt-1">Evento: {nomeEvento || "Carregando..."}</p>
             </div>
-          </div>
+          </div> 
           <Link href="/aplicacao/recepcao" className="text-sm font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg transition-colors">
             ← Voltar ao Painel
           </Link>

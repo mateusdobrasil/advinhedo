@@ -26,7 +26,7 @@ export default function HistoricoVisitantes() {
   const carregarEventos = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from('eventos')
+      .from('recepcao_eventos')
       .select('*')
       .order('data_evento', { ascending: false })
       .order('created_at', { ascending: false });
@@ -86,8 +86,8 @@ export default function HistoricoVisitantes() {
     }
 
     const { data, error } = await supabase
-      .from('visitantes')
-      .select('*, dependentes_acompanhantes(*)')
+      .from('recepcao_visitantes')
+      .select('*, recepcao_dependentes_acompanhantes(*)')
       .in('evento_id', idsEventos)
       .order('created_at', { ascending: false });
 

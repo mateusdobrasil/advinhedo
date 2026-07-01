@@ -15,7 +15,7 @@ export default function HeroCarousel({ fallbackImage }: { fallbackImage: string 
     async function buscarBanners() {
       const hoje = new Date().toISOString().split("T")[0];
       const { data } = await supabase
-        .from("banners")
+        .from("agenda_banners")
         .select("*")
         .gte("data_fim", hoje)
         .lte("data_inicio", hoje)

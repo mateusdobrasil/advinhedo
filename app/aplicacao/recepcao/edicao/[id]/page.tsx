@@ -15,7 +15,7 @@ export default function EditarVisitante() {
   const [loadingData, setLoadingData] = useState(true);
   const [saving, setSaving] = useState(false);
   const [mensagem, setMensagem] = useState("");
-
+ 
   // Estados Base (Dinâmicos baseados no Tipo)
   const [tipo, setTipo] = useState("Visitas");
   const [nome, setNome] = useState("");
@@ -38,8 +38,8 @@ export default function EditarVisitante() {
     const carregarDados = async () => {
       try {
         const { data, error } = await supabase
-          .from('visitantes')
-          .select('*, dependentes_acompanhantes(*)')
+          .from('recepcao_visitantes')
+          .select('*, recepcao_dependentes_acompanhantes(*)')
           .eq('id', id)
           .single();
 
@@ -100,7 +100,7 @@ export default function EditarVisitante() {
     try {
       // 1. Atualizar tabela principal (Condicional baseada no Tipo)
       const { error: errorUpdate } = await supabase
-        .from('visitantes')
+        .from('recepcao_visitantes')
         .update({
           tipo: tipo,
           nome_visitante: nome,
@@ -119,7 +119,7 @@ export default function EditarVisitante() {
 
       // 2. Limpar os dependentes antigos SEMPRE (para garantir que não sobrem lixos se o usuário mudar o tipo)
       const { error: errorDelete } = await supabase
-        .from('dependentes_acompanhantes')
+        .from('recepcao_dependentes_acompanhantes')
         .delete()
         .eq('visitante_id', id);
       
@@ -143,7 +143,7 @@ export default function EditarVisitante() {
 
         if (novosDependentes.length > 0) {
           const { error: errorInsert } = await supabase
-            .from('dependentes_acompanhantes')
+            .from('recepcao_dependentes_acompanhantes')
             .insert(novosDependentes);
             
           if (errorInsert) throw errorInsert;

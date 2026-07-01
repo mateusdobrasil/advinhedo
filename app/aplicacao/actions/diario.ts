@@ -21,7 +21,7 @@ export async function lancarDiario(formData: FormData) {
 
   // 3. SALVA A NOTA NO DIÁRIO
   const { error: diarioError } = await supabase
-    .from('diario_classe')
+    .from('ibv_diario_classe')
     .insert({
       aluno_id,
       turma_id,
@@ -47,7 +47,7 @@ export async function lancarDiario(formData: FormData) {
   // 4. O ESPIÃO DA AUDITORIA (Agora com o nome do aluno!)
   await logAction(supabase, session.user, {
     action: 'LANÇAMENTO DE NOTA',
-    tableName: 'diario_classe',
+    tableName: 'ibv_diario_classe',
     details: `Lançou nota ${nota} e ${faltas} faltas para o aluno: ${nomeAluno}`
   })
 
