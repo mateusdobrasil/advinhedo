@@ -1,5 +1,6 @@
 'use server'
 
+import { logAction } from '@/lib/audit'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
@@ -10,12 +11,6 @@ export async function lancarDiario(formData: FormData) {
   // 1. Descobre quem é o Administrador/Professor que está fazendo o lançamento
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Usuário não autenticado.')
-
-  const { data: admin } = await supabase
-    .from('perfis')
-    .select('nome_completo')
-    .eq('id', session.user.id)
-    .single()
 
   // 2. Pega os dados do formulário
   const aluno_id = formData.get('aluno_id') as string
@@ -50,17 +45,11 @@ export async function lancarDiario(formData: FormData) {
   const nomeAluno = aluno?.nome_completo || 'Aluno Desconhecido'
   
   // 4. O ESPIÃO DA AUDITORIA (Agora com o nome do aluno!)
-  const { error: auditError } = await supabase.from('auditoria').insert({
-    usuario_id: session.user.id,
-    usuario_nome: admin?.nome_completo || 'Sistema',
-    acao: 'LANÇAMENTO DE NOTA',
-    tabela_afetada: 'diario_classe',
-    detalhes: `Lançou nota ${nota} e ${faltas} faltas para o aluno: ${nomeAluno}`
+  await logAction(supabase, session.user, {
+    action: 'LANÇAMENTO DE NOTA',
+    tableName: 'diario_classe',
+    details: `Lançou nota ${nota} e ${faltas} faltas para o aluno: ${nomeAluno}`
   })
-
-  if (auditError) {
-    console.error("❌ ERRO AO GRAVAR AUDITORIA:", auditError.message)
-  }
 
   revalidatePath('/aplicacao/ibv/admin/diario')
   revalidatePath('/aplicacao/ibv/admin/auditoria')

@@ -1,5 +1,6 @@
 'use server'
 
+import { logAction } from '@/lib/audit'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
@@ -28,25 +29,15 @@ export async function lancarNota(formData: FormData) {
     throw new Error('Falha ao lançar nota no sistema.')
   }
 
-  // COLE ISSO DEPOIS QUE O SEU CÓDIGO FIZER UM INSERT/UPDATE IMPORTANTE
-
-  // 1. Descobre quem é o Admin que está fazendo a ação
   const { data: { session } } = await supabase.auth.getSession()
   
   if (session) {
-    const { data: admin } = await supabase
-      .from('perfis')
-      .select('nome_completo')
-      .eq('id', session.user.id)
-      .single()
+    const { data: aluno } = await supabase.from('perfis').select('nome_completo').eq('id', aluno_id).single()
 
-    // 2. Grava a ação no banco
-    await supabase.from('auditoria').insert({
-      usuario_id: session.user.id,
-      usuario_nome: admin?.nome_completo || 'Sistema',
-      acao: 'NOME DA AÇÃO (Ex: NOVA MATRÍCULA)',
-      tabela_afetada: 'nome_da_tabela',
-      detalhes: `Descreva o que aconteceu aqui.`
+    await logAction(supabase, session.user, {
+      action: 'LANÇAMENTO DE NOTA',
+      tableName: 'notas',
+      details: `Lançou nota ${nota} e ${faltas} faltas para o aluno ${aluno?.nome_completo || aluno_id} na disciplina ${disciplina}.`
     })
   }
 

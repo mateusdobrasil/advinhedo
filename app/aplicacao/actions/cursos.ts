@@ -1,5 +1,6 @@
 'use server'
 
+import { logAction } from '@/lib/audit'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
@@ -29,19 +30,11 @@ export async function salvarCurso(formData: FormData) {
 
   if (error) throw new Error(error.message)
 
-  // 2. Registro na Auditoria
-  const { data: admin } = await supabase
-    .from('perfis')
-    .select('nome_completo')
-    .eq('id', session.user.id)
-    .single()
-
-  await supabase.from('auditoria').insert({
-    usuario_id: session.user.id,
-    usuario_nome: admin?.nome_completo || 'Sistema',
-    acao: id ? 'EDIÇÃO DE CURSO' : 'NOVO CURSO',
-    tabela_afetada: 'cursos',
-    detalhes: `${id ? 'Alterou' : 'Cadastrou'} o curso ${nome} com status: ${status.toUpperCase()}`
+  // 2. Registro na Auditoria com a função centralizada
+  await logAction(supabase, session.user, {
+    action: id ? 'EDIÇÃO DE CURSO' : 'NOVO CURSO',
+    tableName: 'cursos',
+    details: `${id ? 'Alterou' : 'Cadastrou'} o curso ${nome} com status: ${status.toUpperCase()}`
   })
 
   revalidatePath('/aplicacao/ibv/admin/cursos')

@@ -1,5 +1,6 @@
 'use server'
 
+import { logAction } from '@/lib/audit'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
@@ -25,25 +26,13 @@ export async function criarAviso(formData: FormData) {
     throw new Error(`Erro ao publicar aviso: ${error.message}`)
   }
 
-  // COLE ISSO DEPOIS QUE O SEU CÓDIGO FIZER UM INSERT/UPDATE IMPORTANTE
-
-  // 1. Descobre quem é o Admin que está fazendo a ação
   const { data: { session } } = await supabase.auth.getSession()
   
   if (session) {
-    const { data: admin } = await supabase
-      .from('perfis')
-      .select('nome_completo')
-      .eq('id', session.user.id)
-      .single()
-
-    // 2. Grava a ação no banco
-    await supabase.from('auditoria').insert({
-      usuario_id: session.user.id,
-      usuario_nome: admin?.nome_completo || 'Sistema',
-      acao: 'Criar Avisos',
-      tabela_afetada: 'avisos',
-      detalhes: `Foi criado um novo aviso.`
+    await logAction(supabase, session.user, {
+      action: 'CRIAÇÃO DE AVISO',
+      tableName: 'avisos',
+      details: `Criou o aviso "${titulo}" para o polo ${polo || 'Geral'}.`
     })
   }
 

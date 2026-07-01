@@ -1,5 +1,6 @@
 'use server'
 
+import { logAction } from '@/lib/audit'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
@@ -27,19 +28,11 @@ export async function salvarPolo(formData: FormData) {
 
   if (error) throw new Error(error.message)
 
-  // 2. Registro na Auditoria
-  const { data: admin } = await supabase
-    .from('perfis')
-    .select('nome_completo')
-    .eq('id', session.user.id)
-    .single()
-
-  await supabase.from('auditoria').insert({
-    usuario_id: session.user.id,
-    usuario_nome: admin?.nome_completo || 'Sistema',
-    acao: id ? 'EDIÇÃO DE POLO' : 'NOVO POLO',
-    tabela_afetada: 'polos',
-    detalhes: `${id ? 'Editou' : 'Cadastrou'} o polo: ${nome} (${tipo})`
+  // 2. Registro na Auditoria com a função centralizada
+  await logAction(supabase, session.user, {
+    action: id ? 'EDIÇÃO DE POLO' : 'NOVO POLO',
+    tableName: 'polos',
+    details: `${id ? 'Editou' : 'Cadastrou'} o polo: ${nome} (${tipo})`
   })
 
   revalidatePath('/aplicacao/ibv/admin/polos')

@@ -1,5 +1,6 @@
 'use server'
 
+import { logAction } from '@/lib/audit'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
@@ -26,14 +27,11 @@ export async function salvarMateria(formData: FormData) {
 
   if (error) throw new Error(error.message)
 
-  // Registro na Auditoria
-  const { data: admin } = await supabase.from('perfis').select('nome_completo').eq('id', session.user.id).single()
-  await supabase.from('auditoria').insert({
-    usuario_id: session.user.id,
-    usuario_nome: admin?.nome_completo || 'Sistema',
-    acao: id ? 'EDIÇÃO DE MATÉRIA' : 'NOVA MATÉRIA',
-    tabela_afetada: 'materias',
-    detalhes: `${id ? 'Alterou' : 'Cadastrou'} a matéria ${nome} como ${status.toUpperCase()}`
+  // Registro na Auditoria com a função centralizada
+  await logAction(supabase, session.user, {
+    action: id ? 'EDIÇÃO DE MATÉRIA' : 'NOVA MATÉRIA',
+    tableName: 'materias',
+    details: `${id ? 'Alterou' : 'Cadastrou'} a matéria ${nome} como ${status.toUpperCase()}`
   })
 
   revalidatePath('/aplicacao/ibv/admin/materias')

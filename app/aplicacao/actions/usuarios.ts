@@ -2,6 +2,7 @@
 
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { createClient } from '@supabase/supabase-js' // 👈 Importação necessária para o Cliente Isolado
+import { logAction } from '@/lib/audit'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 
@@ -68,14 +69,11 @@ export async function criarUsuario(formData: FormData) {
     throw new Error(`Conta criada, mas houve um erro ao salvar o perfil: ${perfilError.message}`)
   }
 
-  // 4. Auditoria
-  const { data: admin } = await supabase.from('perfis').select('nome_completo').eq('id', session.user.id).single()
-  await supabase.from('auditoria').insert({
-    usuario_id: session.user.id,
-    usuario_nome: admin?.nome_completo || 'Sistema',
-    acao: 'NOVO CADASTRO MANUAL',
-    tabela_afetada: 'perfis',
-    detalhes: `Cadastrou o aluno: ${nome_completo} no polo ${polo}`
+  // 4. Auditoria com a função centralizada
+  await logAction(supabase, session.user, {
+    action: 'NOVO CADASTRO MANUAL',
+    tableName: 'perfis',
+    details: `Cadastrou o aluno: ${nome_completo} no polo ${polo}`
   })
 
   revalidatePath('/aplicacao/ibv/admin/cadastro')
@@ -110,14 +108,10 @@ export async function atualizarUsuario(formData: FormData) {
 
   if (error) throw new Error(`Erro ao atualizar perfil: ${error.message}`)
 
-  const { data: admin } = await supabase.from('perfis').select('nome_completo').eq('id', session.user.id).single()
-
-  await supabase.from('auditoria').insert({
-    usuario_id: session.user.id,
-    usuario_nome: admin?.nome_completo || 'Sistema',
-    acao: 'EDIÇÃO COMPLETA DE CADASTRO',
-    tabela_afetada: 'perfis',
-    detalhes: `Editou os dados completos de: ${dadosParaAtualizar.nome_completo}`
+  await logAction(supabase, session.user, {
+    action: 'EDIÇÃO COMPLETA DE CADASTRO',
+    tableName: 'perfis',
+    details: `Editou os dados completos de: ${dadosParaAtualizar.nome_completo}`
   })
 
   revalidatePath(`/aplicacao/ibv/admin/cadastro/${id}`)

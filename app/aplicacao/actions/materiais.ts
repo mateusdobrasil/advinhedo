@@ -1,6 +1,7 @@
 'use server'
 
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
+import { logAction } from '@/lib/audit'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 
@@ -45,25 +46,13 @@ export async function enviarMaterial(formData: FormData) {
     throw new Error('Falha ao salvar os dados no banco.')
   }
 
-  // COLE ISSO DEPOIS QUE O SEU CÓDIGO FIZER UM INSERT/UPDATE IMPORTANTE
-
-  // 1. Descobre quem é o Admin que está fazendo a ação
   const { data: { session } } = await supabase.auth.getSession()
   
   if (session) {
-    const { data: admin } = await supabase
-      .from('perfis')
-      .select('nome_completo')
-      .eq('id', session.user.id)
-      .single()
-
-    // 2. Grava a ação no banco
-    await supabase.from('auditoria').insert({
-      usuario_id: session.user.id,
-      usuario_nome: admin?.nome_completo || 'Sistema',
-      acao: 'NOME DA AÇÃO (Ex: NOVA MATRÍCULA)',
-      tabela_afetada: 'nome_da_tabela',
-      detalhes: `Descreva o que aconteceu aqui.`
+    await logAction(supabase, session.user, {
+      action: 'ENVIO DE MATERIAL',
+      tableName: 'materiais',
+      details: `O material "${titulo}" foi enviado com sucesso. URL: ${publicUrl}`
     })
   }
 

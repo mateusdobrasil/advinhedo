@@ -1,5 +1,6 @@
 'use server'
 
+import { logAction } from '@/lib/audit'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
@@ -57,12 +58,10 @@ export async function atualizarPermissao(formData: FormData) {
   }
 
   // 4. REGISTRO DE AUDITORIA DEFINITIVO
-  await supabase.from('auditoria').insert({
-    usuario_id: session.user.id, // ID de quem fez a alteração
-    usuario_nome: adminLogado.nome_completo || 'Administrador', // Nome de quem fez
-    acao: 'ALTERAÇÃO DE ACESSO',
-    tabela_afetada: 'perfis',
-    detalhes: `Alterou acessos de ${nomeAlvo} para os cargos [ ${tipo_usuario} ] e polos [ ${polo} ].`
+  await logAction(supabase, session.user, {
+    action: 'ALTERAÇÃO DE ACESSO',
+    tableName: 'perfis',
+    details: `Alterou acessos de ${nomeAlvo} para os cargos [ ${tipo_usuario} ] e polos [ ${polo} ].`
   })
   
   // 5. ATUALIZA A TELA

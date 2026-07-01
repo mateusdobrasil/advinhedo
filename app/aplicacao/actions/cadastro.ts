@@ -1,5 +1,6 @@
 'use server'
 
+import { logAction } from '@/lib/audit'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 
@@ -97,14 +98,12 @@ export async function cadastrarAluno(formData: FormData) {
     throw new Error(`Conta criada, mas houve um erro ao salvar os detalhes: ${perfilError.message}`)
   }
 
-  // Gravação na tabela de Auditoria
-  const { error: auditError } = await supabase.from('auditoria').insert({
-    usuario_id: userId, 
-    usuario_nome: nome, 
-    acao: 'NOVO CADASTRO',
-    tabela_afetada: 'perfis',
-    detalhes: `O aluno ${nome} realizou o auto-cadastro pelo portal público.`
+  // Gravação na tabela de Auditoria com a função centralizada
+  // Nota: Como esta é uma Server Action pública (auto-cadastro), não há uma 'session' de admin.
+  // A função logAction precisa de um objeto 'user', que temos em 'authData.user'.
+  await logAction(supabase, authData.user!, {
+    action: 'NOVO CADASTRO',
+    tableName: 'perfis',
+    details: `O aluno ${nome} realizou o auto-cadastro pelo portal público.`
   })
-
-  if (auditError) console.error("❌ ERRO AO GRAVAR AUDITORIA:", auditError.message)
 }

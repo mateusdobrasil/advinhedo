@@ -42,6 +42,7 @@ export default function GerenciadorAgendaPage() {
   });
   const [previaLote, setPreviaLote] = useState<{data_iso: string; dia_semana: string; data_pt: string; conflitos: any[]}[] | null>(null);
   const [salvandoLote, setSalvandoLote] = useState(false);
+  const [erroLote, setErroLote] = useState<string | null>(null);
 
   const [salvandoBanner, setSalvandoBanner] = useState(false);
   const [erroBanner, setErroBanner] = useState("");
@@ -109,6 +110,7 @@ export default function GerenciadorAgendaPage() {
   // =========================================================================
   const gerarPreviaEmLote = (e: React.FormEvent) => {
     e.preventDefault();
+    setErroLote(null); // Limpa erro anterior
     const anoNum = parseInt(formLote.ano);
     const diaAlvo = parseInt(formLote.diaSemana);
     const mesAlvo = formLote.mes;
@@ -138,7 +140,7 @@ export default function GerenciadorAgendaPage() {
     }
 
     if (datasGeradas.length === 0) {
-      alert("A regra informada não resultou em nenhuma data válida neste ano. Verifique se escolheu, por exemplo, o 5º Domingo num mês que só tem 4.");
+      setErroLote("A regra informada não resultou em nenhuma data válida. Verifique se escolheu, por exemplo, o 5º Domingo num mês que só tem 4.");
       return;
     }
 
@@ -472,6 +474,13 @@ export default function GerenciadorAgendaPage() {
                         {congregacoesDB.map(c => <option key={c.id} value={c.nome}>{c.nome}</option>)}
                       </select>
                     </div>
+
+                    {/* Exibe a mensagem de erro aqui */}
+                    {erroLote && (
+                      <div className="sm:col-span-3 bg-red-50 text-red-700 p-4 rounded-xl text-sm font-bold">
+                        {erroLote}
+                      </div>
+                    )}
 
                     <div className="sm:col-span-3 flex justify-end mt-4">
                       <button type="submit" className="bg-amber-500 text-white px-8 py-3.5 font-black rounded-xl hover:bg-amber-600 transition shadow-md">

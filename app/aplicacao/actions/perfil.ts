@@ -1,5 +1,6 @@
 'use server'
 
+import { logAction } from '@/lib/audit'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
@@ -34,23 +35,12 @@ export async function atualizarPerfil(formData: FormData) {
     if (authError) throw new Error('Erro ao atualizar a senha. A senha deve ter no mínimo 6 caracteres.')
   }
 
-  // COLE ISSO DEPOIS QUE O SEU CÓDIGO FIZER UM INSERT/UPDATE IMPORTANTE
-
-  // 1. Descobre quem é o Admin que está fazendo a ação  
+  // 3. Grava a ação de auditoria
   if (session) {
-    const { data: admin } = await supabase
-      .from('perfis')
-      .select('nome_completo')
-      .eq('id', session.user.id)
-      .single()
-
-    // 2. Grava a ação no banco
-    await supabase.from('auditoria').insert({
-      usuario_id: session.user.id,
-      usuario_nome: admin?.nome_completo || 'Sistema',
-      acao: 'NOME DA AÇÃO (Ex: NOVA MATRÍCULA)',
-      tabela_afetada: 'nome_da_tabela',
-      detalhes: `Descreva o que aconteceu aqui.`
+    await logAction(supabase, session.user, {
+      action: 'ATUALIZAÇÃO DE PERFIL',
+      tableName: 'perfis',
+      details: `O usuário ${nome || session.user.email} atualizou seu próprio perfil. Nova senha foi ${novaSenha ? 'definida' : 'mantida'}.`
     })
   }
 
