@@ -83,19 +83,11 @@ export default function Dashboard() {
   const [reunioesSel, setReunioesSel] = useState([])
 
   useEffect(() => {
-    async function carregar() {
-      setLoading(true)
-      setErro(null)
+    let ativo = true
 
-      // Server action: uma chamada traz reuniões, obreiros e presenças
-      const res = await carregarDashboard()
-
-      if (!res.ok) {
-        setErro(res.error || 'Erro ao carregar os dados.')
-        setLoading(false)
-        return
-      }
-
+    // Processa a resposta da action e atualiza os estados
+    function aplicar(res) {
+      if (!ativo || !res.ok) return
       const mapa = {}
       res.presencas.forEach(p => {
         if (!p.presente) return
@@ -105,10 +97,37 @@ export default function Dashboard() {
       setReunioes(res.reunioes)
       setObreiros(res.obreiros)
       setPresencaMap(mapa)
+    }
+
+    // Carga inicial — com spinner
+    async function carregarInicial() {
+      setLoading(true)
+      setErro(null)
+      const res = await carregarDashboard()
+      if (!ativo) return
+      if (!res.ok) {
+        setErro(res.error || 'Erro ao carregar os dados.')
+        setLoading(false)
+        return
+      }
+      aplicar(res)
       if (res.reunioes.length) setReuniaoSel(res.reunioes[0])
       setLoading(false)
     }
-    carregar()
+
+    // Polling a cada 10s — silencioso (sem spinner, sem mexer na seleção)
+    const intervalo = setInterval(async () => {
+      if (document.visibilityState !== 'visible') return // pausa em aba oculta
+      const res = await carregarDashboard()
+      aplicar(res)
+    }, 10000)
+
+    carregarInicial()
+
+    return () => {
+      ativo = false
+      clearInterval(intervalo)
+    }
   }, [])
 
   const reunioesFiltradas = useMemo(() => {
