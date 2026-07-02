@@ -3,7 +3,7 @@
 /**
  * /reunioes/admin/obreiros/[id]/editar/page.jsx
  * Edição dos campos essenciais do obreiro
- */
+ */ 
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'

@@ -35,7 +35,7 @@ function brParaISO(br) {
   if (!d || !m || !a) return null
   return `${a}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`
 }
-
+ 
 export default function NovoObreiroPage() {
   const router = useRouter()
   useReuniaoAuth()
