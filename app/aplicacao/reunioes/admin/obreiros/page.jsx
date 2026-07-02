@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
 import { useReuniaoAuth } from '@/hooks/useReuniaoAuth'
+import { listarObreirosAdmin } from '@/app/aplicacao/actions/obreiros-lista'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+// ── SEM cliente Supabase no navegador ──
+// A listagem vem da server action, que devolve apenas o booleano
+// tem_descritor (o vetor biométrico não trafega mais para esta tela).
 
 function normalizarTexto(t) {
   return (t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -22,39 +21,49 @@ export default function ObreirosPage() {
   const router = useRouter()
   useReuniaoAuth()
 
-  const [obreiros, setObreiros]   = useState([])
-  const [loading, setLoading]     = useState(true)
-  const [busca, setBusca]         = useState('')
-  const [filtro, setFiltro]       = useState('todos') // 'todos' | 'com_foto' | 'sem_foto'
+  const [obreiros, setObreiros] = useState([])
+  const [loading, setLoading]   = useState(true)
+  const [erro, setErro]         = useState(null)
+  const [busca, setBusca]       = useState('')
+  const [filtro, setFiltro]     = useState('todos') // 'todos' | 'com_foto' | 'sem_foto' | 'inativos'
 
   useEffect(() => {
     async function carregar() {
-      const { data } = await supabase
-        .from('obreiro_cadastro')
-        .select('id, nome, foto_url, face_descriptor, obreiro_congregacoes(nome), obreiro_cargos(nome)')
-        .eq('situacao', 'Ativo')
-        .order('nome')
-      setObreiros(data || [])
+      const res = await listarObreirosAdmin()
+      if (!res.ok) {
+        setErro(res.error || 'Erro ao carregar os obreiros.')
+        setLoading(false)
+        return
+      }
+      setObreiros(res.obreiros)
       setLoading(false)
     }
     carregar()
   }, [])
 
+  const ativos   = obreiros.filter(o => o.situacao !== 'Inativo')
+  const inativos = obreiros.filter(o => o.situacao === 'Inativo')
+
   const filtrados = obreiros.filter(o => {
     const buscaNorm = normalizarTexto(busca)
     const nomeNorm  = normalizarTexto(o.nome)
     const congNorm  = normalizarTexto(o.obreiro_congregacoes?.nome || '')
-    const cargoNorm = normalizarTexto(o.obreiro_cargos?.nome || '')
     const corresponde = !busca || nomeNorm.includes(buscaNorm) || congNorm.includes(buscaNorm)
     if (!corresponde) return false
-    if (filtro === 'com_foto') return !!o.face_descriptor
-    if (filtro === 'sem_foto') return !o.face_descriptor
+
+    const inativo = o.situacao === 'Inativo'
+    if (filtro === 'inativos') return inativo
+    if (inativo) return false // demais abas mostram só ativos
+    if (filtro === 'com_foto') return !!o.tem_descritor
+    if (filtro === 'sem_foto') return !o.tem_descritor
     return true
   })
 
-  const comFoto   = obreiros.filter(o => !!o.face_descriptor).length
-  const semFoto   = obreiros.length - comFoto
-  const pctFoto   = obreiros.length ? Math.round(comFoto / obreiros.length * 100) : 0
+  // Progresso de fotos calculado sobre os ATIVOS (inativos não
+  // participam do reconhecimento facial)
+  const comFoto = ativos.filter(o => !!o.tem_descritor).length
+  const semFoto = ativos.length - comFoto
+  const pctFoto = ativos.length ? Math.round(comFoto / ativos.length * 100) : 0
 
   return (
     <div style={s.container}>
@@ -73,11 +82,11 @@ export default function ObreirosPage() {
 
       <div style={s.body}>
 
-        {/* Progresso geral */}
+        {/* Progresso geral (sobre os ativos) */}
         <div style={s.progressoCard}>
           <div style={s.progressoNums}>
             <span style={s.progressoNum}>{comFoto}</span>
-            <span style={s.progressoDen}>/{obreiros.length} com foto</span>
+            <span style={s.progressoDen}>/{ativos.length} com foto</span>
           </div>
           <div style={s.progressoBarra}>
             <div style={{ ...s.progressoFill, width: `${pctFoto}%` }} />
@@ -104,12 +113,18 @@ export default function ObreirosPage() {
         {/* Filtros */}
         <div style={s.filtros}>
           {[
-            { key: 'todos',    label: `Todos (${obreiros.length})` },
+            { key: 'todos',    label: `Todos (${ativos.length})` },
             { key: 'com_foto', label: `Com foto (${comFoto})` },
             { key: 'sem_foto', label: `Sem foto (${semFoto})` },
+            { key: 'inativos', label: `Inativos (${inativos.length})` },
           ].map(f => (
             <button key={f.key}
-              style={{ ...s.filtroBtn, ...(filtro === f.key ? s.filtroBtnAtivo : {}) }}
+              style={{
+                ...s.filtroBtn,
+                ...(filtro === f.key
+                  ? (f.key === 'inativos' ? s.filtroBtnInativo : s.filtroBtnAtivo)
+                  : {}),
+              }}
               onClick={() => setFiltro(f.key)}>
               {f.label}
             </button>
@@ -119,36 +134,54 @@ export default function ObreirosPage() {
         {/* Lista */}
         {loading ? (
           <div style={s.loadingWrap}><div style={s.spinner} /></div>
+        ) : erro ? (
+          <div style={s.emptyBox}>
+            <p style={{ margin: 0, color: '#991B1B', fontSize: 14 }}>{erro}</p>
+          </div>
         ) : filtrados.length === 0 ? (
           <div style={s.emptyBox}>
-            <p style={{ margin: 0, color: '#6B7280', fontSize: 14 }}>Nenhum obreiro encontrado.</p>
+            <p style={{ margin: 0, color: '#6B7280', fontSize: 14 }}>
+              {filtro === 'inativos' ? 'Nenhum obreiro inativo.' : 'Nenhum obreiro encontrado.'}
+            </p>
           </div>
         ) : (
           filtrados.map(o => {
-            const temFoto = !!o.face_descriptor
+            const temFoto = !!o.tem_descritor
+            const inativo = o.situacao === 'Inativo'
             return (
-              <div key={o.id} style={s.card} role="button" tabIndex={0}
-                onClick={() => router.push(`/aplicacao/reunioes/admin/obreiros/${o.id}/foto`)}
-                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') router.push(`/aplicacao/reunioes/admin/obreiros/${o.id}/foto`) }}>
+              // div com onClick (button dentro de button é HTML inválido
+              // e causava warnings de hydration com o botão Editar)
+              <div key={o.id}
+                style={{ ...s.card, ...(inativo ? s.cardInativo : {}) }}
+                onClick={() => router.push(`/aplicacao/reunioes/admin/obreiros/${o.id}/foto`)}>
 
                 {/* Avatar ou foto */}
                 <div style={s.avatarWrap}>
                   {o.foto_url ? (
-                    <img src={o.foto_url} alt={o.nome} style={s.fotoImg} />
+                    <img src={o.foto_url} alt={o.nome} style={{ ...s.fotoImg, ...(inativo ? { filter: 'grayscale(1)', opacity: 0.7 } : {}) }} />
                   ) : (
                     <div style={s.avatarSem}>{iniciais(o.nome)}</div>
                   )}
-                  {temFoto && <div style={s.fotoBadge}>✓</div>}
+                  {temFoto && !inativo && <div style={s.fotoBadge}>✓</div>}
                 </div>
 
                 {/* Info */}
                 <div style={s.cardInfo}>
-                  <div style={s.cardNome}>{o.nome}</div>
+                  <div style={s.cardNome}>
+                    {o.nome}
+                    {inativo && <span style={s.badgeInativo}>Inativo</span>}
+                  </div>
                   <div style={s.cardSub}>{o.obreiro_congregacoes?.nome || '—'}</div>
                   <div style={s.cardSub}>{o.obreiro_cargos?.nome || '—'}</div>
-                  <div style={{ ...s.cardStatus, color: temFoto ? '#065F46' : '#F59E0B' }}>
-                    {temFoto ? 'Foto cadastrada' : 'Sem foto — toque para cadastrar'}
-                  </div>
+                  {inativo ? (
+                    <div style={{ ...s.cardStatus, color: '#9CA3AF' }}>
+                      Não participa do check-in — toque em Editar para reativar
+                    </div>
+                  ) : (
+                    <div style={{ ...s.cardStatus, color: temFoto ? '#065F46' : '#F59E0B' }}>
+                      {temFoto ? 'Foto cadastrada' : 'Sem foto — toque para cadastrar'}
+                    </div>
+                  )}
                 </div>
 
                 <div style={s.cardAcoes}>
@@ -188,14 +221,17 @@ const s = {
   buscaInput:     { flex: 1, border: 'none', outline: 'none', fontSize: 14, padding: '12px 0', background: 'transparent', color: '#111827' },
   filtros:        { display: 'flex', gap: 8, marginBottom: 14, overflowX: 'auto' },
   filtroBtn:      { flexShrink: 0, padding: '6px 14px', background: '#fff', border: '1px solid #E5E7EB', borderRadius: 20, fontSize: 13, color: '#6B7280', cursor: 'pointer', whiteSpace: 'nowrap' },
-  filtroBtnAtivo: { background: '#111827', border: '1px solid #111827', color: '#fff', fontWeight: 500 },
-  card:           { display: 'flex', alignItems: 'center', gap: 12, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '12px', marginBottom: 8, cursor: 'pointer', textAlign: 'left', width: '100%' },
+  filtroBtnAtivo: { background: '#111827', borderColor: '#111827', color: '#fff', fontWeight: 500 },
+  filtroBtnInativo: { background: '#991B1B', borderColor: '#991B1B', color: '#fff', fontWeight: 500 },
+  card:           { display: 'flex', alignItems: 'center', gap: 12, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '12px', marginBottom: 8, cursor: 'pointer', textAlign: 'left', width: '100%', boxSizing: 'border-box' },
+  cardInativo:    { background: '#FAFAFA', border: '1px dashed #E5E7EB', opacity: 0.85 },
   avatarWrap:     { position: 'relative', flexShrink: 0 },
   fotoImg:        { width: 48, height: 48, borderRadius: 12, objectFit: 'cover' },
   avatarSem:      { width: 48, height: 48, borderRadius: 12, background: '#F3F4F6', color: '#9CA3AF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700 },
   fotoBadge:      { position: 'absolute', bottom: -2, right: -2, width: 16, height: 16, borderRadius: '50%', background: '#065F46', color: '#fff', fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 },
   cardInfo:       { flex: 1, minWidth: 0 },
-  cardNome:       { fontSize: 14, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  cardNome:       { fontSize: 14, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6 },
+  badgeInativo:   { borderRadius: 20, padding: '1px 8px', fontSize: 10, fontWeight: 600, background: '#FEE2E2', color: '#991B1B', flexShrink: 0 },
   cardSub:        { fontSize: 12, color: '#6B7280', marginTop: 2 },
   cardStatus:     { fontSize: 11, marginTop: 3, fontWeight: 500 },
   chevron:        { fontSize: 20, color: '#D1D5DB', flexShrink: 0 },

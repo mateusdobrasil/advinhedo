@@ -3,19 +3,17 @@
 /**
  * /reunioes/admin/page.jsx
  * Hub admin — reuniões abertas, nova reunião, navegação
- */ 
+ */
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { createClient } from '@supabase/supabase-js'
 import { logoutReuniao } from '@/app/aplicacao/actions/reunioes-auth'
-import { registrarLogReuniao } from '@/lib/reunioes-log'
+import { listarReunioesAdmin, criarReuniao as criarReuniaoAction, alterarStatusReuniao } from '@/app/aplicacao/actions/reunioes-admin'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+// ── SEM cliente Supabase no navegador ──
+// Listagem (com contagens calculadas no servidor), criação, status e
+// log de auditoria passam pelas server actions (cookie + service role).
 
 function formatarData(iso) {
   if (!iso) return '—'
@@ -35,9 +33,10 @@ function tituloSugerido() {
   return `Reunião de Obreiros — ${mes.charAt(0).toUpperCase() + mes.slice(1)}/${ano}`
 }
 
+// As contagens já vêm calculadas do servidor (presentes, totalCheckins)
 function stats(r) {
-  const total     = r.presencas?.length || 0
-  const presentes = r.presencas?.filter(p => p.presente).length || 0
+  const total     = r.totalCheckins || 0
+  const presentes = r.presentes || 0
   return { total, presentes, pct: total ? Math.round(presentes / total * 100) : 0 }
 }
 
@@ -61,84 +60,79 @@ export default function AdminPage() {
 
   useEffect(() => { carregar() }, [])
 
-  // CORREÇÃO: Capturando 'error' para identificar falhas de relacionamento
   async function carregar() {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('obreiro_reunioes')
-      .select('id, titulo, data_reuniao, hora_inicio, local, aberta, presencas:obreiro_presencas(id, presente)')
-      .eq('ativa', true)
-      .order('data_reuniao', { ascending: false })
+    const res = await listarReunioesAdmin()
 
-    if (error) {
-      console.error("Erro na busca de reuniões:", error.message)
-      mostrarToast(`Erro no banco: ${error.message}`, 'erro')
+    if (!res.ok) {
+      mostrarToast(res.error || 'Erro ao carregar reuniões.', 'erro')
       setReunioes([])
     } else {
-      setReunioes(data || [])
+      setReunioes(res.reunioes)
     }
     setLoading(false)
   }
 
   async function criarReuniao() {
+    if (salvando) return
     setSalvando(true)
-    const { error } = await supabase.from('obreiro_reunioes').insert({
+    const res = await criarReuniaoAction({
       titulo:       form.titulo,
       data_reuniao: form.data_reuniao,
-      hora_inicio:  form.hora_inicio || null,
-      hora_fim:     form.hora_fim    || null,
-      local:        form.local       || null,
-      descricao:    form.descricao   || null,
-      aberta:       true,
-      ativa:        true,
+      hora_inicio:  form.hora_inicio,
+      hora_fim:     form.hora_fim,
+      local:        form.local,
+      descricao:    form.descricao,
     })
     setSalvando(false)
-    if (!error) {
+    if (res.ok) {
       setModal(null)
       setForm({ ...form, titulo: tituloSugerido(), data_reuniao: hojeISO(), descricao: '' })
       mostrarToast('Reunião criada!', 'sucesso')
-      registrarLogReuniao(supabase, { acao: 'criar', tabela: 'obreiro_reunioes', detalhes: `Reunião "${form.titulo}" criada` })
       carregar()
     } else {
-      mostrarToast('Erro ao criar reunião.', 'erro')
+      mostrarToast(res.error || 'Erro ao criar reunião.', 'erro')
     }
   }
 
   async function encerrarReuniao(id) {
+    if (salvando) return
     setSalvando(true)
-    const alvo = reunioes.find(r => r.id === id)
-    const { error } = await supabase.from('obreiro_reunioes').update({ aberta: false }).eq('id', id)
+    const res = await alterarStatusReuniao(id, 'encerrar')
     setSalvando(false)
-    if (!error) {
-      setModal(null); mostrarToast('Reunião encerrada.', 'info')
-      registrarLogReuniao(supabase, { acao: 'editar', tabela: 'obreiro_reunioes', registroId: id, detalhes: `Reunião "${alvo?.titulo}" encerrada` })
+    if (res.ok) {
+      setModal(null)
+      mostrarToast('Reunião encerrada.', 'info')
       carregar()
-    } else mostrarToast('Erro ao encerrar.', 'erro')
+    } else {
+      mostrarToast(res.error || 'Erro ao encerrar.', 'erro')
+    }
   }
 
   async function reabrirReuniao(id) {
-    const alvo = reunioes.find(r => r.id === id)
-    const { error } = await supabase.from('obreiro_reunioes').update({ aberta: true }).eq('id', id)
-    if (!error) {
+    const res = await alterarStatusReuniao(id, 'reabrir')
+    if (res.ok) {
       mostrarToast('Reunião reaberta!', 'sucesso')
-      registrarLogReuniao(supabase, { acao: 'editar', tabela: 'obreiro_reunioes', registroId: id, detalhes: `Reunião "${alvo?.titulo}" reaberta` })
       carregar()
+    } else {
+      mostrarToast(res.error || 'Erro ao reabrir.', 'erro')
     }
   }
 
   async function inativarReuniao(id) {
-    const alvo = reunioes.find(r => r.id === id)
-    const { error } = await supabase.from('obreiro_reunioes').update({ ativa: false }).eq('id', id)
-    if (!error) {
-      setModal(null); mostrarToast('Reunião inativada.', 'info')
-      registrarLogReuniao(supabase, { acao: 'inativar', tabela: 'obreiro_reunioes', registroId: id, detalhes: `Reunião "${alvo?.titulo}" inativada` })
+    const res = await alterarStatusReuniao(id, 'inativar')
+    if (res.ok) {
+      setModal(null)
+      mostrarToast('Reunião inativada.', 'info')
       carregar()
+    } else {
+      mostrarToast(res.error || 'Erro ao inativar.', 'erro')
     }
   }
 
   function mostrarToast(msg, tipo) {
     setToast({ msg, tipo })
-    setTimeout(() => setToast(null), 4000) // Aumentado para 4s para dar tempo de ler o erro técnico
+    setTimeout(() => setToast(null), 4000)
   }
 
   async function sair() {
@@ -169,7 +163,7 @@ export default function AdminPage() {
 
       <div style={s.body}>
 
-        {/* Botões de navegação — 3 botões em grid 2+1 */}
+        {/* Botões de navegação — grid 2x2 */}
         <div style={s.navBtns}>
           <button style={s.navBtn} onClick={() => router.push('/aplicacao/reunioes/admin/checkin')}>
             <div style={{ ...s.navIcone, background: '#D1FAE5', color: '#065F46' }}>✓</div>
@@ -268,7 +262,7 @@ export default function AdminPage() {
                   {total > 0 && (
                     <div style={s.presencaWrap}>
                       <div style={s.presencaBar}><div style={{ ...s.presencaFill, width: `${pct}%`, background: '#9CA3AF' }} /></div>
-                      <span style={s.presencaTxt}>{presentes}/{total} Bonecos ({pct}%)</span>
+                      <span style={s.presencaTxt}>{presentes}/{total} presentes ({pct}%)</span>
                     </div>
                   )}
                   <div style={s.acoes}>

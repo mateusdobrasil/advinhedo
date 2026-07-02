@@ -7,14 +7,12 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
 import { useReuniaoAuth } from '@/hooks/useReuniaoAuth'
-import { registrarLogReuniao } from '@/lib/reunioes-log'
+import { carregarListasApoio, criarObreiro } from '@/app/aplicacao/actions/obreiro-novo'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+// ── SEM cliente Supabase no navegador ──
+// Listas de apoio, número de cadastro, gravação e log de auditoria
+// passam pelas server actions (cookie + service role).
 
 function mascaraCPF(valor) {
   return valor.replace(/\D/g, '').slice(0, 11)
@@ -35,7 +33,7 @@ function brParaISO(br) {
   if (!d || !m || !a) return null
   return `${a}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`
 }
- 
+
 export default function NovoObreiroPage() {
   const router = useRouter()
   useReuniaoAuth()
@@ -61,18 +59,14 @@ export default function NovoObreiroPage() {
 
   useEffect(() => {
     async function carregar() {
-      const [
-        { data: congsData },
-        { data: cargosData },
-        { data: funcoesData },
-      ] = await Promise.all([
-        supabase.from('obreiro_congregacoes').select('id, nome').order('nome'),
-        supabase.from('obreiro_cargos').select('id, nome, nivel').order('nivel', { ascending: false }),
-        supabase.from('obreiro_funcoes').select('id, nome').order('nome'),
-      ])
-      setCongregacoes(congsData || [])
-      setCargos(cargosData || [])
-      setFuncoes(funcoesData || [])
+      const res = await carregarListasApoio()
+      if (!res.ok) {
+        mostrarToast(res.error || 'Erro ao carregar as listas.', 'erro')
+        return
+      }
+      setCongregacoes(res.congregacoes)
+      setCargos(res.cargos)
+      setFuncoes(res.funcoes)
     }
     carregar()
   }, [])
@@ -96,45 +90,31 @@ export default function NovoObreiroPage() {
   }
 
   async function salvar() {
-    if (!validar()) return
+    if (!validar() || salvando) return
     setSalvando(true)
 
-    // Pega o próximo número de cadastro
-    const { data: ultimo } = await supabase
-      .from('obreiro_cadastro')
-      .select('cadastro')
-      .order('cadastro', { ascending: false })
-      .limit(1)
-      .single()
-
-    const proximoCadastro = (ultimo?.cadastro || 0) + 1
-
-    const { data: novo, error } = await supabase
-      .from('obreiro_cadastro')
-      .insert({
-        cadastro:        proximoCadastro,
-        situacao:        form.situacao,
-        nome:            form.nome.trim(),
-        congregacao_id:  form.congregacao_id  || null,
-        cargo_id:        form.cargo_id        || null,
-        funcao_id:       form.funcao_id       || null,
-        cpf:             form.cpf             || null,
-        data_nascimento: brParaISO(form.data_nascimento),
-        telefone:        form.telefone        || null,
-        email:           form.email?.toLowerCase() || null,
-      })
-      .select('id')
-      .single()
+    // A action calcula o número de cadastro no servidor (com retry
+    // contra colisões) e registra o log de auditoria
+    const res = await criarObreiro({
+      situacao:        form.situacao,
+      nome:            form.nome,
+      congregacao_id:  form.congregacao_id,
+      cargo_id:        form.cargo_id,
+      funcao_id:       form.funcao_id,
+      cpf:             form.cpf,
+      data_nascimento: brParaISO(form.data_nascimento),
+      telefone:        form.telefone,
+      email:           form.email,
+    })
 
     setSalvando(false)
 
-    if (error) {
-      mostrarToast('Erro ao cadastrar. Tente novamente.', 'erro')
+    if (!res.ok) {
+      mostrarToast(res.error || 'Erro ao cadastrar. Tente novamente.', 'erro')
     } else {
       mostrarToast('Obreiro cadastrado!', 'sucesso')
-      registrarLogReuniao(supabase, { acao: 'criar', tabela: 'obreiro_cadastro', registroId: novo.id, detalhes: `Obreiro "${form.nome.trim()}" cadastrado` })
       // Redireciona para a foto após cadastrar
-      setTimeout(() => router.push(`/aplicacao/reunioes/admin/obreiros/${novo.id}/foto`), 1200)
+      setTimeout(() => router.push(`/aplicacao/reunioes/admin/obreiros/${res.id}/foto`), 1200)
     }
   }
 
