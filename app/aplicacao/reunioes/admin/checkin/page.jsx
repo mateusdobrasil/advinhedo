@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { useReuniaoAuth } from '@/hooks/useReuniaoAuth'
 import {
   listarReunioesAbertas, listarObreiros, listarPresencas,
@@ -476,7 +477,9 @@ export default function CheckinPage() {
 
         {/* Header kiosk */}
         <div style={k.header}>
-          <div style={k.headerInfo}>
+          <Image src="/imgs/logo_branco.png" alt="AD Vinhedo" width={80} height={36} style={{ objectFit: 'contain' }} priority />
+          <button style={m.voltarBtn} onClick={() => router.push('/aplicacao/reunioes/admin')}>←</button>
+          <div style={k.headerInfo}> 
             <div style={k.headerTitulo}>{reuniao.titulo}</div>
             <div style={k.headerData}>
               {new Date(reuniao.data_reuniao + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}

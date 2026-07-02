@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { useReuniaoAuth } from '@/hooks/useReuniaoAuth'
 import {
   listarConfiguracoes,
@@ -119,6 +120,7 @@ export default function ConfiguracoesPage() {
 
       {/* Header */}
       <div style={s.header}>
+        <Image src="/imgs/logo_branco.png" alt="AD Vinhedo" width={80} height={36} style={{ objectFit: 'contain' }} priority />
         <button style={s.voltarBtn} onClick={() => router.push('/aplicacao/reunioes/admin')}>←</button>
         <div style={{ flex: 1 }}>
           <div style={s.headerTitulo}>Configurações</div>
