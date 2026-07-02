@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { useReuniaoAuth } from '@/hooks/useReuniaoAuth'
 import { carregarDashboard } from '@/app/aplicacao/actions/dashboard'
 
@@ -82,7 +83,7 @@ export default function Dashboard() {
   const [reuniaoSel, setReuniaoSel]   = useState(null)
   const [reunioesSel, setReunioesSel] = useState([])
 
-  useEffect(() => {
+  useEffect(() => { 
     let ativo = true
 
     // Processa a resposta da action e atualiza os estados
@@ -234,6 +235,7 @@ export default function Dashboard() {
 
       {/* Header com botão voltar */}
       <div style={s.header}>
+        <Image src="/imgs/logo_branco.png" alt="AD Vinhedo" width={80} height={36} style={{ objectFit: 'contain' }} priority />
         <button style={s.voltarBtn} onClick={() => router.push('/aplicacao/reunioes/admin')}>←</button>
         <div>
           <div style={s.headerTitulo}>Dashboard</div>
