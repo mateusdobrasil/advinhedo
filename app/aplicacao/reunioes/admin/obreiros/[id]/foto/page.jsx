@@ -4,77 +4,121 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { useReuniaoAuth } from '@/hooks/useReuniaoAuth'
+import { carregarObreiroFoto, gerarUploadFoto, salvarDadosFaciais } from '@/app/aplicacao/actions/obreiro-foto'
 
+// Este cliente fica APENAS para o upload via URL assinada
+// (uploadToSignedUrl). Quem autoriza a gravação é o token gerado
+// pela server action — a anon key sozinha não consegue gravar nada.
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
 const MODELS_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model'
+const BUCKET     = 'fotos-obreiros'
+// No cadastro mantemos o ssdMobilenetv1 (mais preciso que o tiny):
+// é uma operação única por obreiro e a qualidade do descritor aqui
+// define a precisão de TODOS os check-ins futuros.
 
 export default function FotoPage() {
   const router = useRouter()
   const { id } = useParams()
   useReuniaoAuth()
 
-  const videoRef    = useRef(null)
-  const canvasRef   = useRef(null)
-  const streamRef   = useRef(null)
+  const videoRef   = useRef(null)
+  const canvasRef  = useRef(null)
+  const streamRef  = useRef(null)
+  const montadoRef = useRef(true)
 
-  const [obreiro, setObreiro]     = useState(null)
-  const [etapa, setEtapa]         = useState('carregando') // 'carregando' | 'camera' | 'preview' | 'salvando' | 'sucesso' | 'erro'
-  const [fotoBlob, setFotoBlob]   = useState(null)
-  const [fotoUrl, setFotoUrl]     = useState(null)
-  const [modelos, setModelos]     = useState(false)
-  const [msg, setMsg]             = useState('')
+  const [obreiro, setObreiro]       = useState(null)
+  const [etapa, setEtapa]           = useState('carregando') // 'carregando' | 'camera' | 'preview' | 'salvando' | 'sucesso' | 'erro'
+  const [fotoBlob, setFotoBlob]     = useState(null)
+  const [fotoUrl, setFotoUrl]       = useState(null)
+  const [videoReady, setVideoReady] = useState(false)
+  const [msg, setMsg]               = useState('')
 
-  // Carrega obreiro e modelos
+  // Carrega obreiro (via action) e modelos
   useEffect(() => {
-    async function init() {
-      const { data } = await supabase
-        .from('obreiro_cadastro')
-        .select('id, nome, foto_url, face_descriptor, obreiro_congregacoes(nome)')
-        .eq('id', id)
-        .single()
-      setObreiro(data)
+    montadoRef.current = true
 
-      // Carrega modelos face-api
+    async function init() {
+      const res = await carregarObreiroFoto(id)
+      if (!montadoRef.current) return
+      if (!res.ok) {
+        setMsg(res.error || 'Erro ao carregar o obreiro.')
+        setEtapa('erro')
+        return
+      }
+      setObreiro(res.obreiro)
+
       const faceapi = await import('@vladmandic/face-api')
       await Promise.all([
         faceapi.nets.ssdMobilenetv1.loadFromUri(MODELS_URL),
         faceapi.nets.faceLandmark68Net.loadFromUri(MODELS_URL),
         faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL),
       ])
-      setModelos(true)
+      if (!montadoRef.current) return
+      // O useEffect [etapa, videoReady] liga a câmera quando o <video> montar
       setEtapa('camera')
-      iniciarCamera()
     }
     init().catch(() => {
+      if (!montadoRef.current) return
       setMsg('Erro ao carregar os modelos de reconhecimento facial.')
       setEtapa('erro')
     })
 
-    return () => pararCamera()
+    return () => {
+      montadoRef.current = false
+      pararCamera()
+    }
   }, [id])
+
+  // CORREÇÃO: a câmera só liga quando o <video> está no DOM.
+  // Antes, iniciarCamera() rodava logo após setEtapa('camera'), com
+  // videoRef ainda null (o elemento só monta no re-render) — a câmera
+  // ligava mas a tela ficava preta.
+  useEffect(() => {
+    if (etapa !== 'camera' || !videoReady) return
+    iniciarCamera()
+  }, [etapa, videoReady])
+
+  function onVideoRef(el) {
+    if (el && !videoRef.current) {
+      videoRef.current = el
+      setVideoReady(true)
+    }
+  }
 
   async function iniciarCamera() {
     try {
+      pararCamera()
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: 640, height: 640 }
       })
-      streamRef.current = stream
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        videoRef.current.play()
+      if (!montadoRef.current) {
+        stream.getTracks().forEach(t => t.stop())
+        return
       }
-    } catch {
-      setMsg('Não foi possível acessar a câmera frontal.')
+      streamRef.current = stream
+      const video = videoRef.current
+      if (!video) return
+      video.srcObject = stream
+      video.onloadedmetadata = () => video.play().catch(() => {})
+    } catch (err) {
+      if (!montadoRef.current) return
+      const msgs = {
+        NotAllowedError:  'Permissão da câmera negada. Toque no cadeado ao lado do endereço e permita a câmera.',
+        NotFoundError:    'Nenhuma câmera encontrada neste aparelho.',
+        NotReadableError: 'A câmera está em uso por outro aplicativo.',
+      }
+      setMsg(msgs[err.name] || 'Não foi possível acessar a câmera frontal.')
       setEtapa('erro')
     }
   }
 
   function pararCamera() {
     streamRef.current?.getTracks().forEach(t => t.stop())
+    streamRef.current = null
   }
 
   // Tira a foto
@@ -99,16 +143,16 @@ export default function FotoPage() {
   async function salvarFoto() {
     if (!fotoBlob || !obreiro) return
     setEtapa('salvando')
+    setMsg('')
 
     try {
       const faceapi = await import('@vladmandic/face-api')
 
-      // Cria elemento de imagem para análise
+      // 1. Detecta rosto e extrai descritor (no navegador)
       const img = new Image()
       img.src = fotoUrl
       await new Promise(res => { img.onload = res })
 
-      // Detecta rosto e extrai descritor
       const deteccao = await faceapi
         .detectSingleFace(img)
         .withFaceLandmarks()
@@ -120,29 +164,20 @@ export default function FotoPage() {
         return
       }
 
-      // Upload da foto no Storage
-      const nomeArquivo = `${obreiro.id}.jpg`
+      // 2. Pede a URL assinada de upload à server action
+      const auth = await gerarUploadFoto(obreiro.id)
+      if (!auth.ok) throw new Error(auth.error)
+
+      // 3. Envia o arquivo direto ao Storage com o token de uso único
       const { error: uploadErro } = await supabase.storage
-        .from('fotos-obreiros')
-        .upload(nomeArquivo, fotoBlob, { upsert: true, contentType: 'image/jpeg' })
+        .from(BUCKET)
+        .uploadToSignedUrl(auth.path, auth.token, fotoBlob, { contentType: 'image/jpeg' })
 
       if (uploadErro) throw uploadErro
 
-      // URL pública da foto
-      const { data: { publicUrl } } = supabase.storage
-        .from('fotos-obreiros')
-        .getPublicUrl(nomeArquivo)
-
-      // Salva URL e descritor no banco
-      const { error: dbErro } = await supabase
-        .from('obreiro_cadastro')
-        .update({
-          foto_url:        publicUrl,
-          face_descriptor: Array.from(deteccao.descriptor), // Float32Array → array normal
-        })
-        .eq('id', obreiro.id)
-
-      if (dbErro) throw dbErro
+      // 4. Grava foto_url + descritor via server action (com validação)
+      const res = await salvarDadosFaciais(obreiro.id, Array.from(deteccao.descriptor))
+      if (!res.ok) throw new Error(res.error)
 
       setEtapa('sucesso')
 
@@ -153,10 +188,13 @@ export default function FotoPage() {
   }
 
   function repetirFoto() {
+    if (fotoUrl) URL.revokeObjectURL(fotoUrl)
     setFotoBlob(null)
     setFotoUrl(null)
+    setMsg('')
     setEtapa('camera')
-    iniciarCamera()
+    // Se o <video> já montou antes, o useEffect não re-dispara — liga direto
+    if (videoReady) iniciarCamera()
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -181,25 +219,23 @@ export default function FotoPage() {
         </div>
       )}
 
-      {/* Câmera */}
-      {etapa === 'camera' && (
-        <div style={s.cameraWrap}>
-          <p style={s.instrucao}>Centralize o rosto no círculo e toque em "Tirar foto"</p>
+      {/* Câmera — o <video> fica sempre no DOM a partir daqui (display) */}
+      <div style={{ display: etapa === 'camera' ? 'flex' : 'none', ...s.cameraWrap }}>
+        <p style={s.instrucao}>Centralize o rosto no círculo e toque em "Tirar foto"</p>
 
-          <div style={s.videoContainer}>
-            <video ref={videoRef} style={s.video} playsInline muted />
-            <div style={s.guia} />
-          </div>
-
-          <button style={s.btnFoto} onClick={tirarFoto}>Tirar foto</button>
+        <div style={s.videoContainer}>
+          <video ref={onVideoRef} style={s.video} playsInline muted autoPlay />
+          <div style={s.guia} />
         </div>
-      )}
+
+        <button style={s.btnFoto} onClick={tirarFoto}>Tirar foto</button>
+      </div>
 
       {/* Preview da foto */}
       {etapa === 'preview' && (
         <div style={s.previewWrap}>
           <p style={s.instrucao}>
-            {msg || 'Confira a foto. O rosto deve estar bem visível e centralizado.'}
+            {msg ? '' : 'Confira a foto. O rosto deve estar bem visível e centralizado.'}
           </p>
 
           <div style={s.previewImgWrap}>
@@ -274,7 +310,7 @@ const s = {
   erroIcone:      { width: 72, height: 72, borderRadius: '50%', background: '#991B1B', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 700 },
   sucessoBtns:    { display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 320, marginTop: 8 },
   // Câmera
-  cameraWrap:     { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 20px 40px' },
+  cameraWrap:     { flex: 1, flexDirection: 'column', alignItems: 'center', padding: '0 20px 40px' },
   instrucao:      { fontSize: 13, color: '#9CA3AF', textAlign: 'center', margin: '0 0 20px', lineHeight: 1.5 },
   videoContainer: { position: 'relative', width: '100%', maxWidth: 340 },
   video:          { width: '100%', borderRadius: 16, display: 'block', background: '#000' },

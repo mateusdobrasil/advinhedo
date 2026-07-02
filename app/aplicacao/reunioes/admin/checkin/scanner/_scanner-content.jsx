@@ -8,12 +8,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useReuniaoAuth } from '@/hooks/useReuniaoAuth'
-import { createClient } from '@supabase/supabase-js'
+import { checkinPorCPF } from '@/app/aplicacao/actions/checkin-cpf'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+// ── SEM cliente Supabase no navegador ──
+// O CPF lido é enviado à server action, que busca o obreiro e registra
+// a presença no servidor. A lista de CPFs nunca chega ao dispositivo.
 
 // Normaliza CPF removendo tudo que não é dígito
 function normalizarCPF(cpf) {
@@ -27,19 +26,6 @@ function formatarCPF(cpf) {
   return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`
 }
 
-function iniciais(nome) {
-  return (nome || '').split(' ').filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('')
-}
-
-const COR_CARGO = {
-  'Pastor':      { bg: '#FEF3C7', text: '#92400E' },
-  'Evangelista': { bg: '#EDE9FE', text: '#5B21B6' },
-  'Presbítero':  { bg: '#DBEAFE', text: '#1E40AF' },
-  'Diácono':     { bg: '#D1FAE5', text: '#065F46' },
-  'Cooperador':  { bg: '#FCE7F3', text: '#9D174D' },
-  'Membro':      { bg: '#F3F4F6', text: '#374151' },
-}
-
 export function ScannerContent() {
   const router       = useRouter()
   const searchParams = useSearchParams()
@@ -47,14 +33,14 @@ export function ScannerContent() {
   const reuniaoId    = searchParams.get('reuniao')
   const reuniaoTitulo = searchParams.get('titulo')
 
-  const scannerRef   = useRef(null)
-  const html5QrRef   = useRef(null)
+  const scannerRef     = useRef(null)
+  const html5QrRef     = useRef(null)
   const processandoRef = useRef(false)
 
-  const [modo, setModo]           = useState('scanner')  // 'scanner' | 'resultado' | 'erro' | 'jaPresente'
-  const [obreiro, setObreiro]     = useState(null)
+  const [modo, setModo]                 = useState('scanner')  // 'scanner' | 'resultado' | 'erro' | 'jaPresente'
+  const [obreiro, setObreiro]           = useState(null)
   const [mensagemErro, setMensagemErro] = useState('')
-  const [scanAtivo, setScanAtivo] = useState(false)
+  const [scanAtivo, setScanAtivo]       = useState(false)
 
   // ── Inicia o scanner ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -108,58 +94,31 @@ export function ScannerContent() {
 
     const cpfLido = normalizarCPF(texto)
 
-    if (!cpfLido || cpfLido.length < 11) {
+    if (!cpfLido || cpfLido.length !== 11) {
       setMensagemErro(`Código lido: "${texto}"\n\nNão parece um CPF válido. O cartão deve conter apenas o número do CPF.`)
       setModo('erro')
       processandoRef.current = false
       return
     }
 
-    // Busca obreiro pelo CPF (tenta todas as variações de formatação)
-    const { data: obreiros } = await supabase
-      .from('obreiro_cadastro')
-      .select('id, nome, cpf, obreiro_congregacoes(nome), obreiro_cargos(nome)')
-      .eq('situacao', 'Ativo')
+    // Server action: busca o obreiro e registra a presença no servidor
+    const res = await checkinPorCPF(reuniaoId, cpfLido)
 
-    // Compara CPFs normalizados (remove pontos, traços, etc.)
-    const encontrado = obreiros?.find(o => normalizarCPF(o.cpf) === cpfLido)
-
-    if (!encontrado) {
+    if (res.ok && res.jaPresente) {
+      setObreiro(res.obreiro)
+      setModo('jaPresente')
+    } else if (res.ok) {
+      setObreiro(res.obreiro)
+      setModo('resultado')
+    } else if (res.naoEncontrado) {
       setMensagemErro(`CPF ${formatarCPF(cpfLido)} não encontrado.\n\nVerifique se o obreiro está cadastrado e se o CPF está registrado no sistema.`)
       setModo('erro')
-      processandoRef.current = false
-      return
-    }
-
-    // Verifica se já fez check-in
-    const { data: presencaExistente } = await supabase
-      .from('obreiro_presencas')
-      .select('id')
-      .eq('reuniao_id', reuniaoId)
-      .eq('obreiro_id', encontrado.id)
-      .single()
-
-    if (presencaExistente) {
-      setObreiro(encontrado)
-      setModo('jaPresente')
-      processandoRef.current = false
-      return
-    }
-
-    // Registra a presença
-    const { error } = await supabase.from('obreiro_presencas').insert({
-      reuniao_id:     reuniaoId,
-      obreiro_id:     encontrado.id,
-      presente:       true,
-      metodo_checkin: 'qrcode',
-    })
-
-    if (error) {
-      setMensagemErro('Erro ao registrar presença. Tente novamente.')
+    } else if (res.cpfInvalido) {
+      setMensagemErro(`Código lido: "${texto}"\n\nNão parece um CPF válido. O cartão deve conter apenas o número do CPF.`)
       setModo('erro')
     } else {
-      setObreiro(encontrado)
-      setModo('resultado')
+      setMensagemErro(res.error || 'Erro ao registrar presença. Tente novamente.')
+      setModo('erro')
     }
 
     processandoRef.current = false
