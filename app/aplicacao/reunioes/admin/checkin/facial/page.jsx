@@ -13,6 +13,7 @@ const supabase = createClient(
 const MODELS_URL   = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model'
 const LIMIAR_DIST  = 0.5
 const INTERVALO_MS = 1200
+const INPUT_SIZE   = 416 // tinyFaceDetector: 320 é rápido em celular; suba p/ 416 se precisar de mais precisão
 
 function iniciais(nome) {
   return (nome || '').split(' ').filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('')
@@ -35,36 +36,44 @@ function FacialContent() {
   useReuniaoAuth()
 
   const videoRef       = useRef(null)
-  const canvasRef      = useRef(null)
   const streamRef      = useRef(null)
   const matcherRef     = useRef(null)
   const intervaloRef   = useRef(null)
   const processandoRef = useRef(false)
   const faceapiRef     = useRef(null)
+  const montadoRef     = useRef(true) // evita setState após unmount
 
   const [etapa, setEtapa]           = useState('carregando')
   const [statusMsg, setStatusMsg]   = useState('Carregando modelos...')
   const [obreiro, setObreiro]       = useState(null)
   const [confianca, setConfianca]   = useState(0)
   const [videoReady, setVideoReady] = useState(false)
+  const [salvando, setSalvando]     = useState(false)
 
   // 1. Carrega modelos e dados — sem tocar na câmera ainda
   useEffect(() => {
+    montadoRef.current = true
     if (!reuniaoId) { router.push('/aplicacao/reunioes/admin/checkin'); return }
     carregarModelos()
     return () => {
+      montadoRef.current = false
       clearInterval(intervaloRef.current)
       pararCamera()
     }
   }, [reuniaoId])
 
-  // 2. Só inicia câmera depois que o <video> está no DOM (videoReady = true)
+  // 2. CORREÇÃO CRÍTICA: câmera + reconhecimento só iniciam quando
+  //    modelos estão carregados (etapa === 'scanner') E o <video> existe (videoReady).
+  //    Antes, o efeito rodava no primeiro render, quando faceapiRef ainda era null,
+  //    e o reconhecimento nunca era iniciado.
   useEffect(() => {
-    if (!videoReady) return
+    if (etapa !== 'scanner' || !videoReady) return
     iniciarCamera().then(() => {
-      if (faceapiRef.current) iniciarReconhecimento(faceapiRef.current)
+      if (montadoRef.current && faceapiRef.current) {
+        iniciarReconhecimento(faceapiRef.current)
+      }
     })
-  }, [videoReady])
+  }, [etapa, videoReady])
 
   async function carregarModelos() {
     try {
@@ -72,19 +81,31 @@ function FacialContent() {
       const faceapi = await import('@vladmandic/face-api')
       faceapiRef.current = faceapi
 
+      // tinyFaceDetector: 3–5x mais rápido que o ssdMobilenetv1 em celulares.
+      // Para voltar ao SSD, troque tinyFaceDetector por ssdMobilenetv1 aqui
+      // e remova as TinyFaceDetectorOptions na detecção.
       await Promise.all([
-        faceapi.nets.ssdMobilenetv1.loadFromUri(MODELS_URL),
+        faceapi.nets.tinyFaceDetector.loadFromUri(MODELS_URL),
         faceapi.nets.faceLandmark68Net.loadFromUri(MODELS_URL),
         faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL),
       ])
 
+      if (!montadoRef.current) return
       setStatusMsg('Carregando cadastros faciais...')
 
-      const { data: obreiros } = await supabase
+      const { data: obreiros, error } = await supabase
         .from('obreiro_cadastro')
         .select('id, nome, foto_url, face_descriptor, obreiro_congregacoes(nome), obreiro_cargos(nome)')
         .eq('situacao', 'Ativo')
         .not('face_descriptor', 'is', null)
+
+      if (!montadoRef.current) return
+
+      if (error) {
+        setStatusMsg(`Erro ao carregar cadastros: ${error.message}`)
+        setEtapa('erro')
+        return
+      }
 
       if (!obreiros?.length) {
         setStatusMsg('Nenhum obreiro com foto cadastrada. Cadastre fotos primeiro.')
@@ -105,11 +126,12 @@ function FacialContent() {
         mapaObreiros,
       }
 
-      // Muda para scanner — o useEffect do videoReady vai iniciar a câmera
+      // Muda para scanner — o useEffect [etapa, videoReady] inicia câmera + reconhecimento
       setStatusMsg('Aponte a câmera para o rosto do obreiro')
       setEtapa('scanner')
 
     } catch (err) {
+      if (!montadoRef.current) return
       setStatusMsg(`Erro ao inicializar: ${err.message}`)
       setEtapa('erro')
     }
@@ -129,12 +151,17 @@ function FacialContent() {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
       })
+      if (!montadoRef.current) {
+        stream.getTracks().forEach(t => t.stop())
+        return
+      }
       streamRef.current = stream
       const video = videoRef.current
       if (!video) return
       video.srcObject = stream
       video.onloadedmetadata = () => video.play().catch(() => {})
     } catch {
+      if (!montadoRef.current) return
       setStatusMsg('Não foi possível acessar a câmera. Verifique as permissões.')
       setEtapa('erro')
     }
@@ -147,6 +174,8 @@ function FacialContent() {
 
   function iniciarReconhecimento(faceapi) {
     clearInterval(intervaloRef.current)
+    const opcoesDetector = new faceapi.TinyFaceDetectorOptions({ inputSize: INPUT_SIZE })
+
     intervaloRef.current = setInterval(async () => {
       if (processandoRef.current) return
       if (!videoRef.current || !matcherRef.current) return
@@ -156,9 +185,11 @@ function FacialContent() {
 
       try {
         const deteccao = await faceapi
-          .detectSingleFace(videoRef.current)
+          .detectSingleFace(videoRef.current, opcoesDetector)
           .withFaceLandmarks()
           .withFaceDescriptor()
+
+        if (!montadoRef.current) { processandoRef.current = false; return }
 
         if (!deteccao) {
           setStatusMsg('Aponte a câmera para o rosto do obreiro')
@@ -178,9 +209,11 @@ function FacialContent() {
         clearInterval(intervaloRef.current)
         pararCamera()
 
+        // Confiança normalizada dentro da faixa aceita:
+        // distância 0 → 100% | distância no limiar (0.5) → 50%
         const obreiroEncontrado = mapaObreiros[resultado.label]
-        const pctConfianca = Math.round((1 - resultado.distance) * 100)
-        setConfianca(Math.min(99, pctConfianca))
+        const pctConfianca = Math.round(((LIMIAR_DIST - resultado.distance) / LIMIAR_DIST) * 50 + 50)
+        setConfianca(Math.min(99, Math.max(50, pctConfianca)))
         setObreiro(obreiroEncontrado)
         setEtapa('confirmacao')
 
@@ -192,25 +225,35 @@ function FacialContent() {
     }, INTERVALO_MS)
   }
 
+  // CORREÇÃO: insert direto + constraint UNIQUE no banco.
+  // O código 23505 (unique_violation) indica que já havia check-in — sem
+  // SELECT prévio e sem risco de duplicidade entre dois dispositivos.
   async function confirmarCheckin() {
-    if (!obreiro) return
-    const { data: existente } = await supabase
-      .from('obreiro_presencas').select('id')
-      .eq('reuniao_id', reuniaoId).eq('obreiro_id', obreiro.id)
-      .single()
-
-    if (existente) { setEtapa('jaPresente'); return }
+    if (!obreiro || salvando) return
+    setSalvando(true)
 
     const { error } = await supabase.from('obreiro_presencas').insert({
-      reuniao_id: reuniaoId, obreiro_id: obreiro.id,
-      presente: true, metodo_checkin: 'facial',
+      reuniao_id: reuniaoId,
+      obreiro_id: obreiro.id,
+      presente: true,
+      metodo_checkin: 'facial',
     })
-    setEtapa(error ? 'erro' : 'sucesso')
-    if (error) setStatusMsg('Erro ao registrar presença.')
+
+    if (!montadoRef.current) return
+    setSalvando(false)
+
+    if (error?.code === '23505') { setEtapa('jaPresente'); return }
+    if (error) {
+      setStatusMsg('Erro ao registrar presença. Tente novamente.')
+      setEtapa('erro')
+      return
+    }
+    setEtapa('sucesso')
   }
 
   async function reiniciarScanner() {
     setObreiro(null)
+    setConfianca(0)
     setEtapa('scanner')
     setStatusMsg('Aponte a câmera para o rosto do obreiro')
     processandoRef.current = false
@@ -239,11 +282,10 @@ function FacialContent() {
         </div>
       )}
 
-      {/* Scanner — video SEMPRE no DOM quando etapa === 'scanner' */}
+      {/* Scanner — video SEMPRE no DOM (display:none quando fora da etapa) */}
       <div style={{ display: etapa === 'scanner' ? 'flex' : 'none', ...s.scannerWrap }}>
         <p style={s.instrucao}>{statusMsg}</p>
         <div style={s.videoContainer}>
-          {/* Callback ref garante que videoRef só é setado quando o elemento existe */}
           <video ref={onVideoRef} style={s.video} playsInline muted autoPlay />
           <div style={s.guia} />
         </div>
@@ -265,7 +307,8 @@ function FacialContent() {
             <div>
               <div style={s.obreiroNome}>{obreiro.nome}</div>
               <div style={s.obreiroSub}>
-                {obreiro.congregacoes?.nome || '—'}
+                {/* CORREÇÃO: campo correto é obreiro_congregacoes (nome da relação na query) */}
+                {obreiro.obreiro_congregacoes?.nome || '—'}
                 {obreiro.obreiro_cargos?.nome && (
                   <span style={{ ...s.badge, background: cor.bg, color: cor.text }}>
                     {obreiro.obreiro_cargos.nome}
@@ -282,8 +325,16 @@ function FacialContent() {
           </div>
           <p style={s.pergunta}>É você?</p>
           <div style={s.confirmBtns}>
-            <button style={s.btnNaoSouEu} onClick={reiniciarScanner}>Não sou eu</button>
-            <button style={s.btnConfirmar} onClick={confirmarCheckin}>Sim, confirmar ✓</button>
+            <button style={s.btnNaoSouEu} onClick={reiniciarScanner} disabled={salvando}>
+              Não sou eu
+            </button>
+            <button
+              style={{ ...s.btnConfirmar, opacity: salvando ? 0.7 : 1 }}
+              onClick={confirmarCheckin}
+              disabled={salvando}
+            >
+              {salvando ? 'Registrando...' : 'Sim, confirmar ✓'}
+            </button>
           </div>
         </div>
       )}
@@ -295,7 +346,9 @@ function FacialContent() {
           <p style={s.textoClaro}>Presença registrada!</p>
           <div style={{ textAlign: 'center' }}>
             <p style={{ ...s.obreiroNome, color: '#fff' }}>{obreiro.nome}</p>
-            <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0 }}>{obreiro.congregacoes?.nome}</p>
+            <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0 }}>
+              {obreiro.obreiro_congregacoes?.nome}
+            </p>
           </div>
           <button style={s.btnProximo} onClick={reiniciarScanner}>Próximo obreiro →</button>
         </div>
@@ -325,7 +378,6 @@ function FacialContent() {
         </div>
       )}
 
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
     </div>
   )
 }
