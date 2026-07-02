@@ -3,18 +3,16 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useReuniaoAuth } from '@/hooks/useReuniaoAuth'
+import { carregarDashboard } from '@/app/aplicacao/actions/dashboard'
 
-import { createClient } from '@supabase/supabase-js'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
   LineChart, Line,
 } from 'recharts'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+// ── SEM cliente Supabase no navegador ──
+// Os dados vêm da server action carregarDashboard (cookie + service role).
 
 const COR_CARGO = {
   'Pastor':      '#111827',
@@ -79,6 +77,7 @@ export default function Dashboard() {
   const [obreiros, setObreiros]       = useState([])
   const [presencaMap, setPresencaMap] = useState({})
   const [loading, setLoading]         = useState(true)
+  const [erro, setErro]               = useState(null)
   const [modoFiltro, setModoFiltro]   = useState('ultima')
   const [reuniaoSel, setReuniaoSel]   = useState(null)
   const [reunioesSel, setReunioesSel] = useState([])
@@ -86,21 +85,27 @@ export default function Dashboard() {
   useEffect(() => {
     async function carregar() {
       setLoading(true)
-      const [{ data: reuns }, { data: obs }, { data: pres }] = await Promise.all([
-        supabase.from('obreiro_reunioes').select('id, titulo, data_reuniao, aberta').eq('ativa', true).order('data_reuniao', { ascending: false }),
-        supabase.from('obreiro_cadastro').select('id, nome, data_nascimento, obreiro_congregacoes(nome), obreiro_cargos(nome)').eq('situacao', 'Ativo'),
-        supabase.from('obreiro_presencas').select('reuniao_id, obreiro_id, presente'),
-      ])
+      setErro(null)
+
+      // Server action: uma chamada traz reuniões, obreiros e presenças
+      const res = await carregarDashboard()
+
+      if (!res.ok) {
+        setErro(res.error || 'Erro ao carregar os dados.')
+        setLoading(false)
+        return
+      }
+
       const mapa = {}
-      pres?.forEach(p => {
+      res.presencas.forEach(p => {
         if (!p.presente) return
         if (!mapa[p.reuniao_id]) mapa[p.reuniao_id] = new Set()
         mapa[p.reuniao_id].add(p.obreiro_id)
       })
-      setReunioes(reuns || [])
-      setObreiros(obs || [])
+      setReunioes(res.reunioes)
+      setObreiros(res.obreiros)
       setPresencaMap(mapa)
-      if (reuns?.length) setReuniaoSel(reuns[0])
+      if (res.reunioes.length) setReuniaoSel(res.reunioes[0])
       setLoading(false)
     }
     carregar()
@@ -126,7 +131,9 @@ export default function Dashboard() {
   const dadosCongregacao = useMemo(() => {
     const mapa = {}
     obreiros.forEach(o => {
-      const cong = o.congregacoes?.nome || 'Sem congregação'
+      // CORREÇÃO: campo correto é obreiro_congregacoes (antes lia
+      // o.congregacoes e agrupava todo mundo em "Sem congregação")
+      const cong = o.obreiro_congregacoes?.nome || 'Sem congregação'
       if (!mapa[cong]) mapa[cong] = { total: 0, presentes: 0 }
       mapa[cong].total++
       if (presentesSet.has(o.id)) mapa[cong].presentes++
@@ -189,6 +196,16 @@ export default function Dashboard() {
       <div style={s.loadingWrap}>
         <div style={s.spinner} />
         <p style={s.loadingTxt}>Carregando dados...</p>
+      </div>
+    )
+  }
+
+  if (erro) {
+    return (
+      <div style={s.loadingWrap}>
+        <p style={{ fontSize: 15, fontWeight: 600, color: '#111827', margin: 0 }}>Erro ao carregar</p>
+        <p style={{ ...s.loadingTxt, textAlign: 'center', maxWidth: 320 }}>{erro}</p>
+        <button style={s.btnErro} onClick={() => router.push('/aplicacao/reunioes/admin')}>← Voltar</button>
       </div>
     )
   }
@@ -398,9 +415,10 @@ export default function Dashboard() {
 
 const s = {
   container:       { minHeight: '100dvh', background: '#F9FAFB', fontFamily: "'Geist','Inter',sans-serif", maxWidth: 640, margin: '0 auto', paddingBottom: 48 },
-  loadingWrap:     { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh' },
+  loadingWrap:     { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', gap: 8 },
   spinner:         { width: 32, height: 32, border: '3px solid #E5E7EB', borderTopColor: '#111827', borderRadius: '50%', animation: 'spin 0.8s linear infinite' },
   loadingTxt:      { color: '#9CA3AF', fontSize: 14, marginTop: 12 },
+  btnErro:         { marginTop: 12, padding: '10px 24px', background: '#111827', border: 'none', borderRadius: 10, color: '#fff', fontSize: 14, cursor: 'pointer' },
   header:          { background: '#111827', color: '#fff', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 10 },
   voltarBtn:       { background: 'none', border: 'none', color: '#9CA3AF', fontSize: 20, cursor: 'pointer', padding: '0 4px', flexShrink: 0, lineHeight: 1 },
   headerTitulo:    { fontSize: 17, fontWeight: 600 },

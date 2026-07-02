@@ -1,14 +1,18 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
 import { useReuniaoAuth } from '@/hooks/useReuniaoAuth'
+import {
+  listarReunioesAbertas, listarObreiros, listarPresencas,
+  marcarPresenca, removerPresenca,
+} from '@/app/aplicacao/actions/checkin-lista'
+import { carregarObreirosFacial } from '@/app/aplicacao/actions/checkin-facial'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+// ── SEM cliente Supabase no navegador ──
+// Todo acesso ao banco passa pelas server actions (cookie + service role).
+// A atualização entre dispositivos é feita por polling (a cada 10s),
+// já que o Realtime anon foi bloqueado pelo RLS.
 
 // ── Utilitários ────────────────────────────────────────────────────────────────
 
@@ -39,7 +43,10 @@ const COR_CARGO = {
   'Membro':      { bg: '#F3F4F6', text: '#374151' },
 }
 
-const MODELS_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model'
+const MODELS_URL   = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model'
+const POLLING_MS   = 10000 // sincroniza presenças entre dispositivos
+const LIMIAR_DIST  = 0.5
+const INPUT_SIZE   = 320
 
 // ── Hook: detecta se é tablet/notebook (largura >= 768px) ────────────────────
 function useIsKiosk() {
@@ -80,13 +87,13 @@ export default function CheckinPage() {
   const html5QrRef     = useRef(null)
   const processandoRef = useRef(false)
 
-  // Facial
+  // Facial (kiosk)
   const videoRef       = useRef(null)
   const streamRef      = useRef(null)
   const matcherRef     = useRef(null)
   const intervaloRef   = useRef(null)
   const faceapiRef     = useRef(null)
-  const [videoReady, setVideoReady]   = useState(false)
+  const [videoReady, setVideoReady]     = useState(false)
   const [facialStatus, setFacialStatus] = useState('')
 
   const buscaRef = useRef(null)
@@ -94,11 +101,10 @@ export default function CheckinPage() {
   // ── Carrega reuniões ────────────────────────────────────────────────────────
   useEffect(() => {
     async function carregarReunioes() {
-      const { data } = await supabase
-        .from('obreiro_reunioes').select('id, titulo, data_reuniao')
-        .eq('aberta', true).eq('ativa', true).order('data_reuniao', { ascending: false })
-      setReunioes(data || [])
-      if (data?.length === 1) setReuniao(data[0])
+      const res = await listarReunioesAbertas()
+      if (!res.ok) { setReunioes([]); setLoading(false); return }
+      setReunioes(res.reunioes)
+      if (res.reunioes.length === 1) setReuniao(res.reunioes[0])
       setLoading(false)
     }
     carregarReunioes()
@@ -109,69 +115,60 @@ export default function CheckinPage() {
     if (!reuniao) return
     setLoading(true)
     async function carregarDados() {
-      const { data: obs } = await supabase
-        .from('obreiro_cadastro')
-        .select('id, nome, cpf, foto_url, obreiro_congregacoes(nome), obreiro_cargos(nome)')
-        .eq('situacao', 'Ativo').order('nome')
-      const { data: pres } = await supabase
-        .from('obreiro_presencas').select('id, obreiro_id, presente').eq('reuniao_id', reuniao.id)
+      const [resObs, resPres] = await Promise.all([
+        listarObreiros(),
+        listarPresencas(reuniao.id),
+      ])
       const mapa = {}
-      pres?.forEach(p => { if (p.presente) mapa[p.obreiro_id] = p })
-      setObreiros(obs || [])
+      if (resPres.ok) resPres.presencas.forEach(p => { if (p.presente) mapa[p.obreiro_id] = p })
+      setObreiros(resObs.ok ? resObs.obreiros : [])
       setPresencas(mapa)
       setLoading(false)
     }
     carregarDados()
   }, [reuniao])
 
-  // ── Realtime ────────────────────────────────────────────────────────────────
+  // ── Polling: sincroniza presenças entre dispositivos ───────────────────────
+  // (substitui o realtime: além do nome da tabela estar errado na versão
+  //  anterior — 'presencas' em vez de 'obreiro_presencas' —, o Realtime
+  //  anon foi bloqueado pelo RLS. O polling via action funciona sempre.)
   useEffect(() => {
     if (!reuniao) return
-    const canal = supabase
-      .channel(`presencas-kiosk-${reuniao.id}`)
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'presencas', filter: `reuniao_id=eq.${reuniao.id}` },
-        payload => {
-          setPresencas(prev => {
-            const novo = { ...prev }
-            if (payload.eventType === 'DELETE' || payload.new?.presente === false) delete novo[payload.old?.obreiro_id ?? payload.new?.obreiro_id]
-            else novo[payload.new.obreiro_id] = payload.new
-            return novo
-          })
-        })
-      .subscribe()
-    return () => supabase.removeChannel(canal)
+    const id = setInterval(async () => {
+      const res = await listarPresencas(reuniao.id)
+      if (!res.ok) return
+      const mapa = {}
+      res.presencas.forEach(p => { if (p.presente) mapa[p.obreiro_id] = p })
+      setPresencas(mapa)
+    }, POLLING_MS)
+    return () => clearInterval(id)
   }, [reuniao])
 
   // ── Check-in por lista (clique) ─────────────────────────────────────────────
   const fazerCheckin = useCallback(async (obreiro) => {
-    if (loadingId) return
+    if (loadingId || !reuniao) return
     setLoadingId(obreiro.id)
     const jaPresente = presencas[obreiro.id]
 
     if (jaPresente) {
+      // Otimista: remove já da UI, desfaz se der erro
       setPresencas(prev => { const n = { ...prev }; delete n[obreiro.id]; return n })
-      const { error } = await supabase.from('obreiro_presencas').update({ presente: false }).eq('id', jaPresente.id)
-      if (error) {
-        console.error('Falha ao remover check-in em obreiro_presencas:', error.message)
+      const res = await removerPresenca(reuniao.id, obreiro.id)
+      if (!res.ok) {
         setPresencas(prev => ({ ...prev, [obreiro.id]: jaPresente }))
+        if (isKiosk) setPainelDir('erro')
+        else setFeedback({ nome: obreiro.nome.split(' ')[0], tipo: 'erro' })
+      } else {
+        if (isKiosk) { setObreiroConfirmado({ ...obreiro, tipo: 'removido' }); setPainelDir('sucesso') }
+        else setFeedback({ nome: obreiro.nome.split(' ')[0], tipo: 'removido' })
       }
-      if (isKiosk) { setObreiroConfirmado({ ...obreiro, tipo: 'removido' }); setPainelDir('sucesso') }
-      else setFeedback({ nome: obreiro.nome.split(' ')[0], tipo: 'removido' })
     } else {
+      // Otimista: marca já na UI, desfaz se der erro
       const temp = { id: `temp-${obreiro.id}`, obreiro_id: obreiro.id, presente: true }
       setPresencas(prev => ({ ...prev, [obreiro.id]: temp }))
-      // Reaproveita a linha (mesmo obreiro/reunião) desmarcada anteriormente, em vez de duplicar
-      const { data: existente } = await supabase.from('obreiro_presencas').select('id')
-        .eq('reuniao_id', reuniao.id).eq('obreiro_id', obreiro.id).maybeSingle()
-      const { data, error } = existente
-        ? await supabase.from('obreiro_presencas').update({ presente: true, metodo_checkin: 'lista' }).eq('id', existente.id).select().single()
-        : await supabase.from('obreiro_presencas').insert({
-            reuniao_id: reuniao.id, obreiro_id: obreiro.id,
-            presente: true, metodo_checkin: 'lista',
-          }).select().single()
-      if (!error && data) {
-        setPresencas(prev => ({ ...prev, [obreiro.id]: data }))
+      const res = await marcarPresenca(reuniao.id, obreiro.id, 'lista')
+      if (res.ok) {
+        if (res.presenca) setPresencas(prev => ({ ...prev, [obreiro.id]: res.presenca }))
         if (isKiosk) { setObreiroConfirmado({ ...obreiro, tipo: 'sucesso' }); setPainelDir('sucesso') }
         else setFeedback({ nome: obreiro.nome.split(' ')[0], tipo: 'sucesso' })
       } else {
@@ -225,26 +222,13 @@ export default function CheckinPage() {
       return
     }
 
-    const { data: existente } = await supabase.from('obreiro_presencas').select('id, presente')
-      .eq('reuniao_id', reuniao.id).eq('obreiro_id', encontrado.id).maybeSingle()
+    const res = await marcarPresenca(reuniao.id, encontrado.id, 'qrcode')
 
-    if (existente?.presente) {
+    if (res.ok && res.jaPresente) {
       setObreiroConfirmado({ ...encontrado, tipo: 'jaPresente' })
       setPainelDir('jaPresente')
-      processandoRef.current = false
-      return
-    }
-
-    // Reaproveita a linha (mesmo obreiro/reunião) desmarcada anteriormente, em vez de duplicar
-    const { error } = existente
-      ? await supabase.from('obreiro_presencas').update({ presente: true, metodo_checkin: 'qrcode' }).eq('id', existente.id)
-      : await supabase.from('obreiro_presencas').insert({
-          reuniao_id: reuniao.id, obreiro_id: encontrado.id,
-          presente: true, metodo_checkin: 'qrcode',
-        })
-
-    if (!error) {
-      setPresencas(prev => ({ ...prev, [encontrado.id]: { id: Date.now(), obreiro_id: encontrado.id, presente: true } }))
+    } else if (res.ok) {
+      setPresencas(prev => ({ ...prev, [encontrado.id]: res.presenca ?? { id: Date.now(), obreiro_id: encontrado.id, presente: true } }))
       setObreiroConfirmado({ ...encontrado, tipo: 'sucesso' })
       setPainelDir('sucesso')
     } else {
@@ -263,8 +247,10 @@ export default function CheckinPage() {
 
   useEffect(() => {
     if (!videoReady || painelDir !== 'facial') return
+    // Só liga a câmera quando modelos + descritores já carregaram
+    if (!matcherRef.current) return
     iniciarCameraFacial()
-  }, [videoReady, painelDir])
+  }, [videoReady, painelDir, facialStatus])
 
   async function iniciarFacial() {
     setPainelDir('facial')
@@ -272,24 +258,32 @@ export default function CheckinPage() {
     setVideoReady(false)
     videoRef.current = null
 
-    const faceapi = await import('@vladmandic/face-api')
-    faceapiRef.current = faceapi
-    await Promise.all([
-      faceapi.nets.ssdMobilenetv1.loadFromUri(MODELS_URL),
-      faceapi.nets.faceLandmark68Net.loadFromUri(MODELS_URL),
-      faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL),
-    ])
+    try {
+      const faceapi = await import('@vladmandic/face-api')
+      faceapiRef.current = faceapi
+      await Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri(MODELS_URL),
+        faceapi.nets.faceLandmark68Net.loadFromUri(MODELS_URL),
+        faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL),
+      ])
 
-    const { data: obs } = await supabase
-      .from('obreiro_cadastro').select('id, nome, foto_url, face_descriptor, obreiro_congregacoes(nome), obreiro_cargos(nome)')
-      .eq('situacao', 'Ativo').not('face_descriptor', 'is', null)
+      // Server action: única fonte dos descritores (protegidos por RLS)
+      const res = await carregarObreirosFacial()
+      if (!res.ok) { setFacialStatus(res.error || 'Erro ao carregar cadastros.'); return }
+      if (!res.obreiros.length) { setFacialStatus('Nenhuma foto cadastrada.'); return }
 
-    if (!obs?.length) { setFacialStatus('Nenhuma foto cadastrada.'); return }
+      const rotulos = res.obreiros.map(o =>
+        new faceapi.LabeledFaceDescriptors(o.id, [new Float32Array(o.face_descriptor)])
+      )
+      const mapa = {}
+      res.obreiros.forEach(o => { mapa[o.id] = o })
+      matcherRef.current = { matcher: new faceapi.FaceMatcher(rotulos, LIMIAR_DIST), mapaObreiros: mapa }
 
-    const rotulos = obs.map(o => new faceapi.LabeledFaceDescriptors(o.id, [new Float32Array(o.face_descriptor)]))
-    const mapa = {}; obs.forEach(o => { mapa[o.id] = o })
-    matcherRef.current = { matcher: new faceapi.FaceMatcher(rotulos, 0.5), mapaObreiros: mapa }
-    setFacialStatus('Aponte para a câmera')
+      // Dispara o useEffect que liga a câmera (agora com matcher pronto)
+      setFacialStatus('Aponte para a câmera')
+    } catch (err) {
+      setFacialStatus(`Erro ao inicializar: ${err.message}`)
+    }
   }
 
   async function iniciarCameraFacial() {
@@ -302,7 +296,7 @@ export default function CheckinPage() {
       video.srcObject = stream
       video.onloadedmetadata = () => video.play().catch(() => {})
       iniciarReconhecimento()
-    } catch { setFacialStatus('Sem acesso à câmera.') }
+    } catch { setFacialStatus('Sem acesso à câmera. Verifique as permissões.') }
   }
 
   function pararCameraFacial() {
@@ -313,37 +307,46 @@ export default function CheckinPage() {
 
   function iniciarReconhecimento() {
     clearInterval(intervaloRef.current)
+    const faceapi = faceapiRef.current
+    const opcoesDetector = new faceapi.TinyFaceDetectorOptions({ inputSize: INPUT_SIZE })
+
     intervaloRef.current = setInterval(async () => {
+      if (processandoRef.current) return
       if (!videoRef.current || !matcherRef.current || videoRef.current.readyState < 2) return
-      const faceapi = faceapiRef.current
+      processandoRef.current = true
+
       try {
-        const det = await faceapi.detectSingleFace(videoRef.current).withFaceLandmarks().withFaceDescriptor()
-        if (!det) { setFacialStatus('Aponte para a câmera'); return }
+        const det = await faceapi
+          .detectSingleFace(videoRef.current, opcoesDetector)
+          .withFaceLandmarks()
+          .withFaceDescriptor()
+
+        if (!det) { setFacialStatus('Aponte para a câmera'); processandoRef.current = false; return }
+
         const { matcher, mapaObreiros } = matcherRef.current
         const res = matcher.findBestMatch(det.descriptor)
-        if (res.label === 'unknown') { setFacialStatus('Rosto não reconhecido'); return }
+        if (res.label === 'unknown') { setFacialStatus('Rosto não reconhecido'); processandoRef.current = false; return }
 
         clearInterval(intervaloRef.current)
         pararCameraFacial()
 
         const ob = mapaObreiros[res.label]
-        const { data: existente } = await supabase.from('obreiro_presencas').select('id, presente')
-          .eq('reuniao_id', reuniao.id).eq('obreiro_id', ob.id).maybeSingle()
+        const resultado = await marcarPresenca(reuniao.id, ob.id, 'facial')
 
-        if (existente?.presente) { setObreiroConfirmado({ ...ob, tipo: 'jaPresente' }); setPainelDir('jaPresente'); return }
-
-        // Reaproveita a linha (mesmo obreiro/reunião) desmarcada anteriormente, em vez de duplicar
-        const { error } = existente
-          ? await supabase.from('obreiro_presencas').update({ presente: true, metodo_checkin: 'facial' }).eq('id', existente.id)
-          : await supabase.from('obreiro_presencas').insert({
-              reuniao_id: reuniao.id, obreiro_id: ob.id, presente: true, metodo_checkin: 'facial',
-            })
-        if (!error) {
-          setPresencas(prev => ({ ...prev, [ob.id]: { id: Date.now(), obreiro_id: ob.id, presente: true } }))
+        if (resultado.ok && resultado.jaPresente) {
+          setObreiroConfirmado({ ...ob, tipo: 'jaPresente' })
+          setPainelDir('jaPresente')
+        } else if (resultado.ok) {
+          setPresencas(prev => ({ ...prev, [ob.id]: resultado.presenca ?? { id: Date.now(), obreiro_id: ob.id, presente: true } }))
           setObreiroConfirmado({ ...ob, tipo: 'sucesso' })
           setPainelDir('sucesso')
+        } else {
+          setObreiroConfirmado({ nome: resultado.error || 'Erro ao registrar', tipo: 'erro' })
+          setPainelDir('erro')
         }
       } catch {}
+
+      processandoRef.current = false
     }, 1200)
   }
 
@@ -354,6 +357,7 @@ export default function CheckinPage() {
     setObreiroConfirmado(null)
     setVideoReady(false)
     videoRef.current = null
+    processandoRef.current = false
   }
 
   // ── Filtro de obreiros ──────────────────────────────────────────────────────
@@ -397,7 +401,7 @@ export default function CheckinPage() {
     )
   }
 
-  // ── MOBILE: layout vertical (igual ao atual) ────────────────────────────────
+  // ── MOBILE: layout vertical ─────────────────────────────────────────────────
   if (!isKiosk) {
     return (
       <div style={m.container}>

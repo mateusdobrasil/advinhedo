@@ -2,18 +2,17 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
 import { useReuniaoAuth } from '@/hooks/useReuniaoAuth'
+import { carregarObreirosFacial, registrarPresenca } from '@/app/aplicacao/actions/checkin-facial'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+// ── SEM cliente Supabase no navegador ──
+// Todo acesso ao banco agora passa pelas server actions, que validam
+// o cookie de sessão e usam a service role key (nunca exposta ao cliente).
 
 const MODELS_URL   = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model'
 const LIMIAR_DIST  = 0.5
 const INTERVALO_MS = 1200
-const INPUT_SIZE   = 416 // tinyFaceDetector: 320 é rápido em celular; suba p/ 416 se precisar de mais precisão
+const INPUT_SIZE   = 320 // tinyFaceDetector: 320 é rápido em celular; suba p/ 416 se precisar de mais precisão
 
 function iniciais(nome) {
   return (nome || '').split(' ').filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('')
@@ -62,10 +61,8 @@ function FacialContent() {
     }
   }, [reuniaoId])
 
-  // 2. CORREÇÃO CRÍTICA: câmera + reconhecimento só iniciam quando
-  //    modelos estão carregados (etapa === 'scanner') E o <video> existe (videoReady).
-  //    Antes, o efeito rodava no primeiro render, quando faceapiRef ainda era null,
-  //    e o reconhecimento nunca era iniciado.
+  // 2. Câmera + reconhecimento só iniciam quando modelos estão
+  //    carregados (etapa === 'scanner') E o <video> existe (videoReady)
   useEffect(() => {
     if (etapa !== 'scanner' || !videoReady) return
     iniciarCamera().then(() => {
@@ -81,9 +78,6 @@ function FacialContent() {
       const faceapi = await import('@vladmandic/face-api')
       faceapiRef.current = faceapi
 
-      // tinyFaceDetector: 3–5x mais rápido que o ssdMobilenetv1 em celulares.
-      // Para voltar ao SSD, troque tinyFaceDetector por ssdMobilenetv1 aqui
-      // e remova as TinyFaceDetectorOptions na detecção.
       await Promise.all([
         faceapi.nets.tinyFaceDetector.loadFromUri(MODELS_URL),
         faceapi.nets.faceLandmark68Net.loadFromUri(MODELS_URL),
@@ -93,40 +87,36 @@ function FacialContent() {
       if (!montadoRef.current) return
       setStatusMsg('Carregando cadastros faciais...')
 
-      const { data: obreiros, error } = await supabase
-        .from('obreiro_cadastro')
-        .select('id, nome, foto_url, face_descriptor, obreiro_congregacoes(nome), obreiro_cargos(nome)')
-        .eq('situacao', 'Ativo')
-        .not('face_descriptor', 'is', null)
+      // Server action: valida o cookie e busca no banco com a service role
+      const res = await carregarObreirosFacial()
 
       if (!montadoRef.current) return
 
-      if (error) {
-        setStatusMsg(`Erro ao carregar cadastros: ${error.message}`)
+      if (!res.ok) {
+        setStatusMsg(res.error || 'Erro ao carregar cadastros.')
         setEtapa('erro')
         return
       }
 
-      if (!obreiros?.length) {
+      if (!res.obreiros.length) {
         setStatusMsg('Nenhum obreiro com foto cadastrada. Cadastre fotos primeiro.')
         setEtapa('erro')
         return
       }
 
-      const rotulos = obreiros.map(o => {
+      const rotulos = res.obreiros.map(o => {
         const descritor = new Float32Array(o.face_descriptor)
         return new faceapi.LabeledFaceDescriptors(o.id, [descritor])
       })
 
       const mapaObreiros = {}
-      obreiros.forEach(o => { mapaObreiros[o.id] = o })
+      res.obreiros.forEach(o => { mapaObreiros[o.id] = o })
 
       matcherRef.current = {
         matcher: new faceapi.FaceMatcher(rotulos, LIMIAR_DIST),
         mapaObreiros,
       }
 
-      // Muda para scanner — o useEffect [etapa, videoReady] inicia câmera + reconhecimento
       setStatusMsg('Aponte a câmera para o rosto do obreiro')
       setEtapa('scanner')
 
@@ -147,7 +137,19 @@ function FacialContent() {
 
   async function iniciarCamera() {
     try {
-      pararCamera() // garante que não há stream anterior
+      pararCamera()
+
+      // Detecta contexto inseguro (http sem ser localhost) antes de tentar
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setStatusMsg(
+          window.isSecureContext === false
+            ? 'A câmera exige HTTPS. Acesse o sistema por um endereço https://.'
+            : 'Este navegador não suporta acesso à câmera.'
+        )
+        setEtapa('erro')
+        return
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
       })
@@ -160,9 +162,16 @@ function FacialContent() {
       if (!video) return
       video.srcObject = stream
       video.onloadedmetadata = () => video.play().catch(() => {})
-    } catch {
+
+    } catch (err) {
       if (!montadoRef.current) return
-      setStatusMsg('Não foi possível acessar a câmera. Verifique as permissões.')
+      const msgs = {
+        NotAllowedError:      'Permissão da câmera negada. Toque no cadeado ao lado do endereço e permita a câmera, depois recarregue a página.',
+        NotFoundError:        'Nenhuma câmera encontrada neste aparelho.',
+        NotReadableError:     'A câmera está em uso por outro aplicativo. Feche outros apps que usam câmera e tente de novo.',
+        OverconstrainedError: 'A câmera frontal não está disponível neste aparelho.',
+      }
+      setStatusMsg(msgs[err.name] || `Erro ao acessar a câmera: ${err.name || err.message}`)
       setEtapa('erro')
     }
   }
@@ -209,8 +218,7 @@ function FacialContent() {
         clearInterval(intervaloRef.current)
         pararCamera()
 
-        // Confiança normalizada dentro da faixa aceita:
-        // distância 0 → 100% | distância no limiar (0.5) → 50%
+        // Confiança normalizada: distância 0 → 100% | no limiar (0.5) → 50%
         const obreiroEncontrado = mapaObreiros[resultado.label]
         const pctConfianca = Math.round(((LIMIAR_DIST - resultado.distance) / LIMIAR_DIST) * 50 + 50)
         setConfianca(Math.min(99, Math.max(50, pctConfianca)))
@@ -225,26 +233,20 @@ function FacialContent() {
     }, INTERVALO_MS)
   }
 
-  // CORREÇÃO: insert direto + constraint UNIQUE no banco.
-  // O código 23505 (unique_violation) indica que já havia check-in — sem
-  // SELECT prévio e sem risco de duplicidade entre dois dispositivos.
   async function confirmarCheckin() {
     if (!obreiro || salvando) return
     setSalvando(true)
 
-    const { error } = await supabase.from('obreiro_presencas').insert({
-      reuniao_id: reuniaoId,
-      obreiro_id: obreiro.id,
-      presente: true,
-      metodo_checkin: 'facial',
-    })
+    // Server action: valida o cookie e insere com a service role.
+    // A constraint UNIQUE do banco garante que não há duplicidade.
+    const res = await registrarPresenca(reuniaoId, obreiro.id)
 
     if (!montadoRef.current) return
     setSalvando(false)
 
-    if (error?.code === '23505') { setEtapa('jaPresente'); return }
-    if (error) {
-      setStatusMsg('Erro ao registrar presença. Tente novamente.')
+    if (res.jaPresente) { setEtapa('jaPresente'); return }
+    if (!res.ok) {
+      setStatusMsg(res.error || 'Erro ao registrar presença. Tente novamente.')
       setEtapa('erro')
       return
     }
@@ -307,7 +309,6 @@ function FacialContent() {
             <div>
               <div style={s.obreiroNome}>{obreiro.nome}</div>
               <div style={s.obreiroSub}>
-                {/* CORREÇÃO: campo correto é obreiro_congregacoes (nome da relação na query) */}
                 {obreiro.obreiro_congregacoes?.nome || '—'}
                 {obreiro.obreiro_cargos?.nome && (
                   <span style={{ ...s.badge, background: cor.bg, color: cor.text }}>

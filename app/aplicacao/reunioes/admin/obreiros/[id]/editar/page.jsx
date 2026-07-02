@@ -7,14 +7,11 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
 import { useReuniaoAuth } from '@/hooks/useReuniaoAuth'
-import { registrarLogReuniao } from '@/lib/reunioes-log'
+import { carregarObreiroEdicao, salvarObreiro } from '@/app/aplicacao/actions/obreiro-editar'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+// ── SEM cliente Supabase no navegador ──
+// Carregamento, gravação e log de auditoria passam pelas server actions.
 
 // Formata CPF enquanto digita: 000.000.000-00
 function mascaraCPF(valor) {
@@ -56,6 +53,7 @@ export default function EditarObreiroPage() {
   useReuniaoAuth()
 
   const [loading, setLoading]     = useState(true)
+  const [erroCarga, setErroCarga] = useState(null)
   const [salvando, setSalvando]   = useState(false)
   const [toast, setToast]         = useState(null)
   const [congregacoes, setCongregacoes] = useState([])
@@ -75,41 +73,33 @@ export default function EditarObreiroPage() {
   })
 
   const [erros, setErros] = useState({})
-  const [situacaoOriginal, setSituacaoOriginal] = useState('Ativo')
 
-  // Carrega tudo em paralelo
+  // Carrega tudo em uma chamada (server action)
   useEffect(() => {
     async function carregar() {
-      const [
-        { data: obreiro },
-        { data: congsData },
-        { data: cargosData },
-        { data: funcoesData },
-      ] = await Promise.all([
-        supabase.from('obreiro_cadastro').select('*').eq('id', id).single(),
-        supabase.from('obreiro_congregacoes').select('id, nome').order('nome'),
-        supabase.from('obreiro_cargos').select('id, nome, nivel').order('nivel', { ascending: false }),
-        supabase.from('obreiro_funcoes').select('id, nome').order('nome'),
-      ])
+      const res = await carregarObreiroEdicao(id)
 
-      if (obreiro) {
-        setForm({
-          nome:            obreiro.nome || '',
-          congregacao_id:  obreiro.congregacao_id || '',
-          cargo_id:        obreiro.cargo_id || '',
-          funcao_id:       obreiro.funcao_id || '',
-          cpf:             obreiro.cpf || '',
-          data_nascimento: obreiro.data_nascimento ? isoParaBR(obreiro.data_nascimento) : '',
-          telefone:        obreiro.telefone || '',
-          email:           obreiro.email || '',
-          situacao:        obreiro.situacao || 'Ativo',
-        })
-        setSituacaoOriginal(obreiro.situacao || 'Ativo')
+      if (!res.ok) {
+        setErroCarga(res.error || 'Erro ao carregar os dados.')
+        setLoading(false)
+        return
       }
 
-      setCongregacoes(congsData || [])
-      setCargos(cargosData || [])
-      setFuncoes(funcoesData || [])
+      const obreiro = res.obreiro
+      setForm({
+        nome:            obreiro.nome || '',
+        congregacao_id:  obreiro.congregacao_id || '',
+        cargo_id:        obreiro.cargo_id || '',
+        funcao_id:       obreiro.funcao_id || '',
+        cpf:             obreiro.cpf || '',
+        data_nascimento: obreiro.data_nascimento ? isoParaBR(obreiro.data_nascimento) : '',
+        telefone:        obreiro.telefone || '',
+        email:           obreiro.email || '',
+        situacao:        obreiro.situacao || 'Ativo',
+      })
+      setCongregacoes(res.congregacoes)
+      setCargos(res.cargos)
+      setFuncoes(res.funcoes)
       setLoading(false)
     }
     carregar()
@@ -134,32 +124,28 @@ export default function EditarObreiroPage() {
   }
 
   async function salvar() {
-    if (!validar()) return
+    if (!validar() || salvando) return
     setSalvando(true)
 
-    const payload = {
-      nome:            form.nome.trim(),
-      congregacao_id:  form.congregacao_id || null,
-      cargo_id:        form.cargo_id       || null,
-      funcao_id:       form.funcao_id      || null,
-      cpf:             form.cpf            || null,
+    // A action deriva a ação do log (editar/inativar/reativar) no servidor
+    const res = await salvarObreiro(id, {
+      nome:            form.nome,
+      congregacao_id:  form.congregacao_id,
+      cargo_id:        form.cargo_id,
+      funcao_id:       form.funcao_id,
+      cpf:             form.cpf,
       data_nascimento: brParaISO(form.data_nascimento),
-      telefone:        form.telefone       || null,
-      email:           form.email?.toLowerCase() || null,
+      telefone:        form.telefone,
+      email:           form.email,
       situacao:        form.situacao,
-    }
+    })
 
-    const { error } = await supabase.from('obreiro_cadastro').update(payload).eq('id', id)
     setSalvando(false)
 
-    if (error) {
-      mostrarToast('Erro ao salvar. Tente novamente.', 'erro')
+    if (!res.ok) {
+      mostrarToast(res.error || 'Erro ao salvar. Tente novamente.', 'erro')
     } else {
       mostrarToast('Dados salvos com sucesso!', 'sucesso')
-      let acao = 'editar'
-      if (situacaoOriginal !== 'Inativo' && form.situacao === 'Inativo') acao = 'inativar'
-      else if (situacaoOriginal === 'Inativo' && form.situacao !== 'Inativo') acao = 'reativar'
-      registrarLogReuniao(supabase, { acao, tabela: 'obreiro_cadastro', registroId: id, detalhes: `Dados de "${form.nome.trim()}" atualizados` })
       setTimeout(() => router.push('/aplicacao/reunioes/admin/obreiros'), 1500)
     }
   }
@@ -174,6 +160,16 @@ export default function EditarObreiroPage() {
       <div style={s.loadingWrap}>
         <div style={s.spinner} />
         <p style={s.loadingTxt}>Carregando dados...</p>
+      </div>
+    )
+  }
+
+  if (erroCarga) {
+    return (
+      <div style={s.loadingWrap}>
+        <p style={{ fontSize: 15, fontWeight: 600, color: '#111827', margin: 0 }}>Erro ao carregar</p>
+        <p style={{ ...s.loadingTxt, textAlign: 'center', maxWidth: 320 }}>{erroCarga}</p>
+        <button style={s.btnErro} onClick={() => router.push('/aplicacao/reunioes/admin/obreiros')}>← Voltar</button>
       </div>
     )
   }
@@ -364,6 +360,7 @@ const s = {
   loadingWrap:    { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', gap: 12 },
   spinner:        { width: 28, height: 28, border: '3px solid #E5E7EB', borderTopColor: '#111827', borderRadius: '50%', animation: 'spin 0.8s linear infinite' },
   loadingTxt:     { color: '#9CA3AF', fontSize: 14 },
+  btnErro:        { marginTop: 12, padding: '10px 24px', background: '#111827', border: 'none', borderRadius: 10, color: '#fff', fontSize: 14, cursor: 'pointer' },
   toast:          { position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', color: '#fff', fontSize: 14, fontWeight: 500, padding: '10px 20px', borderRadius: 24, zIndex: 999, whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' },
   header:         { background: '#111827', color: '#fff', padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 10 },
   voltarBtn:      { background: 'none', border: 'none', color: '#9CA3AF', fontSize: 20, cursor: 'pointer', padding: '0 4px', flexShrink: 0 },
