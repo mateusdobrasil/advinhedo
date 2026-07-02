@@ -200,6 +200,17 @@ export default function AdminPage() {
             </div>
             <span style={s.navSeta}>›</span>
           </button>
+
+          <button
+            style={{ ...s.navBtn, ...s.navBtnFull, borderColor: '#E5E7EB', background: '#fff' }}
+            onClick={() => router.push('/aplicacao/reunioes/admin/configuracoes')}>
+            <div style={{ ...s.navIcone, background: '#F3F4F6', color: '#374151' }}>⚙</div>
+            <div>
+              <div style={s.navTitulo}>Configurações</div>
+              <div style={s.navSub}>Congregações, cargos e funções</div>
+            </div>
+            <span style={s.navSeta}>›</span>
+          </button>
         </div>
 
         {/* Reuniões abertas */}
