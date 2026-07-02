@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { useReuniaoAuth } from '@/hooks/useReuniaoAuth'
+import { registrarLogReuniao } from '@/lib/reunioes-log'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -131,6 +132,7 @@ export default function NovoObreiroPage() {
       mostrarToast('Erro ao cadastrar. Tente novamente.', 'erro')
     } else {
       mostrarToast('Obreiro cadastrado!', 'sucesso')
+      registrarLogReuniao(supabase, { acao: 'criar', tabela: 'obreiro_cadastro', registroId: novo.id, detalhes: `Obreiro "${form.nome.trim()}" cadastrado` })
       // Redireciona para a foto após cadastrar
       setTimeout(() => router.push(`/aplicacao/reunioes/admin/obreiros/${novo.id}/foto`), 1200)
     }
@@ -339,12 +341,12 @@ const s = {
   label:          { display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 },
   input:          { width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: 10, fontSize: 14, color: '#111827', background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' },
   select:         { width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: 10, fontSize: 14, color: '#111827', background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', cursor: 'pointer' },
-  inputErro:      { borderColor: '#F87171', background: '#FFF5F5' },
+  inputErro:      { border: '1px solid #F87171', background: '#FFF5F5' },
   erroMsg:        { display: 'block', fontSize: 11, color: '#DC2626', marginTop: 4 },
   radioGroup:     { display: 'flex', gap: 8 },
   radioBtn:       { flex: 1, padding: '9px', border: '1px solid #E5E7EB', borderRadius: 10, background: '#F9FAFB', color: '#6B7280', fontSize: 13, cursor: 'pointer', textAlign: 'center' },
-  radioBtnAtivo:  { background: '#D1FAE5', borderColor: '#6EE7B7', color: '#065F46', fontWeight: 600 },
-  radioBtnInativo:{ background: '#FEE2E2', borderColor: '#FCA5A5', color: '#991B1B', fontWeight: 600 },
+  radioBtnAtivo:  { background: '#D1FAE5', border: '1px solid #6EE7B7', color: '#065F46', fontWeight: 600 },
+  radioBtnInativo:{ background: '#FEE2E2', border: '1px solid #FCA5A5', color: '#991B1B', fontWeight: 600 },
   avisoFoto:      { display: 'flex', alignItems: 'flex-start', gap: 10, background: '#EDE9FE', border: '1px solid #C4B5FD', borderRadius: 12, padding: '12px 14px', marginBottom: 14 },
   avisoIcone:     { fontSize: 16, color: '#7C3AED', flexShrink: 0, marginTop: 1 },
   avisoTexto:     { fontSize: 13, color: '#5B21B6', margin: 0, lineHeight: 1.5 },

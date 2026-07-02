@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { useReuniaoAuth } from '@/hooks/useReuniaoAuth'
+import { registrarLogReuniao } from '@/lib/reunioes-log'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -74,6 +75,7 @@ export default function EditarObreiroPage() {
   })
 
   const [erros, setErros] = useState({})
+  const [situacaoOriginal, setSituacaoOriginal] = useState('Ativo')
 
   // Carrega tudo em paralelo
   useEffect(() => {
@@ -102,6 +104,7 @@ export default function EditarObreiroPage() {
           email:           obreiro.email || '',
           situacao:        obreiro.situacao || 'Ativo',
         })
+        setSituacaoOriginal(obreiro.situacao || 'Ativo')
       }
 
       setCongregacoes(congsData || [])
@@ -153,6 +156,10 @@ export default function EditarObreiroPage() {
       mostrarToast('Erro ao salvar. Tente novamente.', 'erro')
     } else {
       mostrarToast('Dados salvos com sucesso!', 'sucesso')
+      let acao = 'editar'
+      if (situacaoOriginal !== 'Inativo' && form.situacao === 'Inativo') acao = 'inativar'
+      else if (situacaoOriginal === 'Inativo' && form.situacao !== 'Inativo') acao = 'reativar'
+      registrarLogReuniao(supabase, { acao, tabela: 'obreiro_cadastro', registroId: id, detalhes: `Dados de "${form.nome.trim()}" atualizados` })
       setTimeout(() => router.push('/aplicacao/reunioes/admin/obreiros'), 1500)
     }
   }
@@ -371,12 +378,12 @@ const s = {
   label:          { display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 },
   input:          { width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: 10, fontSize: 14, color: '#111827', background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' },
   select:         { width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: 10, fontSize: 14, color: '#111827', background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', cursor: 'pointer' },
-  inputErro:      { borderColor: '#F87171', background: '#FFF5F5' },
+  inputErro:      { border: '1px solid #F87171', background: '#FFF5F5' },
   erroMsg:        { display: 'block', fontSize: 11, color: '#DC2626', marginTop: 4 },
   radioGroup:     { display: 'flex', gap: 8 },
   radioBtn:       { flex: 1, padding: '9px', border: '1px solid #E5E7EB', borderRadius: 10, background: '#F9FAFB', color: '#6B7280', fontSize: 13, cursor: 'pointer', textAlign: 'center' },
-  radioBtnAtivo:  { background: '#D1FAE5', borderColor: '#6EE7B7', color: '#065F46', fontWeight: 600 },
-  radioBtnInativo:{ background: '#FEE2E2', borderColor: '#FCA5A5', color: '#991B1B', fontWeight: 600 },
+  radioBtnAtivo:  { background: '#D1FAE5', border: '1px solid #6EE7B7', color: '#065F46', fontWeight: 600 },
+  radioBtnInativo:{ background: '#FEE2E2', border: '1px solid #FCA5A5', color: '#991B1B', fontWeight: 600 },
   btnSalvar:      { width: '100%', padding: '13px', background: '#111827', color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: 'pointer', marginBottom: 10 },
   btnCancelar:    { width: '100%', padding: '13px', background: 'transparent', color: '#9CA3AF', border: 'none', fontSize: 14, cursor: 'pointer' },
 }

@@ -44,6 +44,7 @@ export default function ObreirosPage() {
     const buscaNorm = normalizarTexto(busca)
     const nomeNorm  = normalizarTexto(o.nome)
     const congNorm  = normalizarTexto(o.obreiro_congregacoes?.nome || '')
+    const cargoNorm = normalizarTexto(o.obreiro_cargos?.nome || '')
     const corresponde = !busca || nomeNorm.includes(buscaNorm) || congNorm.includes(buscaNorm)
     if (!corresponde) return false
     if (filtro === 'com_foto') return !!o.face_descriptor
@@ -126,8 +127,9 @@ export default function ObreirosPage() {
           filtrados.map(o => {
             const temFoto = !!o.face_descriptor
             return (
-              <button key={o.id} style={s.card}
-                onClick={() => router.push(`/aplicacao/reunioes/admin/obreiros/${o.id}/foto`)}>
+              <div key={o.id} style={s.card} role="button" tabIndex={0}
+                onClick={() => router.push(`/aplicacao/reunioes/admin/obreiros/${o.id}/foto`)}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') router.push(`/aplicacao/reunioes/admin/obreiros/${o.id}/foto`) }}>
 
                 {/* Avatar ou foto */}
                 <div style={s.avatarWrap}>
@@ -143,6 +145,7 @@ export default function ObreirosPage() {
                 <div style={s.cardInfo}>
                   <div style={s.cardNome}>{o.nome}</div>
                   <div style={s.cardSub}>{o.obreiro_congregacoes?.nome || '—'}</div>
+                  <div style={s.cardSub}>{o.obreiro_cargos?.nome || '—'}</div>
                   <div style={{ ...s.cardStatus, color: temFoto ? '#065F46' : '#F59E0B' }}>
                     {temFoto ? 'Foto cadastrada' : 'Sem foto — toque para cadastrar'}
                   </div>
@@ -156,7 +159,7 @@ export default function ObreirosPage() {
                   </button>
                   <span style={s.chevron}>›</span>
                 </div>
-              </button>
+              </div>
             )
           })
         )}
@@ -185,7 +188,7 @@ const s = {
   buscaInput:     { flex: 1, border: 'none', outline: 'none', fontSize: 14, padding: '12px 0', background: 'transparent', color: '#111827' },
   filtros:        { display: 'flex', gap: 8, marginBottom: 14, overflowX: 'auto' },
   filtroBtn:      { flexShrink: 0, padding: '6px 14px', background: '#fff', border: '1px solid #E5E7EB', borderRadius: 20, fontSize: 13, color: '#6B7280', cursor: 'pointer', whiteSpace: 'nowrap' },
-  filtroBtnAtivo: { background: '#111827', borderColor: '#111827', color: '#fff', fontWeight: 500 },
+  filtroBtnAtivo: { background: '#111827', border: '1px solid #111827', color: '#fff', fontWeight: 500 },
   card:           { display: 'flex', alignItems: 'center', gap: 12, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '12px', marginBottom: 8, cursor: 'pointer', textAlign: 'left', width: '100%' },
   avatarWrap:     { position: 'relative', flexShrink: 0 },
   fotoImg:        { width: 48, height: 48, borderRadius: 12, objectFit: 'cover' },

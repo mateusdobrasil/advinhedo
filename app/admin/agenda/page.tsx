@@ -59,7 +59,7 @@ export default function GerenciadorAgendaPage() {
     const { data: eventos } = await supabase.from("agenda_eventos").select("*").order("data_evento", { ascending: true });
     if (eventos) setEventosDB(eventos);
 
-    const { data: congregacoes } = await supabase.from("obreiro_congregacoes").select("*").order("nome");
+    const { data: congregacoes } = await supabase.from("agenda_congregacoes").select("*").order("nome");
     if (congregacoes) {
       setCongregacoesDB(congregacoes);
       if (congregacoes.length > 0) {
@@ -245,7 +245,7 @@ export default function GerenciadorAgendaPage() {
   const handleAddCongregacao = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!novoNomeCong) return;
-    const { data, error } = await supabase.from("obreiro_congregacoes").insert([{ nome: novoNomeCong }]).select();
+    const { data, error } = await supabase.from("agenda_congregacoes").insert([{ nome: novoNomeCong }]).select();
     if (!error && data) {
       setCongregacoesDB([...congregacoesDB, data[0]].sort((a, b) => a.nome.localeCompare(b.nome)));
       setNovoNomeCong("");
@@ -255,7 +255,7 @@ export default function GerenciadorAgendaPage() {
   const handleEditCongregacao = async (id: string, nomeAtual: string) => {
     const novoNome = prompt("Digite o novo nome para a congregação:", nomeAtual);
     if (!novoNome || novoNome === nomeAtual) return;
-    const { error } = await supabase.from("obreiro_congregacoes").update({ nome: novoNome }).eq("id", id);
+    const { error } = await supabase.from("agenda_congregacoes").update({ nome: novoNome }).eq("id", id);
     if (!error) {
       setCongregacoesDB(congregacoesDB.map(c => c.id === id ? { ...c, nome: novoNome } : c).sort((a, b) => a.nome.localeCompare(b.nome)));
     }
@@ -263,7 +263,7 @@ export default function GerenciadorAgendaPage() {
 
   const handleDeleteCongregacao = async (id: string) => {
     if (!confirm("Excluir esta congregação?")) return;
-    const { error } = await supabase.from("obreiro_congregacoes").delete().eq("id", id);
+    const { error } = await supabase.from("agenda_congregacoes").delete().eq("id", id);
     if (!error) setCongregacoesDB(congregacoesDB.filter(c => c.id !== id));
   };
 

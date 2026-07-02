@@ -87,7 +87,7 @@ export default function Dashboard() {
     async function carregar() {
       setLoading(true)
       const [{ data: reuns }, { data: obs }, { data: pres }] = await Promise.all([
-        supabase.from('obreiro_reunioes').select('id, titulo, data_reuniao, aberta').order('data_reuniao', { ascending: false }),
+        supabase.from('obreiro_reunioes').select('id, titulo, data_reuniao, aberta').eq('ativa', true).order('data_reuniao', { ascending: false }),
         supabase.from('obreiro_cadastro').select('id, nome, data_nascimento, obreiro_congregacoes(nome), obreiro_cargos(nome)').eq('situacao', 'Ativo'),
         supabase.from('obreiro_presencas').select('reuniao_id, obreiro_id, presente'),
       ])
@@ -409,11 +409,11 @@ const s = {
   secao:           { marginBottom: 16 },
   filtroTabs:      { display: 'flex', gap: 6, marginBottom: 12, overflowX: 'auto' },
   filtroTab:       { flexShrink: 0, padding: '7px 14px', background: '#fff', border: '1px solid #E5E7EB', borderRadius: 20, fontSize: 13, color: '#6B7280', cursor: 'pointer', whiteSpace: 'nowrap' },
-  filtroTabAtivo:  { background: '#111827', borderColor: '#111827', color: '#fff', fontWeight: 500 },
+  filtroTabAtivo:  { background: '#111827', border: '1px solid #111827', color: '#fff', fontWeight: 500 },
   select:          { width: '100%', padding: '10px 14px', border: '1px solid #D1D5DB', borderRadius: 10, fontSize: 14, color: '#111827', background: '#fff', outline: 'none' },
   compararLista:   { display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 200, overflowY: 'auto' },
   compararItem:    { display: 'flex', gap: 10, alignItems: 'center', padding: '8px 12px', background: '#fff', border: '1px solid #E5E7EB', borderRadius: 10, cursor: 'pointer', textAlign: 'left' },
-  compararItemAtivo: { borderColor: '#111827', background: '#F9FAFB' },
+  compararItemAtivo: { border: '1px solid #111827', background: '#F9FAFB' },
   compararData:    { fontSize: 12, color: '#6B7280', whiteSpace: 'nowrap' },
   compararTitulo:  { fontSize: 13, color: '#111827', fontWeight: 500 },
   reuniaoInfo:     { display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 16 },
@@ -421,7 +421,7 @@ const s = {
   tagAberta:       { color: '#065F46', fontWeight: 600 },
   cards:           { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginBottom: 12 },
   card:            { background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '12px', textAlign: 'center' },
-  cardDestaque:    { borderColor: '#86EFAC', background: '#F0FDF4' },
+  cardDestaque:    { border: '1px solid #86EFAC', background: '#F0FDF4' },
   cardNum:         { fontSize: 22, fontWeight: 700, color: '#111827', lineHeight: 1 },
   cardLabel:       { fontSize: 11, color: '#9CA3AF', marginTop: 4 },
   barraGeralWrap:  { marginBottom: 20 },

@@ -96,7 +96,7 @@ export default function CheckinPage() {
     async function carregarReunioes() {
       const { data } = await supabase
         .from('obreiro_reunioes').select('id, titulo, data_reuniao')
-        .eq('aberta', true).order('data_reuniao', { ascending: false })
+        .eq('aberta', true).eq('ativa', true).order('data_reuniao', { ascending: false })
       setReunioes(data || [])
       if (data?.length === 1) setReuniao(data[0])
       setLoading(false)
@@ -116,7 +116,7 @@ export default function CheckinPage() {
       const { data: pres } = await supabase
         .from('obreiro_presencas').select('id, obreiro_id, presente').eq('reuniao_id', reuniao.id)
       const mapa = {}
-      pres?.forEach(p => { mapa[p.obreiro_id] = p })
+      pres?.forEach(p => { if (p.presente) mapa[p.obreiro_id] = p })
       setObreiros(obs || [])
       setPresencas(mapa)
       setLoading(false)
@@ -134,7 +134,7 @@ export default function CheckinPage() {
         payload => {
           setPresencas(prev => {
             const novo = { ...prev }
-            if (payload.eventType === 'DELETE') delete novo[payload.old.obreiro_id]
+            if (payload.eventType === 'DELETE' || payload.new?.presente === false) delete novo[payload.old?.obreiro_id ?? payload.new?.obreiro_id]
             else novo[payload.new.obreiro_id] = payload.new
             return novo
           })
@@ -151,17 +151,25 @@ export default function CheckinPage() {
 
     if (jaPresente) {
       setPresencas(prev => { const n = { ...prev }; delete n[obreiro.id]; return n })
-      const { error } = await supabase.from('obreiro_presencas').delete().eq('id', jaPresente.id)
-      if (error) setPresencas(prev => ({ ...prev, [obreiro.id]: jaPresente }))
+      const { error } = await supabase.from('obreiro_presencas').update({ presente: false }).eq('id', jaPresente.id)
+      if (error) {
+        console.error('Falha ao remover check-in em obreiro_presencas:', error.message)
+        setPresencas(prev => ({ ...prev, [obreiro.id]: jaPresente }))
+      }
       if (isKiosk) { setObreiroConfirmado({ ...obreiro, tipo: 'removido' }); setPainelDir('sucesso') }
       else setFeedback({ nome: obreiro.nome.split(' ')[0], tipo: 'removido' })
     } else {
       const temp = { id: `temp-${obreiro.id}`, obreiro_id: obreiro.id, presente: true }
       setPresencas(prev => ({ ...prev, [obreiro.id]: temp }))
-      const { data, error } = await supabase.from('obreiro_presencas').insert({
-        reuniao_id: reuniao.id, obreiro_id: obreiro.id,
-        presente: true, metodo_checkin: 'lista',
-      }).select().single()
+      // Reaproveita a linha (mesmo obreiro/reunião) desmarcada anteriormente, em vez de duplicar
+      const { data: existente } = await supabase.from('obreiro_presencas').select('id')
+        .eq('reuniao_id', reuniao.id).eq('obreiro_id', obreiro.id).maybeSingle()
+      const { data, error } = existente
+        ? await supabase.from('obreiro_presencas').update({ presente: true, metodo_checkin: 'lista' }).eq('id', existente.id).select().single()
+        : await supabase.from('obreiro_presencas').insert({
+            reuniao_id: reuniao.id, obreiro_id: obreiro.id,
+            presente: true, metodo_checkin: 'lista',
+          }).select().single()
       if (!error && data) {
         setPresencas(prev => ({ ...prev, [obreiro.id]: data }))
         if (isKiosk) { setObreiroConfirmado({ ...obreiro, tipo: 'sucesso' }); setPainelDir('sucesso') }
@@ -217,20 +225,23 @@ export default function CheckinPage() {
       return
     }
 
-    const { data: existente } = await supabase.from('obreiro_presencas').select('id')
-      .eq('reuniao_id', reuniao.id).eq('obreiro_id', encontrado.id).single()
+    const { data: existente } = await supabase.from('obreiro_presencas').select('id, presente')
+      .eq('reuniao_id', reuniao.id).eq('obreiro_id', encontrado.id).maybeSingle()
 
-    if (existente) {
+    if (existente?.presente) {
       setObreiroConfirmado({ ...encontrado, tipo: 'jaPresente' })
       setPainelDir('jaPresente')
       processandoRef.current = false
       return
     }
 
-    const { error } = await supabase.from('obreiro_presencas').insert({
-      reuniao_id: reuniao.id, obreiro_id: encontrado.id,
-      presente: true, metodo_checkin: 'qrcode',
-    })
+    // Reaproveita a linha (mesmo obreiro/reunião) desmarcada anteriormente, em vez de duplicar
+    const { error } = existente
+      ? await supabase.from('obreiro_presencas').update({ presente: true, metodo_checkin: 'qrcode' }).eq('id', existente.id)
+      : await supabase.from('obreiro_presencas').insert({
+          reuniao_id: reuniao.id, obreiro_id: encontrado.id,
+          presente: true, metodo_checkin: 'qrcode',
+        })
 
     if (!error) {
       setPresencas(prev => ({ ...prev, [encontrado.id]: { id: Date.now(), obreiro_id: encontrado.id, presente: true } }))
@@ -316,14 +327,17 @@ export default function CheckinPage() {
         pararCameraFacial()
 
         const ob = mapaObreiros[res.label]
-        const { data: existente } = await supabase.from('obreiro_presencas').select('id')
-          .eq('reuniao_id', reuniao.id).eq('obreiro_id', ob.id).single()
+        const { data: existente } = await supabase.from('obreiro_presencas').select('id, presente')
+          .eq('reuniao_id', reuniao.id).eq('obreiro_id', ob.id).maybeSingle()
 
-        if (existente) { setObreiroConfirmado({ ...ob, tipo: 'jaPresente' }); setPainelDir('jaPresente'); return }
+        if (existente?.presente) { setObreiroConfirmado({ ...ob, tipo: 'jaPresente' }); setPainelDir('jaPresente'); return }
 
-        const { error } = await supabase.from('obreiro_presencas').insert({
-          reuniao_id: reuniao.id, obreiro_id: ob.id, presente: true, metodo_checkin: 'facial',
-        })
+        // Reaproveita a linha (mesmo obreiro/reunião) desmarcada anteriormente, em vez de duplicar
+        const { error } = existente
+          ? await supabase.from('obreiro_presencas').update({ presente: true, metodo_checkin: 'facial' }).eq('id', existente.id)
+          : await supabase.from('obreiro_presencas').insert({
+              reuniao_id: reuniao.id, obreiro_id: ob.id, presente: true, metodo_checkin: 'facial',
+            })
         if (!error) {
           setPresencas(prev => ({ ...prev, [ob.id]: { id: Date.now(), obreiro_id: ob.id, presente: true } }))
           setObreiroConfirmado({ ...ob, tipo: 'sucesso' })
@@ -643,10 +657,10 @@ const m = {
   buscaLimpar:     { background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: 14 },
   filtros:         { display: 'flex', gap: 8, padding: '10px 16px 0', overflowX: 'auto' },
   filtroBtn:       { flexShrink: 0, padding: '6px 14px', background: '#fff', border: '1px solid #E5E7EB', borderRadius: 20, fontSize: 13, color: '#6B7280', cursor: 'pointer', whiteSpace: 'nowrap' },
-  filtroBtnAtivo:  { background: '#111827', borderColor: '#111827', color: '#fff', fontWeight: 500 },
+  filtroBtnAtivo:  { background: '#111827', border: '1px solid #111827', color: '#fff', fontWeight: 500 },
   lista:           { display: 'flex', flexDirection: 'column', padding: '12px 16px 0' },
   card:            { display: 'flex', alignItems: 'center', gap: 12, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '12px 14px', marginBottom: 8, cursor: 'pointer', textAlign: 'left', width: '100%' },
-  cardPresente:    { background: '#F0FDF4', borderColor: '#86EFAC' },
+  cardPresente:    { background: '#F0FDF4', border: '1px solid #86EFAC' },
   avatar:          { width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0, overflow: 'hidden' },
   cardInfo:        { flex: 1, minWidth: 0 },
   cardNome:        { fontSize: 14, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
@@ -684,12 +698,12 @@ const k = {
   buscaLimpar:  { background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', fontSize: 14 },
   filtros:      { display: 'flex', gap: 8 },
   filtroBtn:    { padding: '6px 16px', background: '#fff', border: '1px solid #E2E8F0', borderRadius: 20, fontSize: 13, color: '#64748B', cursor: 'pointer' },
-  filtroBtnAtivo: { background: '#111827', borderColor: '#111827', color: '#fff', fontWeight: 500 },
+  filtroBtnAtivo: { background: '#111827', border: '1px solid #111827', color: '#fff', fontWeight: 500 },
   lista:        { flex: 1, overflowY: 'auto', padding: '0 24px 16px' },
   loadingWrap:  { display: 'flex', justifyContent: 'center', padding: '60px 0' },
   spinner:      { width: 32, height: 32, border: '3px solid #E2E8F0', borderTopColor: '#111827', borderRadius: '50%', animation: 'spin 0.8s linear infinite' },
   card:         { display: 'flex', alignItems: 'center', gap: 14, background: '#fff', border: '1px solid #E2E8F0', borderRadius: 14, padding: '14px 16px', marginBottom: 8, cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'all 0.15s' },
-  cardPresente: { background: '#F0FDF4', borderColor: '#86EFAC' },
+  cardPresente: { background: '#F0FDF4', border: '1px solid #86EFAC' },
   avatar:       { width: 52, height: 52, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, flexShrink: 0, overflow: 'hidden' },
   avatarFoto:   { width: '100%', height: '100%', objectFit: 'cover' },
   cardInfo:     { flex: 1, minWidth: 0 },
