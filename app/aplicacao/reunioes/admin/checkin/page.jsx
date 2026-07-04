@@ -12,7 +12,7 @@ import { carregarObreirosFacial } from '@/app/aplicacao/actions/checkin-facial'
 
 // ── SEM cliente Supabase no navegador ──
 // Todo acesso ao banco passa pelas server actions (cookie + service role).
-// A atualização entre dispositivos é feita por polling (a cada 10s),
+// A cada 10s o polling re-sincroniza presenças E a lista de obreiros,
 // já que o Realtime anon foi bloqueado pelo RLS.
 
 // ── Utilitários ────────────────────────────────────────────────────────────────
@@ -45,7 +45,7 @@ const COR_CARGO = {
 }
 
 const MODELS_URL   = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model'
-const POLLING_MS   = 10000 // sincroniza presenças entre dispositivos
+const POLLING_MS   = 10000 // sincroniza presenças + lista de obreiros
 const LIMIAR_DIST  = 0.5
 const INPUT_SIZE   = 320
 
@@ -99,6 +99,9 @@ export default function CheckinPage() {
 
   const buscaRef = useRef(null)
 
+  // Evita que o polling atropele uma ação em andamento (check-in otimista)
+  const acaoEmCursoRef = useRef(false)
+
   // ── Carrega reuniões ────────────────────────────────────────────────────────
   useEffect(() => {
     async function carregarReunioes() {
@@ -129,18 +132,26 @@ export default function CheckinPage() {
     carregarDados()
   }, [reuniao])
 
-  // ── Polling: sincroniza presenças entre dispositivos ───────────────────────
-  // (substitui o realtime: além do nome da tabela estar errado na versão
-  //  anterior — 'presencas' em vez de 'obreiro_presencas' —, o Realtime
-  //  anon foi bloqueado pelo RLS. O polling via action funciona sempre.)
+  // ── Polling a cada 10s: presenças + lista de obreiros ──────────────────────
+  // Atualiza tanto as presenças (check-ins de outros dispositivos) quanto
+  // a lista de obreiros (cadastros/edições feitos durante a reunião).
   useEffect(() => {
     if (!reuniao) return
     const id = setInterval(async () => {
-      const res = await listarPresencas(reuniao.id)
-      if (!res.ok) return
-      const mapa = {}
-      res.presencas.forEach(p => { if (p.presente) mapa[p.obreiro_id] = p })
-      setPresencas(mapa)
+      if (document.visibilityState !== 'visible') return // pausa em aba oculta
+      if (acaoEmCursoRef.current) return                 // não atropela ação otimista
+
+      const [resObs, resPres] = await Promise.all([
+        listarObreiros(),
+        listarPresencas(reuniao.id),
+      ])
+
+      if (resPres.ok) {
+        const mapa = {}
+        resPres.presencas.forEach(p => { if (p.presente) mapa[p.obreiro_id] = p })
+        setPresencas(mapa)
+      }
+      if (resObs.ok) setObreiros(resObs.obreiros)
     }, POLLING_MS)
     return () => clearInterval(id)
   }, [reuniao])
@@ -149,6 +160,7 @@ export default function CheckinPage() {
   const fazerCheckin = useCallback(async (obreiro) => {
     if (loadingId || !reuniao) return
     setLoadingId(obreiro.id)
+    acaoEmCursoRef.current = true
     const jaPresente = presencas[obreiro.id]
 
     if (jaPresente) {
@@ -179,6 +191,7 @@ export default function CheckinPage() {
       }
     }
     setLoadingId(null)
+    acaoEmCursoRef.current = false
     if (!isKiosk) setTimeout(() => setFeedback(null), 2500)
   }, [loadingId, presencas, reuniao, isKiosk])
 
@@ -268,7 +281,9 @@ export default function CheckinPage() {
         faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL),
       ])
 
-      // Server action: única fonte dos descritores (protegidos por RLS)
+      // Server action: única fonte dos descritores (protegidos por RLS).
+      // Recarregado a cada abertura do facial — pega fotos cadastradas
+      // durante a reunião sem precisar recarregar a página.
       const res = await carregarObreirosFacial()
       if (!res.ok) { setFacialStatus(res.error || 'Erro ao carregar cadastros.'); return }
       if (!res.obreiros.length) { setFacialStatus('Nenhuma foto cadastrada.'); return }
@@ -475,11 +490,13 @@ export default function CheckinPage() {
       {/* Coluna esquerda — lista */}
       <div style={k.esquerda}>
 
-        {/* Header kiosk */}
+        {/* Header kiosk — logo+voltar à esquerda, título ao centro, stats à direita */}
         <div style={k.header}>
-          <Image src="/imgs/logo_branco.png" alt="AD Vinhedo" width={80} height={36} style={{ objectFit: 'contain' }} priority />
-          <button style={m.voltarBtn} onClick={() => router.push('/aplicacao/reunioes/admin')}>←</button>
-          <div style={k.headerInfo}> 
+          <div style={k.headerEsq}>
+            <button style={k.voltarBtnKiosk} onClick={() => router.push('/aplicacao/reunioes/admin')}>←</button>
+            <Image src="/imgs/logo_branco.png" alt="AD Vinhedo" width={72} height={32} style={{ objectFit: 'contain' }} priority />
+          </div>
+          <div style={k.headerInfo}>
             <div style={k.headerTitulo}>{reuniao.titulo}</div>
             <div style={k.headerData}>
               {new Date(reuniao.data_reuniao + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
@@ -687,8 +704,10 @@ const k = {
 
   // Coluna esquerda
   esquerda:     { width: '55%', display: 'flex', flexDirection: 'column', background: '#F8FAFC', borderRight: '1px solid #E2E8F0' },
-  header:       { background: '#111827', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 },
-  headerInfo:   { minWidth: 0 },
+  header:       { background: '#111827', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexShrink: 0 },
+  headerEsq:    { display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 },
+  voltarBtnKiosk: { background: 'none', border: 'none', color: '#9CA3AF', fontSize: 22, cursor: 'pointer', padding: 0, lineHeight: 1 },
+  headerInfo:   { flex: 1, minWidth: 0, textAlign: 'center' },
   headerTitulo: { fontSize: 16, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   headerData:   { fontSize: 12, color: '#9CA3AF', marginTop: 2, textTransform: 'capitalize' },
   headerStats:  { textAlign: 'right', flexShrink: 0 },

@@ -72,12 +72,12 @@ export default function ObreirosPage() {
       {/* Header */}
       <div style={s.header}>
         <Image src="/imgs/logo_branco.png" alt="AD Vinhedo" width={80} height={36} style={{ objectFit: 'contain' }} priority />
-        <button style={s.voltarBtn} onClick={() => router.push('/aplicacao/reunioes/admin')}>←</button>
+        <button style={s.voltarBtn} onClick={() => router.push('/aplicacao/reunioes/admin/secretaria')}>←</button>
         <div style={{ flex: 1 }}>
           <div style={s.headerTitulo}>Dados Cadastrais</div>
           <div style={s.headerSub}>Dados e Reconhecimento facial</div>
         </div>
-        <button style={s.btnNovo} onClick={() => router.push('/aplicacao/reunioes/admin/obreiros/novo')}>
+        <button style={s.btnNovo} onClick={() => router.push('/aplicacao/reunioes/admin/secretaria/obreiros/novo')}>
           + Novo
         </button>
       </div>
@@ -155,7 +155,7 @@ export default function ObreirosPage() {
               // e causava warnings de hydration com o botão Editar)
               <div key={o.id}
                 style={{ ...s.card, ...(inativo ? s.cardInativo : {}) }}
-                onClick={() => router.push(`/aplicacao/reunioes/admin/obreiros/${o.id}/foto`)}>
+                onClick={() => router.push(`/aplicacao/reunioes/admin/secretaria/obreiros/${o.id}/foto`)}>
 
                 {/* Avatar ou foto */}
                 <div style={s.avatarWrap}>
@@ -189,7 +189,7 @@ export default function ObreirosPage() {
                 <div style={s.cardAcoes}>
                   <button
                     style={s.btnEditar}
-                    onClick={e => { e.stopPropagation(); router.push(`/aplicacao/reunioes/admin/obreiros/${o.id}/editar`) }}>
+                    onClick={e => { e.stopPropagation(); router.push(`/aplicacao/reunioes/admin/secretaria/obreiros/${o.id}/editar`) }}>
                     Editar
                   </button>
                   <span style={s.chevron}>›</span>

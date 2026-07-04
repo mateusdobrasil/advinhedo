@@ -1,36 +1,32 @@
 'use client'
 
 /**
- * /reunioes/admin/obreiros/[id]/editar/page.jsx
- * Edição dos campos essenciais do obreiro
- */ 
+ * /reunioes/admin/obreiros/novo/page.jsx
+ * Cadastro de novo obreiro
+ */
 
 import { useState, useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useReuniaoAuth } from '@/hooks/useReuniaoAuth'
-import { carregarObreiroEdicao, salvarObreiro } from '@/app/aplicacao/actions/obreiro-editar'
+import { carregarListasApoio, criarObreiro } from '@/app/aplicacao/actions/obreiro-novo'
 
 // ── SEM cliente Supabase no navegador ──
-// Carregamento, gravação e log de auditoria passam pelas server actions.
+// Listas de apoio, número de cadastro, gravação e log de auditoria
+// passam pelas server actions (cookie + service role).
 
-// Formata CPF enquanto digita: 000.000.000-00
 function mascaraCPF(valor) {
-  return valor
-    .replace(/\D/g, '')
-    .slice(0, 11)
+  return valor.replace(/\D/g, '').slice(0, 11)
     .replace(/(\d{3})(\d)/, '$1.$2')
     .replace(/(\d{3})(\d)/, '$1.$2')
     .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
 }
 
-// Converte YYYY-MM-DD → DD/MM/YYYY para exibição
-function isoParaBR(iso) {
-  if (!iso) return ''
-  const [a, m, d] = iso.split('-')
-  return `${d}/${m}/${a}`
+function mascaraData(valor) {
+  return valor.replace(/\D/g, '').slice(0, 8)
+    .replace(/(\d{2})(\d)/, '$1/$2')
+    .replace(/(\d{2})(\d)/, '$1/$2')
 }
 
-// Converte DD/MM/YYYY → YYYY-MM-DD para salvar
 function brParaISO(br) {
   if (!br || br.length < 10) return null
   const [d, m, a] = br.split('/')
@@ -38,72 +34,42 @@ function brParaISO(br) {
   return `${a}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`
 }
 
-// Formata data enquanto digita: DD/MM/YYYY
-function mascaraData(valor) {
-  return valor
-    .replace(/\D/g, '')
-    .slice(0, 8)
-    .replace(/(\d{2})(\d)/, '$1/$2')
-    .replace(/(\d{2})(\d)/, '$1/$2')
-}
-
-export default function EditarObreiroPage() {
+export default function NovoObreiroPage() {
   const router = useRouter()
-  const { id } = useParams()
   useReuniaoAuth()
 
-  const [loading, setLoading]     = useState(true)
-  const [erroCarga, setErroCarga] = useState(null)
-  const [salvando, setSalvando]   = useState(false)
-  const [toast, setToast]         = useState(null)
+  const [salvando, setSalvando]         = useState(false)
+  const [toast, setToast]               = useState(null)
   const [congregacoes, setCongregacoes] = useState([])
-  const [cargos, setCargos]       = useState([])
-  const [funcoes, setFuncoes]     = useState([])
+  const [cargos, setCargos]             = useState([])
+  const [funcoes, setFuncoes]           = useState([])
+  const [erros, setErros]               = useState({})
 
   const [form, setForm] = useState({
-    nome:           '',
-    congregacao_id: '',
-    cargo_id:       '',
-    funcao_id:      '',
-    cpf:            '',
+    nome:            '',
+    congregacao_id:  '',
+    cargo_id:        '',
+    funcao_id:       '',
+    cpf:             '',
     data_nascimento: '',
-    telefone:       '',
-    email:          '',
-    situacao:       'Ativo',
+    telefone:        '',
+    email:           '',
+    situacao:        'Ativo',
   })
 
-  const [erros, setErros] = useState({})
-
-  // Carrega tudo em uma chamada (server action)
   useEffect(() => {
     async function carregar() {
-      const res = await carregarObreiroEdicao(id)
-
+      const res = await carregarListasApoio()
       if (!res.ok) {
-        setErroCarga(res.error || 'Erro ao carregar os dados.')
-        setLoading(false)
+        mostrarToast(res.error || 'Erro ao carregar as listas.', 'erro')
         return
       }
-
-      const obreiro = res.obreiro
-      setForm({
-        nome:            obreiro.nome || '',
-        congregacao_id:  obreiro.congregacao_id || '',
-        cargo_id:        obreiro.cargo_id || '',
-        funcao_id:       obreiro.funcao_id || '',
-        cpf:             obreiro.cpf || '',
-        data_nascimento: obreiro.data_nascimento ? isoParaBR(obreiro.data_nascimento) : '',
-        telefone:        obreiro.telefone || '',
-        email:           obreiro.email || '',
-        situacao:        obreiro.situacao || 'Ativo',
-      })
       setCongregacoes(res.congregacoes)
       setCargos(res.cargos)
       setFuncoes(res.funcoes)
-      setLoading(false)
     }
     carregar()
-  }, [id])
+  }, [])
 
   function atualizar(campo, valor) {
     setForm(prev => ({ ...prev, [campo]: valor }))
@@ -112,9 +78,9 @@ export default function EditarObreiroPage() {
 
   function validar() {
     const novosErros = {}
-    if (!form.nome.trim()) novosErros.nome = 'Nome é obrigatório'
-    if (!form.congregacao_id) novosErros.congregacao_id = 'Congregação é obrigatória'
-    if (!form.cargo_id) novosErros.cargo_id = 'Cargo é obrigatório'
+    if (!form.nome.trim())       novosErros.nome = 'Nome é obrigatório'
+    if (!form.congregacao_id)    novosErros.congregacao_id = 'Congregação é obrigatória'
+    if (!form.cargo_id)          novosErros.cargo_id = 'Cargo é obrigatório'
     if (form.cpf && form.cpf.replace(/\D/g, '').length !== 11)
       novosErros.cpf = 'CPF incompleto (11 dígitos)'
     if (form.data_nascimento && form.data_nascimento.length < 10)
@@ -127,8 +93,10 @@ export default function EditarObreiroPage() {
     if (!validar() || salvando) return
     setSalvando(true)
 
-    // A action deriva a ação do log (editar/inativar/reativar) no servidor
-    const res = await salvarObreiro(id, {
+    // A action calcula o número de cadastro no servidor (com retry
+    // contra colisões) e registra o log de auditoria
+    const res = await criarObreiro({
+      situacao:        form.situacao,
       nome:            form.nome,
       congregacao_id:  form.congregacao_id,
       cargo_id:        form.cargo_id,
@@ -137,41 +105,22 @@ export default function EditarObreiroPage() {
       data_nascimento: brParaISO(form.data_nascimento),
       telefone:        form.telefone,
       email:           form.email,
-      situacao:        form.situacao,
     })
 
     setSalvando(false)
 
     if (!res.ok) {
-      mostrarToast(res.error || 'Erro ao salvar. Tente novamente.', 'erro')
+      mostrarToast(res.error || 'Erro ao cadastrar. Tente novamente.', 'erro')
     } else {
-      mostrarToast('Dados salvos com sucesso!', 'sucesso')
-      setTimeout(() => router.push('/aplicacao/reunioes/admin/obreiros'), 1500)
+      mostrarToast('Obreiro cadastrado!', 'sucesso')
+      // Redireciona para a foto após cadastrar
+      setTimeout(() => router.push(`/aplicacao/reunioes/admin/secretaria/obreiros/${res.id}/foto`), 1200)
     }
   }
 
   function mostrarToast(msg, tipo) {
     setToast({ msg, tipo })
     setTimeout(() => setToast(null), 3000)
-  }
-
-  if (loading) {
-    return (
-      <div style={s.loadingWrap}>
-        <div style={s.spinner} />
-        <p style={s.loadingTxt}>Carregando dados...</p>
-      </div>
-    )
-  }
-
-  if (erroCarga) {
-    return (
-      <div style={s.loadingWrap}>
-        <p style={{ fontSize: 15, fontWeight: 600, color: '#111827', margin: 0 }}>Erro ao carregar</p>
-        <p style={{ ...s.loadingTxt, textAlign: 'center', maxWidth: 320 }}>{erroCarga}</p>
-        <button style={s.btnErro} onClick={() => router.push('/aplicacao/reunioes/admin/obreiros')}>← Voltar</button>
-      </div>
-    )
   }
 
   return (
@@ -185,12 +134,10 @@ export default function EditarObreiroPage() {
 
       {/* Header */}
       <div style={s.header}>
-        <button style={s.voltarBtn} onClick={() => router.push('/aplicacao/reunioes/admin/obreiros')}>←</button>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={s.headerTitulo}>Editar obreiro</div>
-          <div style={s.headerSub} title={form.nome}>
-            {form.nome || 'Sem nome'}
-          </div>
+        <button style={s.voltarBtn} onClick={() => router.push('/aplicacao/reunioes/admin/secretaria/obreiros')}>←</button>
+        <div style={{ flex: 1 }}>
+          <div style={s.headerTitulo}>Novo obreiro</div>
+          <div style={s.headerSub}>Preencha os dados e salve</div>
         </div>
         <button
           style={{ ...s.btnSalvarHeader, opacity: salvando ? 0.6 : 1 }}
@@ -202,17 +149,13 @@ export default function EditarObreiroPage() {
 
       <div style={s.body}>
 
-        {/* Situação */}
+        {/* Status */}
         <div style={s.secao}>
           <div style={s.secaoTitulo}>Status</div>
           <div style={s.radioGroup}>
             {['Ativo', 'Inativo'].map(op => (
-              <button
-                key={op}
-                style={{
-                  ...s.radioBtn,
-                  ...(form.situacao === op ? (op === 'Ativo' ? s.radioBtnAtivo : s.radioBtnInativo) : {})
-                }}
+              <button key={op}
+                style={{ ...s.radioBtn, ...(form.situacao === op ? (op === 'Ativo' ? s.radioBtnAtivo : s.radioBtnInativo) : {}) }}
                 onClick={() => atualizar('situacao', op)}>
                 {op}
               </button>
@@ -231,6 +174,7 @@ export default function EditarObreiroPage() {
               value={form.nome}
               onChange={e => atualizar('nome', e.target.value)}
               placeholder="Nome completo do obreiro"
+              autoFocus
             />
             {erros.nome && <span style={s.erroMsg}>{erros.nome}</span>}
           </div>
@@ -312,7 +256,6 @@ export default function EditarObreiroPage() {
         {/* Contato */}
         <div style={s.secao}>
           <div style={s.secaoTitulo}>Contato</div>
-
           <div style={s.campoRow}>
             <div style={{ ...s.campo, flex: 1 }}>
               <label style={s.label}>Telefone</label>
@@ -338,15 +281,22 @@ export default function EditarObreiroPage() {
           </div>
         </div>
 
-        {/* Botão salvar principal */}
+        {/* Aviso sobre foto */}
+        <div style={s.avisoFoto}>
+          <span style={s.avisoIcone}>◉</span>
+          <p style={s.avisoTexto}>
+            Após salvar, você será redirecionado para cadastrar a foto facial do obreiro.
+          </p>
+        </div>
+
         <button
           style={{ ...s.btnSalvar, opacity: salvando ? 0.6 : 1 }}
           onClick={salvar}
           disabled={salvando}>
-          {salvando ? 'Salvando...' : 'Salvar alterações'}
+          {salvando ? 'Cadastrando...' : 'Cadastrar obreiro'}
         </button>
 
-        <button style={s.btnCancelar} onClick={() => router.push('/aplicacao/reunioes/admin/obreiros')}>
+        <button style={s.btnCancelar} onClick={() => router.push('/aplicacao/reunioes/admin/secretaria/obreiros')}>
           Cancelar
         </button>
 
@@ -357,15 +307,11 @@ export default function EditarObreiroPage() {
 
 const s = {
   container:      { minHeight: '100dvh', background: '#F9FAFB', fontFamily: "'Geist','Inter',sans-serif", maxWidth: 560, margin: '0 auto', paddingBottom: 40 },
-  loadingWrap:    { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', gap: 12 },
-  spinner:        { width: 28, height: 28, border: '3px solid #E5E7EB', borderTopColor: '#111827', borderRadius: '50%', animation: 'spin 0.8s linear infinite' },
-  loadingTxt:     { color: '#9CA3AF', fontSize: 14 },
-  btnErro:        { marginTop: 12, padding: '10px 24px', background: '#111827', border: 'none', borderRadius: 10, color: '#fff', fontSize: 14, cursor: 'pointer' },
   toast:          { position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', color: '#fff', fontSize: 14, fontWeight: 500, padding: '10px 20px', borderRadius: 24, zIndex: 999, whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' },
   header:         { background: '#111827', color: '#fff', padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 10 },
   voltarBtn:      { background: 'none', border: 'none', color: '#9CA3AF', fontSize: 20, cursor: 'pointer', padding: '0 4px', flexShrink: 0 },
   headerTitulo:   { fontSize: 15, fontWeight: 600 },
-  headerSub:      { fontSize: 11, color: '#9CA3AF', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  headerSub:      { fontSize: 11, color: '#9CA3AF', marginTop: 2 },
   btnSalvarHeader:{ background: '#34D399', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', flexShrink: 0 },
   body:           { padding: '16px' },
   secao:          { background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, padding: '16px', marginBottom: 12 },
@@ -381,6 +327,9 @@ const s = {
   radioBtn:       { flex: 1, padding: '9px', border: '1px solid #E5E7EB', borderRadius: 10, background: '#F9FAFB', color: '#6B7280', fontSize: 13, cursor: 'pointer', textAlign: 'center' },
   radioBtnAtivo:  { background: '#D1FAE5', border: '1px solid #6EE7B7', color: '#065F46', fontWeight: 600 },
   radioBtnInativo:{ background: '#FEE2E2', border: '1px solid #FCA5A5', color: '#991B1B', fontWeight: 600 },
+  avisoFoto:      { display: 'flex', alignItems: 'flex-start', gap: 10, background: '#EDE9FE', border: '1px solid #C4B5FD', borderRadius: 12, padding: '12px 14px', marginBottom: 14 },
+  avisoIcone:     { fontSize: 16, color: '#7C3AED', flexShrink: 0, marginTop: 1 },
+  avisoTexto:     { fontSize: 13, color: '#5B21B6', margin: 0, lineHeight: 1.5 },
   btnSalvar:      { width: '100%', padding: '13px', background: '#111827', color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: 'pointer', marginBottom: 10 },
   btnCancelar:    { width: '100%', padding: '13px', background: 'transparent', color: '#9CA3AF', border: 'none', fontSize: 14, cursor: 'pointer' },
 }

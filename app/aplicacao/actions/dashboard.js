@@ -4,8 +4,8 @@
  * app/aplicacao/actions/dashboard.js
  *
  * Dados do dashboard de presenças, carregados NO SERVIDOR em uma
- * única action — mesmo padrão das demais: valida o cookie
- * (verificarAuthReuniao) e usa a service role key.
+ * única action — valida o cookie (verificarAuthReuniao) e usa a
+ * service role key.
  */
 
 import { createClient } from '@supabase/supabase-js'
@@ -20,7 +20,7 @@ function supabaseAdmin() {
 }
 
 /**
- * Retorna tudo que o dashboard precisa em uma chamada:
+ * Retorna tudo que o dashboard (e o relatório do pastor) precisam:
  * { ok: true, reunioes, obreiros, presencas } ou { ok: false, error }
  */
 export async function carregarDashboard() {
@@ -38,7 +38,8 @@ export async function carregarDashboard() {
       .order('data_reuniao', { ascending: false }),
     supabase
       .from('obreiro_cadastro')
-      .select('id, nome, data_nascimento, obreiro_congregacoes(nome), obreiro_cargos(nome)')
+      // + obreiro_funcoes(nome): necessário para o relatório do pastor
+      .select('id, nome, data_nascimento, obreiro_congregacoes(nome), obreiro_cargos(nome), obreiro_funcoes(nome)')
       .eq('situacao', 'Ativo'),
     supabase
       .from('obreiro_presencas')

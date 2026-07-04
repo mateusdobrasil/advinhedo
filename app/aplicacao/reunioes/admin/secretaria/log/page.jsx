@@ -63,7 +63,7 @@ export default function LogReunioesPage() {
 
       <div style={s.header}>
         <Image src="/imgs/logo_branco.png" alt="AD Vinhedo" width={80} height={36} style={{ objectFit: 'contain' }} priority />
-        <button style={s.voltarBtn} onClick={() => router.push('/aplicacao/reunioes/admin')}>←</button>
+        <button style={s.voltarBtn} onClick={() => router.push('/aplicacao/reunioes/admin/secretaria')}>←</button>
         <div style={{ flex: 1 }}>
           <div style={s.headerTitulo}>Log do sistema</div>
           <div style={s.headerSub}>Acessos e alterações em Reuniões</div>

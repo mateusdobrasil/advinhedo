@@ -236,7 +236,7 @@ export default function Dashboard() {
       {/* Header com botão voltar */}
       <div style={s.header}>
         <Image src="/imgs/logo_branco.png" alt="AD Vinhedo" width={80} height={36} style={{ objectFit: 'contain' }} priority />
-        <button style={s.voltarBtn} onClick={() => router.push('/aplicacao/reunioes/admin')}>←</button>
+        <button style={s.voltarBtn} onClick={() => router.push('/aplicacao/reunioes/admin/secretaria')}>←</button>
         <div>
           <div style={s.headerTitulo}>Dashboard</div>
           <div style={s.headerSub}>Análise de presenças — AD Vinhedo</div>
@@ -244,6 +244,16 @@ export default function Dashboard() {
       </div>
 
       <div style={s.body}>
+
+        {/* Relatório do pastor — visão por congregação, imprimível */}
+        <button style={s.relatorioBtn} onClick={() => router.push('/aplicacao/reunioes/admin/secretaria/dashboard/relatorio')}>
+          <div style={s.relatorioBtnIcone}>📄</div>
+          <div style={{ flex: 1, textAlign: 'left' }}>
+            <div style={s.relatorioBtnTitulo}>Relatório por congregação</div>
+            <div style={s.relatorioBtnSub}>Presenças, cargos e funções — para impressão</div>
+          </div>
+          <span style={s.relatorioBtnSeta}>›</span>
+        </button>
 
         <div style={s.secao}>
           <div style={s.filtroTabs}>
@@ -445,6 +455,11 @@ const s = {
   headerTitulo:    { fontSize: 17, fontWeight: 600 },
   headerSub:       { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
   body:            { padding: '16px' },
+  relatorioBtn:    { display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '14px 16px', background: '#fff', border: '1px solid #C4B5FD', borderRadius: 14, cursor: 'pointer', marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' },
+  relatorioBtnIcone: { width: 40, height: 40, borderRadius: 10, background: '#EDE9FE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 },
+  relatorioBtnTitulo:{ fontSize: 14, fontWeight: 700, color: '#111827' },
+  relatorioBtnSub:   { fontSize: 12, color: '#6B7280', marginTop: 2 },
+  relatorioBtnSeta:  { fontSize: 20, color: '#C4B5FD', flexShrink: 0 },
   secao:           { marginBottom: 16 },
   filtroTabs:      { display: 'flex', gap: 6, marginBottom: 12, overflowX: 'auto' },
   filtroTab:       { flexShrink: 0, padding: '7px 14px', background: '#fff', border: '1px solid #E5E7EB', borderRadius: 20, fontSize: 13, color: '#6B7280', cursor: 'pointer', whiteSpace: 'nowrap' },

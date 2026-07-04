@@ -203,7 +203,7 @@ export default function FotoPage() {
 
       {/* Header */}
       <div style={s.header}>
-        <button style={s.voltarBtn} onClick={() => router.push('/aplicacao/reunioes/admin/obreiros')}>←</button>
+        <button style={s.voltarBtn} onClick={() => router.push('/aplicacao/reunioes/admin/secretaria/obreiros')}>←</button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={s.headerTitulo}>{obreiro?.nome || 'Carregando...'}</div>
           <div style={s.headerSub}>{obreiro?.obreiro_congregacoes?.nome || ''}</div>
@@ -268,7 +268,7 @@ export default function FotoPage() {
           <p style={s.textoSub}>{obreiro?.nome} já pode usar o reconhecimento facial no check-in.</p>
 
           <div style={s.sucessoBtns}>
-            <button style={s.btnVoltar} onClick={() => router.push('/aplicacao/reunioes/admin/obreiros')}>
+            <button style={s.btnVoltar} onClick={() => router.push('/aplicacao/reunioes/admin/secretaria/obreiros')}>
               ← Voltar à lista
             </button>
             <button style={s.btnSalvar} onClick={repetirFoto}>
@@ -284,7 +284,7 @@ export default function FotoPage() {
           <div style={s.erroIcone}>✕</div>
           <p style={s.texto}>Erro</p>
           <p style={s.textoSub}>{msg}</p>
-          <button style={s.btnVoltar} onClick={() => router.push('/aplicacao/reunioes/admin/obreiros')}>
+          <button style={s.btnVoltar} onClick={() => router.push('/aplicacao/reunioes/admin/secretaria/obreiros')}>
             ← Voltar à lista
           </button>
         </div>
