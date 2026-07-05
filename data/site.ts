@@ -83,7 +83,7 @@ export const programacao = [
   },
   {
     dia: "1º Domingo do mês",
-    cultos: [{ hora: "10h15", nome: "Santa Ceia" }],
+    cultos: [{ hora: "10h15", nome: "Ceia do Senhor" }],
   },
   {
     dia: "1ª Sexta-feira do mês",

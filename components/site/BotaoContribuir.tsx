@@ -81,7 +81,7 @@ export default function BotaoContribuir() {
 
               {/* Sicoob */}
                 <div className="rounded-xl border border-midnight/10 bg-white/70 p-4">
-                <p className="font-semibold text-midnight">Banco Sicoob</p>
+                <p className="font-semibold text-midnight">Banco Bradesco</p>
                 <div className="mt-3 grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
                     <dl className="space-y-1 text-stone">
                     <div className="flex justify-between gap-4">
