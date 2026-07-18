@@ -294,8 +294,8 @@ export default function HistoricoVisitantes() {
                     <div className="divide-y divide-gray-100 p-2 md:p-6">
                       {visitantesDoEvento.map((visitante) => {
                         const tipoV = visitante.tipo || 'Visitas';
-                        const filhos = visitante.dependentes_acompanhantes?.filter((d: any) => d.tipo === 'FILHO').map((f: any) => f.nome) || [];
-                        const acompanhantes = visitante.dependentes_acompanhantes?.filter((d: any) => d.tipo === 'ACOMPANHANTE').map((a: any) => a.nome) || [];
+                        const filhos = visitante.recepcao_dependentes_acompanhantes?.filter((d: any) => d.tipo === 'FILHO').map((f: any) => f.nome) || [];
+                        const acompanhantes = visitante.recepcao_dependentes_acompanhantes?.filter((d: any) => d.tipo === 'ACOMPANHANTE').map((a: any) => a.nome) || [];
 
                         return (
                           <div key={visitante.id} className="p-4 hover:bg-gray-50 transition-colors flex flex-col md:flex-row justify-between items-start gap-6 rounded-lg">

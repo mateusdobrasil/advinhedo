@@ -57,7 +57,7 @@ export default function EditarVisitante() {
           setTemFilhos(data.tem_filhos || false);
           setTemAcompanhantes(data.tem_acompanhantes || false);
 
-          const dependentes = data.dependentes_acompanhantes || [];
+          const dependentes = data.recepcao_dependentes_acompanhantes || [];
           const listaFilhos = dependentes.filter((d: any) => d.tipo === 'FILHO').map((d: any) => d.nome);
           const listaAcompanhantes = dependentes.filter((d: any) => d.tipo === 'ACOMPANHANTE').map((d: any) => d.nome);
 

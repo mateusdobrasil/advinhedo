@@ -270,7 +270,7 @@ export default function EdicaoVisitante() {
     setSetor(visitante.setor_trabalho || "");
     setEsposa(visitante.nome_esposa || "");
     setFoiApresentado(visitante.foi_apresentado);
-    setDependentes(visitante.dependentes_acompanhantes || []);
+    setDependentes(visitante.recepcao_dependentes_acompanhantes || []);
   };
 
   const adicionarDependente = (tipoDep: string) => setDependentes([...dependentes, { nome: "", tipo: tipoDep, novo: true }]);
@@ -327,19 +327,6 @@ export default function EdicaoVisitante() {
     } finally {
       setBuscando(false);
     }
-  };
-
-  const handleExcluir = async (id: string) => {
-    if (!confirm("Tem certeza que deseja apagar este registro permanentemente?")) return;
-    setBuscando(true);
-    const { error } = await supabase.from("recepcao_visitantes").delete().eq("id", id);
-    if (error) setMensagem(`Erro ao excluir: ${error.message}`);
-    else {
-      setMensagem("Registro excluído com sucesso.");
-      setVisitanteEditando(null);
-      setResultados(resultados.filter(r => r.id !== id));
-    }
-    setBuscando(false);
   };
 
   const formatarLista = (lista: string[]) => {
@@ -537,8 +524,8 @@ export default function EdicaoVisitante() {
             <div className="divide-y divide-gray-200">
               {resultadosFiltrados.map((visitante) => {
                 const tipoV = visitante.tipo || 'Visitas';
-                const filhos = visitante.dependentes_acompanhantes?.filter((d: any) => d.tipo === 'FILHO').map((f: any) => f.nome) || [];
-                const acompanhantes = visitante.dependentes_acompanhantes?.filter((d: any) => d.tipo === 'ACOMPANHANTE').map((a: any) => a.nome) || [];
+                const filhos = visitante.recepcao_dependentes_acompanhantes?.filter((d: any) => d.tipo === 'FILHO').map((f: any) => f.nome) || [];
+                const acompanhantes = visitante.recepcao_dependentes_acompanhantes?.filter((d: any) => d.tipo === 'ACOMPANHANTE').map((a: any) => a.nome) || [];
 
                 return (
                   <div key={visitante.id} className="p-5 flex flex-col lg:flex-row justify-between items-start gap-6 hover:bg-gray-50 transition-colors">
@@ -610,9 +597,6 @@ export default function EdicaoVisitante() {
 
                       <button onClick={() => iniciarEdicao(visitante)} className="flex-1 lg:flex-none px-5 py-2.5 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100 transition-colors">
                         Editar Info
-                      </button>
-                      <button onClick={() => handleExcluir(visitante.id)} className="flex-1 lg:flex-none px-5 py-2.5 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 transition-colors">
-                        Excluir
                       </button>
                     </div>
                   </div>

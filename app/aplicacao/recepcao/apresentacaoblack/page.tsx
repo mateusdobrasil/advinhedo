@@ -146,7 +146,7 @@ export default function TelaApresentacaoBlack() {
       >
         <div className="flex items-center gap-4">
           <img src={logo1.src} alt="Logo" className="h-10 w-auto object-contain" />
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-100">{tituloEvento}</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-100">{tituloEvento}</h1>
         </div>
         
         {/* Container de Controles - Responde apenas à visibilidade da barra */}
@@ -182,8 +182,8 @@ export default function TelaApresentacaoBlack() {
         
         {visitantesExibidos.length === 0 ? (
           <div className="bg-gray-900 rounded-3xl shadow-sm border border-dashed border-gray-700 p-20 text-center max-w-3xl w-full mt-10">
-            <h3 className="text-4xl text-gray-500 font-medium mb-6">Nenhum item {filtroAtivo !== 'Todos' ? `do tipo ${filtroAtivo}` : ''} na fila</h3>
-            <p className="text-2xl text-gray-600 mb-10">Aguardando novos cadastros...</p>
+            <h3 className="text-3xl text-gray-500 font-medium mb-6">Nenhum item {filtroAtivo !== 'Todos' ? `do tipo ${filtroAtivo}` : ''} na fila</h3>
+            <p className="text-xl text-gray-600 mb-10">Aguardando novos cadastros...</p>
           </div>
         ) : (
           (() => {
@@ -216,52 +216,52 @@ export default function TelaApresentacaoBlack() {
                 {/* Camada do texto (z-10 para ficar acima da marca d'água) */}
                 <div className="relative z-10 flex-1 overflow-y-auto px-4 flex flex-col items-center justify-center text-center space-y-4 md:space-y-6 pb-4 w-full h-full custom-scrollbar">
                   
-                  {tipo === 'Pedido de Oraçao' && <p className="text-3xl md:text-4xl text-gray-400 font-medium leading-none m-0">Para quem:</p>}
-                  
-                  <h2 className="text-6xl md:text-8xl font-bold text-blue-300 uppercase leading-tight break-words w-full drop-shadow-md">
+                  {tipo === 'Pedido de Oraçao' && <p className="text-2xl md:text-3xl text-gray-400 font-medium leading-none m-0">Para quem:</p>}
+
+                  <h2 className="text-5xl md:text-7xl font-bold text-blue-300 uppercase leading-tight break-words w-full drop-shadow-md">
                     {visitante.nome_visitante}
                   </h2>
-                  
+
                   {tipo === 'Visitas' && (
                     <>
-                      {visitante.setor_trabalho && <p className="text-3xl md:text-6xl text-gray-400 font-medium leading-snug mt-4">Vindo de: <span className="text-gray-100 font-bold">{visitante.setor_trabalho}</span></p>}
+                      {visitante.setor_trabalho && <p className="text-2xl md:text-5xl text-gray-400 font-medium leading-snug mt-4">Vindo de: <span className="text-gray-100 font-bold">{visitante.setor_trabalho}</span></p>}
                       {visitante.representado_por && (
                         <div className="pt-4">
                           <div className="bg-yellow-500/10 border-2 border-yellow-500/30 text-yellow-300 px-8 py-4 md:px-10 md:py-6 rounded-2xl inline-flex flex-wrap items-center justify-center gap-2 shadow-sm">
-                            <span className="font-bold text-yellow-400/80 uppercase text-2xl md:text-4xl tracking-wide">Representado por:</span>
-                            <span className="text-4xl md:text-6xl font-bold ml-2 text-yellow-200">{visitante.representado_por}</span>
+                            <span className="font-bold text-yellow-400/80 uppercase text-xl md:text-3xl tracking-wide">Representado por:</span>
+                            <span className="text-3xl md:text-5xl font-bold ml-2 text-yellow-200">{visitante.representado_por}</span>
                           </div>
                         </div>
                       )}
                       {(visitante.nome_esposa || nomesFilhos.length > 0 || nomesAcompanhantes.length > 0) && <div className="w-32 h-1 md:h-2 bg-gray-700 mx-auto my-4 md:my-6 rounded-full shrink-0"></div>}
-                      {visitante.nome_esposa && <p className="text-3xl md:text-6xl text-gray-400 font-medium">Esposa: <span className="text-gray-100 font-bold">{visitante.nome_esposa}</span></p>}
-                      {nomesFilhos.length > 0 && <p className="text-3xl md:text-6xl text-gray-400 font-medium mt-2">Filhos: <span className="text-gray-100 font-bold"> {formatarLista(nomesFilhos)} </span></p>}
-                      {nomesAcompanhantes.length > 0 && <p className="text-3xl md:text-6xl text-gray-400 font-medium mt-2">Acompanhantes: <span className="text-gray-100 font-bold"> {formatarLista(nomesAcompanhantes)} </span></p>}
+                      {visitante.nome_esposa && <p className="text-2xl md:text-5xl text-gray-400 font-medium">Esposa: <span className="text-gray-100 font-bold">{visitante.nome_esposa}</span></p>}
+                      {nomesFilhos.length > 0 && <p className="text-2xl md:text-5xl text-gray-400 font-medium mt-2">Filhos: <span className="text-gray-100 font-bold"> {formatarLista(nomesFilhos)} </span></p>}
+                      {nomesAcompanhantes.length > 0 && <p className="text-2xl md:text-5xl text-gray-400 font-medium mt-2">Acompanhantes: <span className="text-gray-100 font-bold"> {formatarLista(nomesAcompanhantes)} </span></p>}
                     </>
                   )}
 
                   {tipo === 'Aniversários' && (
                     <>
                       {visitante.representado_por && (
-                        <p className="text-3xl md:text-5xl text-gray-400 font-medium leading-snug mt-6">
+                        <p className="text-2xl md:text-4xl text-gray-400 font-medium leading-snug mt-6">
                           Quem parabeniza: <span className="text-gray-100 font-bold">{visitante.representado_por}</span>
                         </p>
                       )}
-                      {visitante.data_aniversario && <p className="text-4xl md:text-7xl text-gray-400 font-medium mt-6">Data: <span className="text-gray-100 font-bold">{formatarData(visitante.data_aniversario)}</span></p>}
-                      {visitante.observacoes && <div className="mt-10 bg-gray-800/80 p-8 md:p-10 rounded-3xl border border-gray-700 max-w-5xl"><p className="text-3xl md:text-5xl text-yellow-100/90 italic">"{visitante.observacoes}"</p></div>}
+                      {visitante.data_aniversario && <p className="text-3xl md:text-6xl text-gray-400 font-medium mt-6">Data: <span className="text-gray-100 font-bold">{formatarData(visitante.data_aniversario)}</span></p>}
+                      {visitante.observacoes && <div className="mt-10 bg-gray-800/80 p-8 md:p-10 rounded-3xl border border-gray-700 max-w-5xl"><p className="text-2xl md:text-4xl text-yellow-100/90 italic">"{visitante.observacoes}"</p></div>}
                     </>
                   )}
 
                   {tipo === 'Agradecimento' && (
                     <div className="mt-10 bg-green-900/20 p-10 rounded-3xl border border-green-800/50 w-full max-w-6xl">
-                      <p className="text-4xl md:text-6xl text-gray-100 italic leading-relaxed">"{visitante.observacoes}"</p>
+                      <p className="text-3xl md:text-5xl text-gray-100 italic leading-relaxed">"{visitante.observacoes}"</p>
                     </div>
                   )}
 
                   {tipo === 'Pedido de Oraçao' && (
                     <div className="mt-10 bg-gray-800/80 p-8 md:p-10 rounded-3xl border border-gray-700 w-full max-w-5xl">
-                      <p className="text-2xl md:text-4xl text-purple-300 mb-4 uppercase font-bold">Motivo:</p>
-                      <p className="text-4xl md:text-6xl text-gray-100 italic leading-relaxed">"{visitante.observacoes}"</p>
+                      <p className="text-xl md:text-3xl text-purple-300 mb-4 uppercase font-bold">Motivo:</p>
+                      <p className="text-3xl md:text-5xl text-gray-100 italic leading-relaxed">"{visitante.observacoes}"</p>
                     </div>
                   )}
 
@@ -269,7 +269,7 @@ export default function TelaApresentacaoBlack() {
                      <>
                       {visitante.observacoes && (
                         <div className="mt-10 bg-gray-800/80 p-10 md:p-14 rounded-3xl border border-gray-700 w-full max-w-6xl shadow-inner">
-                          <p className="text-4xl md:text-7xl text-gray-100 whitespace-pre-wrap leading-relaxed break-words">{visitante.observacoes}</p>
+                          <p className="text-3xl md:text-6xl text-gray-100 whitespace-pre-wrap leading-relaxed break-words">{visitante.observacoes}</p>
                         </div>
                       )}
                     </>
