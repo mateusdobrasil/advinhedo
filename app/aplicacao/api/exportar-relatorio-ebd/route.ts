@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Mapeamento dinâmico para garantir que encontre a imagem no backend do Next.js
-    const LOGO_IGREJA = path.join(process.cwd(), 'app', 'imgs', 'logo_branco.png')
+    const LOGO_IGREJA = path.join(process.cwd(), 'public', 'imgs', 'logo_branco.png')
 
     // ==========================================
     // 2. GABARITO MESTRE (CABEÇALHO E RODAPÉ)
