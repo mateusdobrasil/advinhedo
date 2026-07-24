@@ -28,8 +28,12 @@ export default async function RelatoriosPage() {
   // =================================================================
   // DADOS GERAIS DO INSTITUTO
   // =================================================================
-  const { count: totalAlunos } = await supabase.from('perfis').select('*', { count: 'exact', head: true }).ilike('tipo_usuario', '%aluno%')
-  const { count: totalTurmas } = await supabase.from('ebd_turmas').select('*', { count: 'exact', head: true })
+  // Alunos distintos matriculados na EBD (perfis é compartilhada com IBV/IBUC,
+  // então contar por tipo_usuario incluiria alunos de outros módulos)
+  const { data: alunosMatriculados } = await supabase.from('ebd_matriculas').select('aluno_id')
+  const totalAlunos = new Set(alunosMatriculados?.map(m => m.aluno_id)).size
+
+  const { count: totalTurmas } = await supabase.from('ebd_turmas').select('*', { count: 'exact', head: true }).eq('status', 'Ativa')
   const { count: totalMatriculas } = await supabase.from('ebd_matriculas').select('*', { count: 'exact', head: true })
 
   const { data: financeiro } = await supabase.from('ebd_financeiro').select('valor, status')

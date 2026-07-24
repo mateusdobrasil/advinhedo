@@ -174,9 +174,13 @@ export default async function RelatoriosEBDPage({ searchParams }: PageProps) {
       totalOferta += a.oferta
     })
 
-    // Correção Matemática: O cálculo de ausentes considera quantas aulas ocorreram no período.
-    const totalPresencasPossiveis = t.total_alunos * qtdAulas
-    const ausentes = qtdAulas > 0 ? Math.max(0, totalPresencasPossiveis - t.presentes) : 0
+    // Correção Matemática: o cálculo de ausentes considera quantas aulas ocorreram no período.
+    // Se a turma não teve nenhuma chamada registrada no período (qtdAulas = 0), consideramos
+    // ao menos 1 aula "perdida" para que todo matriculado apareça como ausente em vez de
+    // simplesmente sumir da conta (o que fazia presentes + ausentes < matriculados).
+    const aulasParaCalculo = Math.max(qtdAulas, 1)
+    const totalPresencasPossiveis = t.total_alunos * aulasParaCalculo
+    const ausentes = Math.max(0, totalPresencasPossiveis - t.presentes)
 
     totalGeralPresentes += t.presentes
     totalGeralBiblias += t.biblias
