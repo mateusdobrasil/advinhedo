@@ -1,6 +1,7 @@
 'use server'
 
 import { logAction } from '@/lib/audit'
+import { paraMaiusculo } from '@/lib/texto'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
@@ -12,7 +13,7 @@ export async function atualizarPerfil(formData: FormData) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Não autorizado')
 
-  const nome = formData.get('nome') as string
+  const nome = paraMaiusculo(formData.get('nome'))
   const novaSenha = formData.get('senha') as string
 
   // 1. Atualiza o nome na tabela 'perfis'

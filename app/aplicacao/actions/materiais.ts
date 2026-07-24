@@ -2,6 +2,7 @@
 
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { logAction } from '@/lib/audit'
+import { paraMaiusculo } from '@/lib/texto'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 
@@ -21,7 +22,7 @@ export async function enviarMaterial(formData: FormData) {
   const nomeBucket = `${modulo}_materiais`
   const nomeTabela = `${modulo}_materiais`
 
-  const titulo = formData.get('titulo') as string
+  const titulo = paraMaiusculo(formData.get('titulo'))
   const descricao = formData.get('descricao') as string
   const arquivo = formData.get('arquivo') as File
 

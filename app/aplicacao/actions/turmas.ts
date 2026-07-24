@@ -1,6 +1,7 @@
 'use server'
 
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
+import { paraMaiusculo } from '@/lib/texto'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 
@@ -16,7 +17,10 @@ export async function criarTurma(formData: FormData) {
   const tabela = modulo === 'ebd' ? 'ebd_turmas' : 'turmas'
 
   // 2. Captura os dados básicos do formulário
-  const nome = formData.get('nome') as string
+  // Obs: "curso" não é maiuscularizado aqui de propósito — ele guarda o texto de
+  // cursos.nome selecionado no dropdown, e precisa bater exatamente com esse valor
+  // para o cálculo automático de mensalidade (CriadorMatricula/admin/ebd) funcionar.
+  const nome = paraMaiusculo(formData.get('nome'))
   const curso = formData.get('curso') as string
   const modalidade = formData.get('modalidade') as string
   const dia_semana = formData.get('dia_semana') as string

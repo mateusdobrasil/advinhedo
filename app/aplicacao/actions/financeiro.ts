@@ -1,6 +1,7 @@
 'use server'
 
 import { logAction } from '@/lib/audit'
+import { paraMaiusculo } from '@/lib/texto'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
@@ -13,7 +14,7 @@ export async function criarCobranca(formData: FormData) {
   const tabela = modulo === 'ebd' ? 'ebd_financeiro' : 'financeiro'
 
   const aluno_id = formData.get('aluno_id') as string
-  const descricao = formData.get('descricao') as string
+  const descricao = paraMaiusculo(formData.get('descricao'))
   const valor = parseFloat(formData.get('valor') as string)
 
   const { error } = await supabase.from(tabela).insert({

@@ -1,6 +1,7 @@
 'use server'
 
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
+import { paraMaiusculo } from '@/lib/texto'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 
@@ -11,7 +12,7 @@ export async function cadastrarVisitanteEBD(formData: FormData) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Não autorizado')
 
-  const nome_completo = formData.get('nome_completo') as string
+  const nome_completo = paraMaiusculo(formData.get('nome_completo'))
   const telefone = formData.get('telefone') as string
   const turma_id = formData.get('turma_id') as string
 

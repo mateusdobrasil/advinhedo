@@ -3,6 +3,7 @@
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { createClient } from '@supabase/supabase-js' // 👈 Importação necessária para o Cliente Isolado
 import { logAction } from '@/lib/audit'
+import { paraMaiusculo } from '@/lib/texto'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 
@@ -21,11 +22,12 @@ export async function criarUsuario(formData: FormData) {
   // Extraindo os dados do formulário
   const email = formData.get('email') as string
   const senha = formData.get('senha') as string
-  const nome_completo = formData.get('nome_completo') as string
-  
+  const nome_completo = paraMaiusculo(formData.get('nome_completo'))
+
   const cpf = limparTexto(formData.get('cpf'))
   const polo_id = limparTexto(formData.get('polo_id'))
-  const polo = limparTexto(formData.get('polo'))
+  const poloTexto = limparTexto(formData.get('polo'))
+  const polo = poloTexto ? paraMaiusculo(poloTexto) : null
 
   // 1. Verificação de Segurança
   const { data: { session } } = await supabase.auth.getSession()
@@ -97,6 +99,8 @@ export async function atualizarUsuario(formData: FormData) {
     if (key !== 'id' && !key.startsWith('$')) {
       if (key.includes('data') && value === '') {
         dadosParaAtualizar[key] = null
+      } else if (key === 'nome_completo') {
+        dadosParaAtualizar[key] = paraMaiusculo(value)
       } else {
         dadosParaAtualizar[key] = value
       }

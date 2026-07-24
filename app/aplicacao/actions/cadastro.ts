@@ -1,6 +1,7 @@
 'use server'
 
 import { logAction } from '@/lib/audit'
+import { paraMaiusculo } from '@/lib/texto'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 
@@ -19,7 +20,7 @@ const limparTexto = (texto: FormDataEntryValue | null) => {
 export async function cadastrarAluno(formData: FormData) {
   const email = formData.get('email') as string
   const senha = formData.get('senha') as string
-  const nome = formData.get('nome') as string
+  const nome = paraMaiusculo(formData.get('nome'))
 
   const supabase = createServerActionClient({ cookies })
 
@@ -48,7 +49,7 @@ export async function cadastrarAluno(formData: FormData) {
       
       // 👇 AS DUAS COLUNAS REFERENTES AO POLO 👇
       polo_id: limparTexto(formData.get('polo_id')), // ID do Polo (UUID)
-      polo: limparTexto(formData.get('polo')),       // Nome do Polo em texto que injetamos no form
+      polo: limparTexto(formData.get('polo')) ? paraMaiusculo(formData.get('polo')) : null, // Nome do Polo em texto que injetamos no form
       
       email: email,
       nome_completo: nome,

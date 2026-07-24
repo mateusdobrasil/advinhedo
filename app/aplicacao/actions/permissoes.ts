@@ -1,6 +1,7 @@
 'use server'
 
 import { logAction } from '@/lib/audit'
+import { paraMaiusculo } from '@/lib/texto'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
@@ -35,7 +36,7 @@ export async function atualizarPermissao(formData: FormData) {
 
   // Pega todos os polos marcados (Se vier vazio, cai pro padrão IBV)
   const polosArray = formData.getAll('polo') as string[]
-  const polo = polosArray.length > 0 ? polosArray.join(', ') : 'IBV'
+  const polo = polosArray.length > 0 ? polosArray.map(p => paraMaiusculo(p)).join(', ') : 'IBV'
 
   // Opcional: Busca o nome da pessoa que está sofrendo a alteração para deixar o log bonito
   const { data: usuarioAlvo } = await supabase

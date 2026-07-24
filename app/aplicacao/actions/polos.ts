@@ -1,6 +1,7 @@
 'use server'
 
 import { logAction } from '@/lib/audit'
+import { paraMaiusculo } from '@/lib/texto'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
@@ -9,7 +10,7 @@ export async function salvarPolo(formData: FormData) {
   const supabase = createServerActionClient({ cookies })
 
   const id = formData.get('id') as string // Se houver ID, é edição
-  const nome = formData.get('nome') as string
+  const nome = paraMaiusculo(formData.get('nome'))
   const cidade = formData.get('cidade') as string
   const tipo = formData.get('tipo') as string
 

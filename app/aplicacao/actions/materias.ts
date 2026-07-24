@@ -1,6 +1,7 @@
 'use server'
 
 import { logAction } from '@/lib/audit'
+import { paraMaiusculo } from '@/lib/texto'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
@@ -9,7 +10,7 @@ export async function salvarMateria(formData: FormData) {
   const supabase = createServerActionClient({ cookies })
 
   const id = formData.get('id') as string
-  const nome = formData.get('nome') as string
+  const nome = paraMaiusculo(formData.get('nome'))
   const curso_id = formData.get('curso_id') as string
   const status = formData.get('status') as string // Captura o novo status
 

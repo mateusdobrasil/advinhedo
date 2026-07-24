@@ -1,6 +1,7 @@
 'use server'
 
 import { logAction } from '@/lib/audit'
+import { paraMaiusculo } from '@/lib/texto'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
@@ -8,9 +9,11 @@ import { revalidatePath } from 'next/cache'
 export async function criarAviso(formData: FormData) {
   const supabase = createServerActionClient({ cookies })
 
-  const titulo = formData.get('titulo') as string
+  const titulo = paraMaiusculo(formData.get('titulo'))
   const conteudo = formData.get('conteudo') as string
-  const polo = formData.get('polo') as string
+  const poloForm = formData.get('polo') as string
+  // "Todos" é um valor sentinela usado nos filtros de avisos (polo.eq.Todos) — não maiusculizar
+  const polo = poloForm && poloForm !== 'Todos' ? paraMaiusculo(poloForm) : poloForm
   const turma_id = formData.get('turma_id') as string
 
   // Montamos o objeto de dados. Se não escolher turma, deixamos vazio (Geral)
