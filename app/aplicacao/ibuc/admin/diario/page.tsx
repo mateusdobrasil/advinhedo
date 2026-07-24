@@ -61,7 +61,7 @@ export default async function DiarioPage() {
         </div>
 
         <div className="mb-8 flex justify-end">
-          <CriadorDiario alunos={alunos || []} turmas={turmas || []} materias={materias || []} />
+          <CriadorDiario alunos={alunos || []} turmas={turmas || []} materias={materias || []} modulo="ibuc" />
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

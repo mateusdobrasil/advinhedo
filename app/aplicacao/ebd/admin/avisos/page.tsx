@@ -31,14 +31,14 @@ export default async function AvisosPage() {
   }
 
   // 4. Busca as turmas para o formulário
-  const { data: turmas } = await supabase.from('turmas').select('id, nome').order('nome')
+  const { data: turmas } = await supabase.from('ebd_turmas').select('id, nome').order('nome')
 
   // 5. Busca os avisos e faz um Join para pegar o nome da turma (se houver)
   const { data: avisos } = await supabase
     .from('avisos')
     .select(`
       *,
-      turmas ( nome )
+      ebd_turmas ( nome )
     `)
     .order('created_at', { ascending: false })
 

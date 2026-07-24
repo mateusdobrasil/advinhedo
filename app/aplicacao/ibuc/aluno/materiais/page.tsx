@@ -16,7 +16,7 @@ export default async function MateriaisAlunoPage() {
 
   // 2. Busca a lista de materiais disponíveis
   const { data: materiais, error } = await supabase
-    .from('materiais')
+    .from('ibuc_materiais')
     .select('*')
     .order('created_at', { ascending: false })
 

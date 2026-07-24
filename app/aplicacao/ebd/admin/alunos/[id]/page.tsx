@@ -44,20 +44,20 @@ export default async function PerfilAlunoAdminPage({ params }: { params: { id: s
 
   // 5. Busca as matrículas dele (com nome da turma)
   const { data: matriculas } = await supabase
-    .from('matriculas')
-    .select(`*, turmas ( nome, curso )`)
+    .from('ebd_matriculas')
+    .select(`*, ebd_turmas ( nome, curso )`)
     .eq('aluno_id', id)
 
   // 6. Busca o histórico de notas e faltas
   const { data: boletim } = await supabase
-    .from('diario_classe')
-    .select(`*, materias ( nome ), turmas ( nome )`)
+    .from('ebd_diario_classe')
+    .select(`*, ebd_materias ( nome ), ebd_turmas ( nome )`)
     .eq('aluno_id', id)
     .order('created_at', { ascending: false })
 
   // 7. Busca o financeiro
   const { data: financeiro } = await supabase
-    .from('financeiro')
+    .from('ebd_financeiro')
     .select('*')
     .eq('aluno_id', id)
     .order('data_vencimento', { ascending: true })

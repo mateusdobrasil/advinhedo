@@ -4,11 +4,24 @@ import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 
+// A EBD tem tabelas próprias (ebd_matriculas, ebd_financeiro); IBV/IBUC continuam
+// compartilhando as tabelas genéricas até serem migradas também.
+function tabelaMatriculas(modulo: string) {
+  return modulo === 'ebd' ? 'ebd_matriculas' : 'matriculas'
+}
+function tabelaFinanceiro(modulo: string) {
+  return modulo === 'ebd' ? 'ebd_financeiro' : 'financeiro'
+}
+
 export async function matricularAluno(formData: FormData) {
   const supabase = createServerActionClient({ cookies })
 
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Não autorizado')
+
+  const modulo = formData.get('modulo') as string
+  const tabelaMat = tabelaMatriculas(modulo)
+  const tabelaFin = tabelaFinanceiro(modulo)
 
   // Dados Acadêmicos
   const aluno_id = formData.get('aluno_id') as string
@@ -16,7 +29,7 @@ export async function matricularAluno(formData: FormData) {
 
   // 🛡️ TRAVA ANTI-DUPLICIDADE INDIVIDUAL
   const { data: matriculaExistente } = await supabase
-    .from('matriculas')
+    .from(tabelaMat)
     .select('id')
     .eq('aluno_id', aluno_id)
     .eq('turma_id', turma_id)
@@ -34,7 +47,7 @@ export async function matricularAluno(formData: FormData) {
 
   // 1. CRIAR A MATRÍCULA
   const { data: novaMatricula, error: erroMatricula } = await supabase
-    .from('matriculas')
+    .from(tabelaMat)
     .insert({
       aluno_id,
       turma_id,
@@ -89,7 +102,7 @@ export async function matricularAluno(formData: FormData) {
   // 3. INSERIR TUDO NO BANCO DE UMA SÓ VEZ (Lote)
   if (lancamentosFinanceiros.length > 0) {
     const { error: erroFinanceiro } = await supabase
-      .from('financeiro')
+      .from(tabelaFin)
       .insert(lancamentosFinanceiros)
 
     if (erroFinanceiro) {
@@ -99,28 +112,28 @@ export async function matricularAluno(formData: FormData) {
   }
 
   // Atualiza as páginas
-  revalidatePath('/aplicacao/ibv/admin/matriculas')
-  revalidatePath('/aplicacao/ibv/admin/turmas')
+  revalidatePath(`/aplicacao/${modulo}/admin/matriculas`)
+  revalidatePath(`/aplicacao/${modulo}/admin/turmas`)
 }
 
 // ==========================================
 // FUNÇÃO PARA TRANCAR / REATIVAR MATRÍCULAS
 // ==========================================
-export async function alterarStatusMatricula(matriculaId: string, novoStatus: string) {
+export async function alterarStatusMatricula(matriculaId: string, novoStatus: string, modulo: string) {
   const supabase = createServerActionClient({ cookies })
 
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Não autorizado')
 
   const { error } = await supabase
-    .from('matriculas')
+    .from(tabelaMatriculas(modulo))
     .update({ status: novoStatus })
     .eq('id', matriculaId)
 
   if (error) throw new Error(`Erro ao alterar status: ${error.message}`)
 
-  revalidatePath('/aplicacao/ibv/admin/matriculas')
-  revalidatePath('/aplicacao/ibv/admin/turmas')
+  revalidatePath(`/aplicacao/${modulo}/admin/matriculas`)
+  revalidatePath(`/aplicacao/${modulo}/admin/turmas`)
 }
 
 // ==========================================
@@ -132,6 +145,10 @@ export async function matricularEmLote(formData: FormData) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Não autorizado')
 
+  const modulo = formData.get('modulo') as string
+  const tabelaMat = tabelaMatriculas(modulo)
+  const tabelaFin = tabelaFinanceiro(modulo)
+
   const turma_id = formData.get('turma_id') as string
   const alunos_selecionados = formData.getAll('alunos_selecionados') as string[]
 
@@ -142,7 +159,7 @@ export async function matricularEmLote(formData: FormData) {
   // 🛡️ TRAVA ANTI-DUPLICIDADE EM LOTE
   // Verifica no banco quais desses alunos já estão nessa turma
   const { data: matriculasExistentes } = await supabase
-    .from('matriculas')
+    .from(tabelaMat)
     .select('aluno_id')
     .eq('turma_id', turma_id)
     .in('aluno_id', alunos_selecionados)
@@ -170,7 +187,7 @@ export async function matricularEmLote(formData: FormData) {
   for (const aluno_id of alunosParaMatricular) {
     // 1. Cria a Matrícula
     const { data: novaMatricula, error: erroMatricula } = await supabase
-      .from('matriculas')
+      .from(tabelaMat)
       .insert({
         aluno_id,
         turma_id,
@@ -181,7 +198,7 @@ export async function matricularEmLote(formData: FormData) {
 
     if (erroMatricula) {
       console.error(`Erro ao matricular aluno ${aluno_id}:`, erroMatricula.message)
-      continue 
+      continue
     }
 
     // 2. Prepara o Financeiro daquele aluno
@@ -225,12 +242,12 @@ export async function matricularEmLote(formData: FormData) {
   // 3. Insere todo o financeiro gerado de uma só vez no banco
   if (lancamentosFinanceiros.length > 0) {
     const { error: erroFinanceiro } = await supabase
-      .from('financeiro')
+      .from(tabelaFin)
       .insert(lancamentosFinanceiros)
 
     if (erroFinanceiro) throw new Error("Matrículas concluídas, mas houve erro ao gerar financeiro.")
   }
 
-  revalidatePath('/aplicacao/ibv/admin/matriculas')
-  revalidatePath('/aplicacao/ibv/admin/turmas')
+  revalidatePath(`/aplicacao/${modulo}/admin/matriculas`)
+  revalidatePath(`/aplicacao/${modulo}/admin/turmas`)
 }

@@ -8,9 +8,10 @@ interface CriadorMatriculaProps {
   turmas: any[]
   cursosRegras: any[] // Lista com nome e preço dos cursos
   turmaIdPadrao?: string
+  modulo: 'ebd' | 'ibv' | 'ibuc'
 }
 
-export default function CriadorMatricula({ alunos, turmas, cursosRegras = [], turmaIdPadrao }: CriadorMatriculaProps) {
+export default function CriadorMatricula({ alunos, turmas, cursosRegras = [], turmaIdPadrao, modulo }: CriadorMatriculaProps) {
   const [aberto, setAberto] = useState(false)
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
@@ -75,6 +76,7 @@ export default function CriadorMatricula({ alunos, turmas, cursosRegras = [], tu
           }} 
           className="space-y-6"
         >
+          <input type="hidden" name="modulo" value={modulo} />
           {/* SEÇÃO 1: ACADÊMICO */}
           <div className="space-y-4">
             <h4 className="text-xs font-black uppercase text-blue-600 tracking-wider">1. Vínculo Acadêmico</h4>

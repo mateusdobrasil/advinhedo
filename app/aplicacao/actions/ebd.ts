@@ -25,6 +25,23 @@ export async function salvarChamadaUnificada(formData: FormData) {
   // Resolve o erro: "cannot affect row a second time"
   const alunoIds = Array.from(new Set(alunoIdsRaw))
 
+  // 🧹 LIMPEZA DE PORTADOR ANTIGO:
+  // Visitantes/oferta do dia ficam guardados numa única linha "portadora" (o primeiro aluno da lista).
+  // Se esse portador mudar de um dia para o outro (ex.: o aluno que carregava o valor foi
+  // desmatriculado ou a ordem da turma mudou), a linha antiga pode ficar com um valor "fantasma"
+  // que nunca é zerado e é contado em dobro nos relatórios. Por isso zeramos aqui qualquer linha
+  // desta data que não seja mais a portadora antes de gravar o novo valor.
+  const { error: erroLimpeza } = await supabase
+    .from('ebd_frequencia')
+    .update({ visitantes: 0, oferta: 0 })
+    .eq('turma_id', turma_id)
+    .eq('data_aula', data_aula)
+    .neq('aluno_id', alunoIds[0])
+
+  if (erroLimpeza) {
+    console.error("❌ ERRO AO LIMPAR DADOS GERAIS ANTIGOS:", erroLimpeza)
+  }
+
   // 2. Constrói o array de registros para o banco
   const registrosParaSalvar = alunoIds.map((aluno_id, index) => {
     const presente = formData.has(`presente_${aluno_id}`)
@@ -48,7 +65,7 @@ export async function salvarChamadaUnificada(formData: FormData) {
 
   // 3. O UPSERT: Insere novos ou atualiza existentes
   const { error } = await supabase
-    .from('frequencia_ebd')
+    .from('ebd_frequencia')
     .upsert(registrosParaSalvar, { 
       onConflict: 'aluno_id, turma_id, data_aula' 
     })

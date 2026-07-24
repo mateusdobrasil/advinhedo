@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import EditorPermissao from '../../../components/EditorPermissao'
+import { sanitizarFiltroBusca } from '@/lib/postgrest'
 
 interface PageProps {
   searchParams: any
@@ -43,7 +44,8 @@ export default async function PermissoesPage({ searchParams }: PageProps) {
   // Se o usuário digitou algo na busca, aplica o filtro do Supabase (ilike = ignora maiúsculas/minúsculas)
   // O .or() permite buscar o termo em qualquer uma dessas colunas simultaneamente
   if (busca) {
-    query = query.or(`nome_completo.ilike.%${busca}%,email.ilike.%${busca}%,polo.ilike.%${busca}%,tipo_usuario.ilike.%${busca}%`)
+    const termo = sanitizarFiltroBusca(busca)
+    query = query.or(`nome_completo.ilike.%${termo}%,email.ilike.%${termo}%,polo.ilike.%${termo}%,tipo_usuario.ilike.%${termo}%`)
   }
 
   const { data: usuarios } = await query

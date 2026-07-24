@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { lancarDiario } from '../actions/diario'
 
-export default function CriadorDiario({ alunos, turmas, materias }: { alunos: any[], turmas: any[], materias: any[] }) {
+export default function CriadorDiario({ alunos, turmas, materias, modulo }: { alunos: any[], turmas: any[], materias: any[], modulo: 'ebd' | 'ibv' | 'ibuc' }) {
   const [aberto, setAberto] = useState(false)
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
@@ -35,7 +35,8 @@ export default function CriadorDiario({ alunos, turmas, materias }: { alunos: an
             setCarregando(false)
           }
         }} className="space-y-4">
-          
+          <input type="hidden" name="modulo" value={modulo} />
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Aluno *</label>
             <select name="aluno_id" required className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-emerald-500">
@@ -64,7 +65,7 @@ export default function CriadorDiario({ alunos, turmas, materias }: { alunos: an
           <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200 mt-2">
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">Nota Final</label>
-              <input type="number" step="0.1" max="100" name="nota" placeholder="Ex: 8.5" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-emerald-500 font-semibold text-emerald-700" />
+              <input type="number" step="0.1" min="0" max="10" name="nota" placeholder="Ex: 8.5" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-emerald-500 font-semibold text-emerald-700" />
             </div>
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">Total de Faltas</label>

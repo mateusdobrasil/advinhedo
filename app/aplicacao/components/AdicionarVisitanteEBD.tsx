@@ -5,9 +5,10 @@ import { cadastrarVisitanteEBD } from '../actions/visitantes'
 
 interface AdicionarVisitanteProps {
   turmaId: string
+  modulo: 'ebd' | 'ibv' | 'ibuc'
 }
 
-export default function AdicionarVisitanteEBD({ turmaId }: AdicionarVisitanteProps) {
+export default function AdicionarVisitanteEBD({ turmaId, modulo }: AdicionarVisitanteProps) {
   const [aberto, setAberto] = useState(false)
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
@@ -56,6 +57,7 @@ export default function AdicionarVisitanteEBD({ turmaId }: AdicionarVisitantePro
         >
           {/* Campo Oculto para enviar o ID da Turma automaticamente */}
           <input type="hidden" name="turma_id" value={turmaId} />
+          <input type="hidden" name="modulo" value={modulo} />
 
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-1">Nome Completo</label>

@@ -32,17 +32,17 @@ export default async function DiarioPage() {
 
   // 4. Busca os dados para alimentar as caixas de seleção do modal
   const { data: alunos } = await supabase.from('perfis').select('id, nome_completo').ilike('tipo_usuario', '%aluno%').order('nome_completo')
-  const { data: turmas } = await supabase.from('turmas').select('id, nome').eq('is_ebd', false).order('nome')
-  const { data: materias } = await supabase.from('materias').select('id, nome').eq('status', 'Ativa').order('nome')
+  const { data: turmas } = await supabase.from('ebd_turmas').select('id, nome').eq('is_ebd', false).order('nome')
+  const { data: materias } = await supabase.from('ebd_materias').select('id, nome').eq('status', 'Ativa').order('nome')
 
   // 5. Busca os registros do diário trazendo os nomes usando Join
   const { data: diarios } = await supabase
-    .from('diario_classe')
+    .from('ebd_diario_classe')
     .select(`
       *,
       perfis ( nome_completo ),
-      turmas ( nome ),
-      materias ( nome )
+      ebd_turmas ( nome ),
+      ebd_materias ( nome )
     `)
     .order('created_at', { ascending: false })
 
@@ -61,7 +61,7 @@ export default async function DiarioPage() {
         </div>
 
         <div className="mb-8 flex justify-end">
-          <CriadorDiario alunos={alunos || []} turmas={turmas || []} materias={materias || []} />
+          <CriadorDiario alunos={alunos || []} turmas={turmas || []} materias={materias || []} modulo="ebd" />
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

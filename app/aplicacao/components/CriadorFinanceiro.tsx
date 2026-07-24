@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { criarCobranca } from '../actions/financeiro'
 
-export default function CriadorFinanceiro({ alunos }: { alunos: any[] }) {
+export default function CriadorFinanceiro({ alunos, modulo }: { alunos: any[], modulo: 'ebd' | 'ibv' | 'ibuc' }) {
   const [aberto, setAberto] = useState(false)
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
@@ -35,7 +35,8 @@ export default function CriadorFinanceiro({ alunos }: { alunos: any[] }) {
             setCarregando(false)
           }
         }} className="space-y-4">
-          
+          <input type="hidden" name="modulo" value={modulo} />
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Selecione o Aluno *</label>
             <select name="aluno_id" required className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-green-500">

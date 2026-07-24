@@ -23,8 +23,8 @@ export default async function AlunoDashboardPage() {
 
   // 2. Busca matrículas e turmas associadas
   const { data: matriculas } = await supabase
-    .from('matriculas')
-    .select('*, turmas(id, nome, curso)')
+    .from('ebd_matriculas')
+    .select('*, ebd_turmas(id, nome, curso)')
     .eq('aluno_id', session.user.id)
 
   // 3. Busca Avisos filtrados (Contexto do aluno)

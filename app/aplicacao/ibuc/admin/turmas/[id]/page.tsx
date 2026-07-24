@@ -164,16 +164,17 @@ export default async function DetalhesTurmaPage({ params }: PageProps) {
               {/* EXIBIÇÃO CONDICIONAL: Somente renderiza esses botões se for EBD */}
               {turma.is_ebd && (
                 <>
-                  <AdicionarVisitanteEBD turmaId={turma.id} />
+                  <AdicionarVisitanteEBD turmaId={turma.id} modulo="ibuc" />
                 </>
               )}
               
               {/* BOTÃO DE MATRÍCULA PADRÃO (Sempre aparece) */}
-              <CriadorMatricula 
-                alunos={todosOsAlunos || []} 
-                turmas={todasAsTurmas || []} 
-                cursosRegras={cursosRegras || []} 
-                turmaIdPadrao={turma.id} 
+              <CriadorMatricula
+                alunos={todosOsAlunos || []}
+                turmas={todasAsTurmas || []}
+                cursosRegras={cursosRegras || []}
+                turmaIdPadrao={turma.id}
+                modulo="ibuc"
               />
             </div>
           </div>

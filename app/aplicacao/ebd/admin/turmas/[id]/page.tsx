@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
 import CriadorMatricula from '../../../../components/CriadorMatricula'
 import AdicionarVisitanteEBD from '../../../../components/AdicionarVisitanteEBD'
-import FormChamadaEBD from '../../../../components/FormChamadaEBD'
 
 interface PageProps {
   params: any
@@ -41,7 +40,7 @@ export default async function DetalhesTurmaPage({ params }: PageProps) {
 
   // 2. Busca os dados da Turma atual (Já traz a coluna is_ebd pelo select '*')
   const { data: turma, error: erroTurma } = await supabase
-    .from('turmas')
+    .from('ebd_turmas')
     .select('*')
     .eq('id', id)
     .single()
@@ -50,7 +49,7 @@ export default async function DetalhesTurmaPage({ params }: PageProps) {
 
   // 3. Busca as Matrículas desta turma
   const { data: dadosMatriculas, error: erroAlunos } = await supabase
-    .from('matriculas')
+    .from('ebd_matriculas')
     .select(`
       id,
       aluno_id,
@@ -58,7 +57,7 @@ export default async function DetalhesTurmaPage({ params }: PageProps) {
       revista_entregue,
       created_at,
       perfis ( nome_completo ),
-      turmas ( nome, curso )
+      ebd_turmas ( nome, curso )
     `)
     .eq('turma_id', id)
 
@@ -79,19 +78,13 @@ export default async function DetalhesTurmaPage({ params }: PageProps) {
     }))
     .sort((a: any, b: any) => a.nome_completo.localeCompare(b.nome_completo)) || []
 
-  // Formata os alunos especificamente para o Componente de Chamada
-  const alunosParaChamada = alunos.map(a => ({
-    id: a.aluno_id,
-    nome_completo: a.nome_completo
-  }))
-
   // ==========================================
   // BUSCAS PARA OS MODAIS E FORMULÁRIOS
   // ==========================================
 
   // 3. Buscas para alimentar o botão "+ Nova Matrícula"
   const { data: todasAsTurmas } = await supabase
-    .from('turmas')
+    .from('ebd_turmas')
     .select('id, nome, curso')
     .eq('status', 'Ativa')
     .order('nome')
@@ -103,18 +96,8 @@ export default async function DetalhesTurmaPage({ params }: PageProps) {
     .order('nome_completo')
 
   const { data: cursosRegras } = await supabase
-    .from('cursos')
+    .from('ebd_cursos')
     .select('nome, valor_mensalidade')
-
-  // Só busca as frequências se for realmente uma turma da EBD, para poupar o banco de dados
-  let frequenciasExistentes: any[] = []
-  if (turma.is_ebd) {
-    const { data: freqs } = await supabase
-      .from('frequencia_ebd')
-      .select('*')
-      .eq('turma_id', id)
-    frequenciasExistentes = freqs || []
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 p-6">
@@ -164,16 +147,17 @@ export default async function DetalhesTurmaPage({ params }: PageProps) {
               {/* EXIBIÇÃO CONDICIONAL: Somente renderiza esses botões se for EBD */}
               {turma.is_ebd && (
                 <>
-                  <AdicionarVisitanteEBD turmaId={turma.id} />
+                  <AdicionarVisitanteEBD turmaId={turma.id} modulo="ebd" />
                 </>
               )}
               
               {/* BOTÃO DE MATRÍCULA PADRÃO (Sempre aparece) */}
-              <CriadorMatricula 
-                alunos={todosOsAlunos || []} 
-                turmas={todasAsTurmas || []} 
-                cursosRegras={cursosRegras || []} 
-                turmaIdPadrao={turma.id} 
+              <CriadorMatricula
+                alunos={todosOsAlunos || []}
+                turmas={todasAsTurmas || []}
+                cursosRegras={cursosRegras || []}
+                turmaIdPadrao={turma.id}
+                modulo="ebd"
               />
             </div>
           </div>

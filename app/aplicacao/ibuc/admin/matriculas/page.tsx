@@ -119,7 +119,7 @@ export default async function MatriculasPage({ searchParams }: PageProps) {
           
           <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-2 justify-end">
             {/* 👇 Botão universal que permite escolher origem e destino 👇 */}
-            <MatriculaPorTurma turmas={todasAsTurmas || []} />
+            <MatriculaPorTurma turmas={todasAsTurmas || []} modulo="ibuc" />
           </div>
         </div>
 
@@ -160,7 +160,7 @@ export default async function MatriculasPage({ searchParams }: PageProps) {
                       </td>
                       <td className="px-6 py-4 text-right space-x-3">
                         {/* Botão Dinâmico para Trancar/Reativar */}
-                        <BotaoStatusMatricula matriculaId={mat.id} statusAtual={mat.status || 'Ativo'} />
+                        <BotaoStatusMatricula matriculaId={mat.id} statusAtual={mat.status || 'Ativo'} modulo="ibuc" />
                       </td>
                     </tr>
                   ))

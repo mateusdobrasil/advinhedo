@@ -16,16 +16,19 @@ interface Aluno {
   jaMatriculado: boolean
 }
 
-export default function MatriculaPorTurma({ 
-  turmas, 
-  turmaDestinoPadrao = '' 
-}: { 
-  turmas: Turma[], 
-  turmaDestinoPadrao?: string 
+export default function MatriculaPorTurma({
+  turmas,
+  turmaDestinoPadrao = '',
+  modulo
+}: {
+  turmas: Turma[],
+  turmaDestinoPadrao?: string,
+  modulo: 'ebd' | 'ibv' | 'ibuc'
 }) {
   const router = useRouter()
   const supabase = createClientComponentClient()
-  
+  const tabelaMatriculas = modulo === 'ebd' ? 'ebd_matriculas' : 'matriculas'
+
   const [isOpen, setIsOpen] = useState(false)
   const [turmaDestinoId, setTurmaDestinoId] = useState(turmaDestinoPadrao)
   const [turmaOrigemId, setTurmaOrigemId] = useState('')
@@ -78,7 +81,7 @@ export default function MatriculaPorTurma({
             .ilike('tipo_usuario', '%aluno%')
 
           const { data: matriculasAtivas, error: erroMatriculas } = await supabase
-            .from('matriculas')
+            .from(tabelaMatriculas)
             .select('aluno_id')
             .eq('status', 'Ativo')
 
@@ -93,7 +96,7 @@ export default function MatriculaPorTurma({
 
         // Verifica quem JÁ ESTÁ na Turma de Destino selecionada para bloquear a duplicata visualmente
         const { data: matriculasDestino, error: erroDestino } = await supabase
-          .from('matriculas')
+          .from(tabelaMatriculas)
           .select('aluno_id')
           .eq('turma_id', turmaDestinoId)
           .eq('status', 'Ativo')
@@ -159,7 +162,7 @@ export default function MatriculaPorTurma({
         revista_entregue: false
       }))
 
-      const { error } = await supabase.from('matriculas').insert(novasMatriculas)
+      const { error } = await supabase.from(tabelaMatriculas).insert(novasMatriculas)
       if (error) throw error
 
       setMensagem({ texto: `${selecionados.length} aluno(s) matriculado(s) com sucesso!`, tipo: 'sucesso' })

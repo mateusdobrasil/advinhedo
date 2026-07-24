@@ -76,7 +76,9 @@ export async function criarUsuario(formData: FormData) {
     details: `Cadastrou o aluno: ${nome_completo} no polo ${polo}`
   })
 
-  revalidatePath('/aplicacao/ibv/admin/cadastro')
+  for (const modulo of ['ebd', 'ibv', 'ibuc']) {
+    revalidatePath(`/aplicacao/${modulo}/admin/cadastro`)
+  }
 }
 
 // ============================================================================
@@ -114,6 +116,8 @@ export async function atualizarUsuario(formData: FormData) {
     details: `Editou os dados completos de: ${dadosParaAtualizar.nome_completo}`
   })
 
-  revalidatePath(`/aplicacao/ibv/admin/cadastro/${id}`)
-  revalidatePath('/aplicacao/ibv/admin/cadastro')
+  for (const modulo of ['ebd', 'ibv', 'ibuc']) {
+    revalidatePath(`/aplicacao/${modulo}/admin/cadastro/${id}`)
+    revalidatePath(`/aplicacao/${modulo}/admin/cadastro`)
+  }
 }

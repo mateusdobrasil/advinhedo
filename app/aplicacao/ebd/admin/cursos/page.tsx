@@ -32,7 +32,7 @@ export default async function CursosPage() {
 
   // 4. BUSCA COM ORDENAÇÃO DUPLA: 'Ativo' vem antes de 'Inativo' no alfabeto
   const { data: cursos } = await supabase
-    .from('cursos')
+    .from('ebd_cursos')
     .select('*')
     .order('status', { ascending: true }) 
     .order('nome', { ascending: true })
@@ -53,7 +53,7 @@ export default async function CursosPage() {
         {/* BOTÃO CADASTRAR NOVO CURSO */}
         <div className="mb-8 flex justify-end">
           {/* CORREÇÃO: Chamamos apenas o componente vazio para ele entrar em modo "Criação" */}
-          <CriadorCurso />
+          <CriadorCurso modulo="ebd" />
         </div>
 
         <div className="grid grid-cols-1 gap-4">
@@ -86,7 +86,7 @@ export default async function CursosPage() {
                   </span>
                   
                   {/* Aqui o botão recebe o curso 'c', então ele entende que é modo de Edição. Perfeito! */}
-                  <CriadorCurso curso={c} />
+                  <CriadorCurso curso={c} modulo="ebd" />
                 </div>
               </div>
             )

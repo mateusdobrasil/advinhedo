@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import CriadorFinanceiro from '../../../components/CriadorFinanceiro'
+import BotaoBaixarCobranca from '../../../components/BotaoBaixarCobranca'
 
 export default async function FinanceiroPage() {
   const supabase = createServerComponentClient({ cookies })
@@ -38,7 +39,7 @@ export default async function FinanceiroPage() {
 
   // 5. Busca o financeiro puxando o nome do aluno
   const { data: cobrancas } = await supabase
-    .from('financeiro')
+    .from('ebd_financeiro')
     .select(`
       *,
       perfis ( nome_completo )
@@ -60,7 +61,7 @@ export default async function FinanceiroPage() {
         </div>
 
         <div className="mb-8 flex justify-end">
-          <CriadorFinanceiro alunos={alunos || []} />
+          <CriadorFinanceiro alunos={alunos || []} modulo="ebd" />
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -102,9 +103,7 @@ export default async function FinanceiroPage() {
                         </td>
                         <td className="px-6 py-4 text-right">
                           {cob.status === 'Pendente' && (
-                            <button className="text-green-600 hover:text-green-800 text-sm font-bold bg-green-50 px-3 py-1 rounded-md transition">
-                              Baixar
-                            </button>
+                            <BotaoBaixarCobranca cobrancaId={cob.id} modulo="ebd" />
                           )}
                         </td>
                       </tr>

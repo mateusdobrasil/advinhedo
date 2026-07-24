@@ -10,7 +10,7 @@ export default async function PerfilPage() {
   const supabase = createServerComponentClient({ cookies })
 
   const { data: { session } } = await supabase.auth.getSession()
-  if (!session) redirect('/aplicacao/login')
+  if (!session) redirect('/aplicacao/ebd/login')
 
   // Busca os dados atuais do usuário
   const { data: perfil } = await supabase

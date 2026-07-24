@@ -6,9 +6,10 @@ import { salvarCurso } from '../actions/cursos'
 
 interface CriadorCursoProps {
   curso?: any // Se receber o curso, é Edição. Se não receber, é Cadastro.
+  modulo: 'ebd' | 'ibv' | 'ibuc'
 }
 
-export default function CriadorCurso({ curso }: CriadorCursoProps) {
+export default function CriadorCurso({ curso, modulo }: CriadorCursoProps) {
   const router = useRouter() // 👈 Instanciado o router
   const [aberto, setAberto] = useState(false)
   const [carregando, setCarregando] = useState(false)
@@ -51,7 +52,8 @@ export default function CriadorCurso({ curso }: CriadorCursoProps) {
             <form action={handleAcao} className="p-6 space-y-4">
               {/* O campo ID escondido garante que o sistema saiba que é para editar */}
               {curso?.id && <input type="hidden" name="id" value={curso.id} />}
-              
+              <input type="hidden" name="modulo" value={modulo} />
+
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">Nome do Curso</label>
                 <input name="nome" defaultValue={curso?.nome} required className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Ex: Teologia Básica" />

@@ -12,6 +12,10 @@ export async function lancarDiario(formData: FormData) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Usuário não autenticado.')
 
+  // A EBD tem tabela própria (ebd_diario_classe); IBV/IBUC continuam na tabela genérica
+  const modulo = formData.get('modulo') as string
+  const tabela = modulo === 'ebd' ? 'ebd_diario_classe' : 'diario_classe'
+
   // 2. Pega os dados do formulário
   const aluno_id = formData.get('aluno_id') as string
   const turma_id = formData.get('turma_id') as string
@@ -19,9 +23,13 @@ export async function lancarDiario(formData: FormData) {
   const faltas = parseInt(formData.get('faltas') as string)
   const nota = parseFloat(formData.get('nota') as string)
 
+  if (!Number.isNaN(nota) && (nota < 0 || nota > 10)) {
+    throw new Error('A nota deve estar entre 0 e 10.')
+  }
+
   // 3. SALVA A NOTA NO DIÁRIO
   const { error: diarioError } = await supabase
-    .from('ibv_diario_classe')
+    .from(tabela)
     .insert({
       aluno_id,
       turma_id,
@@ -47,10 +55,10 @@ export async function lancarDiario(formData: FormData) {
   // 4. O ESPIÃO DA AUDITORIA (Agora com o nome do aluno!)
   await logAction(supabase, session.user, {
     action: 'LANÇAMENTO DE NOTA',
-    tableName: 'ibv_diario_classe',
+    tableName: tabela,
     details: `Lançou nota ${nota} e ${faltas} faltas para o aluno: ${nomeAluno}`
   })
 
-  revalidatePath('/aplicacao/ibv/admin/diario')
-  revalidatePath('/aplicacao/ibv/admin/auditoria')
+  revalidatePath(`/aplicacao/${modulo}/admin/diario`)
+  revalidatePath(`/aplicacao/${modulo}/admin/auditoria`)
 }

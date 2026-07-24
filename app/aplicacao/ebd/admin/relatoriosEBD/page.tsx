@@ -71,19 +71,19 @@ export default async function RelatoriosEBDPage({ searchParams }: PageProps) {
   
   // 3.1 Busca todas as turmas da EBD
   const { data: turmasEBD } = await supabase
-    .from('turmas')
+    .from('ebd_turmas')
     .select('id, nome')
     .eq('is_ebd', true)
 
   // 3.2 Busca matrículas ativas para contar os alunos de cada turma da EBD
   const { data: matriculasAtivas } = await supabase
-    .from('matriculas')
+    .from('ebd_matriculas')
     .select('turma_id, aluno_id')
     .eq('status', 'Ativo')
 
   // 3.3 Presenças de Alunos para o Ranking Individual (Top 5)
   const { data: frequenciasAlunos } = await supabase
-    .from('frequencia_ebd')
+    .from('ebd_frequencia')
     .select(`
       aluno_id,
       presente,
@@ -95,7 +95,7 @@ export default async function RelatoriosEBDPage({ searchParams }: PageProps) {
 
   // 3.4 Frequências Agregadas (Para preencher as métricas das turmas)
   const { data: frequencias } = await supabase
-    .from('frequencia_ebd')
+    .from('ebd_frequencia')
     .select('turma_id, aluno_id, data_aula, presente, trouxe_biblia, trouxe_revista, visitantes, oferta')
     .gte('data_aula', start)
     .lte('data_aula', end)

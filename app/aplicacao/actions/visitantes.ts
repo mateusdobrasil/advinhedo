@@ -15,6 +15,10 @@ export async function cadastrarVisitanteEBD(formData: FormData) {
   const telefone = formData.get('telefone') as string
   const turma_id = formData.get('turma_id') as string
 
+  // A EBD tem tabela própria (ebd_matriculas); IBV/IBUC continuam na tabela genérica
+  const modulo = formData.get('modulo') as string
+  const tabelaMatriculas = modulo === 'ebd' ? 'ebd_matriculas' : 'matriculas'
+
   // 2. Geração automática de credenciais fictícias para o visitante
   // Isso permite que ele entre na tabela 'perfis' sem precisar de um e-mail real agora.
   const emailFicticio = `visitante.${Date.now()}@ebd.local`
@@ -45,7 +49,7 @@ export async function cadastrarVisitanteEBD(formData: FormData) {
 
   // 5. Matricular o Visitante automaticamente na Turma da EBD selecionada
   const { error: matriculaError } = await supabase
-    .from('matriculas')
+    .from(tabelaMatriculas)
     .insert({
       aluno_id: userId,
       turma_id: turma_id,
@@ -55,5 +59,5 @@ export async function cadastrarVisitanteEBD(formData: FormData) {
   if (matriculaError) throw new Error('Visitante criado, mas ocorreu um erro ao vinculá-lo à turma.')
 
   // Atualiza a página da turma para o visitante aparecer na lista imediatamente
-  revalidatePath(`/aplicacao/ibv/admin/turmas/${turma_id}`)
+  revalidatePath(`/aplicacao/${modulo}/admin/turmas/${turma_id}`)
 }

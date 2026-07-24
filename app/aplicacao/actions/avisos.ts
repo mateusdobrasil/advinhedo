@@ -36,5 +36,7 @@ export async function criarAviso(formData: FormData) {
     })
   }
 
-  revalidatePath('/aplicacao/ibv/admin/avisos')
+  for (const modulo of ['ebd', 'ibv', 'ibuc']) {
+    revalidatePath(`/aplicacao/${modulo}/admin/avisos`)
+  }
 }

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { enviarMaterial } from '../actions/materiais'
 
-export default function UploaderMaterial() {
+export default function UploaderMaterial({ modulo }: { modulo: 'ebd' | 'ibv' | 'ibuc' }) {
   const [carregando, setCarregando] = useState(false)
   const [aberto, setAberto] = useState(false)
 
@@ -38,6 +38,7 @@ export default function UploaderMaterial() {
         }} 
         className="space-y-4"
       >
+        <input type="hidden" name="modulo" value={modulo} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm text-gray-600 mb-1">Título / Nome da Aula</label>

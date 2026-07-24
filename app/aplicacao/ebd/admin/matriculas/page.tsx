@@ -43,14 +43,14 @@ export default async function MatriculasPage({ searchParams }: PageProps) {
 
   // Busca TODAS as matrículas com os relacionamentos
   const { data: dadosMatriculas } = await supabase
-    .from('matriculas')
+    .from('ebd_matriculas')
     .select(`
       id,
       aluno_id,
       status,
       created_at,
       perfis ( nome_completo ),
-      turmas ( nome, curso )
+      ebd_turmas ( nome, curso )
     `)
     .order('created_at', { ascending: false })
 
@@ -75,7 +75,7 @@ export default async function MatriculasPage({ searchParams }: PageProps) {
   // 5. Busca as turmas para alimentar o botão de Matrícula
   // =================================================================
   const { data: todasAsTurmas } = await supabase
-    .from('turmas')
+    .from('ebd_turmas')
     .select('id, nome, curso')
     .eq('status', 'Ativa')
     .order('nome')
@@ -119,7 +119,7 @@ export default async function MatriculasPage({ searchParams }: PageProps) {
           
           <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-2 justify-end">
             {/* 👇 Botão universal que permite escolher origem e destino 👇 */}
-            <MatriculaPorTurma turmas={todasAsTurmas || []} />
+            <MatriculaPorTurma turmas={todasAsTurmas || []} modulo="ebd" />
           </div>
         </div>
 
@@ -160,7 +160,7 @@ export default async function MatriculasPage({ searchParams }: PageProps) {
                       </td>
                       <td className="px-6 py-4 text-right space-x-3">
                         {/* Botão Dinâmico para Trancar/Reativar */}
-                        <BotaoStatusMatricula matriculaId={mat.id} statusAtual={mat.status || 'Ativo'} />
+                        <BotaoStatusMatricula matriculaId={mat.id} statusAtual={mat.status || 'Ativo'} modulo="ebd" />
                       </td>
                     </tr>
                   ))

@@ -60,7 +60,7 @@ export default async function FinanceiroPage() {
         </div>
 
         <div className="mb-8 flex justify-end">
-          <CriadorFinanceiro alunos={alunos || []} />
+          <CriadorFinanceiro alunos={alunos || []} modulo="ibuc" />
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

@@ -35,5 +35,7 @@ export async function salvarPolo(formData: FormData) {
     details: `${id ? 'Editou' : 'Cadastrou'} o polo: ${nome} (${tipo})`
   })
 
-  revalidatePath('/aplicacao/ibv/admin/polos')
+  for (const modulo of ['ebd', 'ibv', 'ibuc']) {
+    revalidatePath(`/aplicacao/${modulo}/admin/polos`)
+  }
 }

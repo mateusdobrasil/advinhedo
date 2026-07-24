@@ -32,7 +32,7 @@ export default async function TurmasPage() {
 
   // 4. Busca as turmas ordenadas por status (Ativa primeiro) e depois por ordem alfabética
   const { data: turmas, error } = await supabase
-    .from('turmas')
+    .from('ebd_turmas')
     .select('*')
     .eq('is_ebd', false)
     .order('status', { ascending: true })
@@ -51,7 +51,7 @@ export default async function TurmasPage() {
 
   // 6. Busca os Cursos Ativos para popular o select de criação/edição de turmas
   const { data: cursosAtivos } = await supabase
-    .from('cursos')
+    .from('ebd_cursos')
     .select('id, nome')
     .eq('status', 'Ativo')
     .order('nome', { ascending: true })
@@ -73,9 +73,10 @@ export default async function TurmasPage() {
 
         {/* BOTÃO CADASTRAR NOVA TURMA */}
         <div className="mb-8 flex justify-end">
-          <CriadorTurma 
-            cursosDisponiveis={cursosAtivos || []} 
+          <CriadorTurma
+            cursosDisponiveis={cursosAtivos || []}
             ebdSalasConfig={ebdSalasConfig || []} // <-- Injetado aqui
+            modulo="ebd"
           />
         </div>
 

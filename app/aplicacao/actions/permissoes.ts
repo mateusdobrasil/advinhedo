@@ -65,5 +65,7 @@ export async function atualizarPermissao(formData: FormData) {
   })
   
   // 5. ATUALIZA A TELA
-  revalidatePath('/aplicacao/ibv/admin/permissoes')
+  for (const modulo of ['ebd', 'ibv', 'ibuc']) {
+    revalidatePath(`/aplicacao/${modulo}/admin/permissoes`)
+  }
 }

@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import CriadorUsuario from '../../../components/CriadorUsuario'
+import { sanitizarFiltroBusca } from '@/lib/postgrest'
 
 interface PageProps {
   searchParams: any
@@ -49,7 +50,8 @@ export default async function CadastroCentralPage({ searchParams }: PageProps) {
 
   // Se houver busca, aplicamos um filtro OR (Nome, Email ou CPF)
   if (busca) {
-    query = query.or(`nome_completo.ilike.%${busca}%,email.ilike.%${busca}%,cpf.ilike.%${busca}%`)
+    const termo = sanitizarFiltroBusca(busca)
+    query = query.or(`nome_completo.ilike.%${termo}%,email.ilike.%${termo}%,cpf.ilike.%${termo}%`)
   }
 
   const { data: alunos } = await query

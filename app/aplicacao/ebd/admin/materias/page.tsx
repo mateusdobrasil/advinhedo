@@ -32,7 +32,7 @@ export default async function MateriasPage() {
 
   // 4. Busca os Cursos Ativos (para alimentar o Select do CriadorMateria)
   const { data: cursosAtivos } = await supabase
-    .from('cursos')
+    .from('ebd_cursos')
     .select('id, nome')
     .eq('status', 'Ativo')
     .order('nome', { ascending: true })
@@ -40,10 +40,10 @@ export default async function MateriasPage() {
   // 5. Busca todas as Matérias com o nome do Curso relacionado
   // Ordena por Status (Ativa antes de Inativa no alfabeto) e depois por Nome
   const { data: materias, error } = await supabase
-    .from('materias')
+    .from('ebd_materias')
     .select(`
       *,
-      cursos ( nome )
+      ebd_cursos ( nome )
     `)
     .order('status', { ascending: true })
     .order('nome', { ascending: true })
@@ -79,7 +79,7 @@ export default async function MateriasPage() {
             </Link>
 
             {/* 2º Botão: Criador de Matéria (Embaixo, alinhado à direita) */}
-            <CriadorMateria cursos={cursosAtivos || []} />
+            <CriadorMateria cursos={cursosAtivos || []} modulo="ebd" />
             
           </div>
         </div>
@@ -122,7 +122,7 @@ export default async function MateriasPage() {
                     </span>
                     
                     {/* COMPONENTE DE EDIÇÃO */}
-                    <CriadorMateria materia={m} cursos={cursosAtivos || []} />
+                    <CriadorMateria materia={m} cursos={cursosAtivos || []} modulo="ebd" />
                   </div>
                 </div>
               )

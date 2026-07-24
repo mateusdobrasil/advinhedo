@@ -4,12 +4,13 @@ import { useState } from 'react'
 import { criarTurma } from '../actions/turmas'
 
 interface CriadorTurmaProps {
-  turma?: any 
-  cursosDisponiveis?: any[] 
+  turma?: any
+  cursosDisponiveis?: any[]
   ebdSalasConfig?: any[] // <-- Nova propriedade dinâmica
+  modulo: 'ebd' | 'ibv' | 'ibuc'
 }
 
-export default function CriadorTurma({ turma, cursosDisponiveis = [], ebdSalasConfig = [] }: CriadorTurmaProps) {
+export default function CriadorTurma({ turma, cursosDisponiveis = [], ebdSalasConfig = [], modulo }: CriadorTurmaProps) {
   const [aberto, setAberto] = useState(false)
   const [carregando, setCarregando] = useState(false)
   const [isEbd, setIsEbd] = useState(turma?.is_ebd || false)
@@ -44,6 +45,7 @@ export default function CriadorTurma({ turma, cursosDisponiveis = [], ebdSalasCo
         }} className="space-y-4">
           
           {isEdicao && <input type="hidden" name="id" value={turma.id} />}
+          <input type="hidden" name="modulo" value={modulo} />
 
           {/* TOGGLE EBD */}
           <div className="bg-orange-50 border border-orange-100 p-4 rounded-lg flex items-center justify-between">

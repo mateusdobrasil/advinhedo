@@ -79,7 +79,7 @@ export default async function MateriasPage() {
             </Link>
 
             {/* 2º Botão: Criador de Matéria (Embaixo, alinhado à direita) */}
-            <CriadorMateria cursos={cursosAtivos || []} />
+            <CriadorMateria cursos={cursosAtivos || []} modulo="ibv" />
             
           </div>
         </div>
@@ -122,7 +122,7 @@ export default async function MateriasPage() {
                     </span>
                     
                     {/* COMPONENTE DE EDIÇÃO */}
-                    <CriadorMateria materia={m} cursos={cursosAtivos || []} />
+                    <CriadorMateria materia={m} cursos={cursosAtivos || []} modulo="ibv" />
                   </div>
                 </div>
               )

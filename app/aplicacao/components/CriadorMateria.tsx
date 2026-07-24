@@ -7,9 +7,10 @@ import { salvarMateria } from '../actions/materias'
 interface CriadorMateriaProps {
   materia?: any // Se vier preenchido, o componente entra no modo de Edição
   cursos: any[] // Lista de cursos (apenas os ativos) para preencher a caixa de seleção
+  modulo: 'ebd' | 'ibv' | 'ibuc'
 }
 
-export default function CriadorMateria({ materia, cursos }: CriadorMateriaProps) {
+export default function CriadorMateria({ materia, cursos, modulo }: CriadorMateriaProps) {
   const router = useRouter() // 👈 Instanciado o router
   const [aberto, setAberto] = useState(false)
   const [carregando, setCarregando] = useState(false)
@@ -56,7 +57,8 @@ export default function CriadorMateria({ materia, cursos }: CriadorMateriaProps)
               
               {/* O campo ID escondido garante que o sistema saiba qual matéria atualizar */}
               {materia?.id && <input type="hidden" name="id" value={materia.id} />}
-              
+              <input type="hidden" name="modulo" value={modulo} />
+
               {/* NOME DA MATÉRIA */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">Nome da Matéria</label>

@@ -11,6 +11,10 @@ export async function criarTurma(formData: FormData) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Não autorizado')
 
+  // A EBD tem tabela própria (ebd_turmas); IBV/IBUC continuam na tabela genérica
+  const modulo = formData.get('modulo') as string
+  const tabela = modulo === 'ebd' ? 'ebd_turmas' : 'turmas'
+
   // 2. Captura os dados básicos do formulário
   const nome = formData.get('nome') as string
   const curso = formData.get('curso') as string
@@ -32,8 +36,8 @@ export async function criarTurma(formData: FormData) {
     // MODO EDIÇÃO
     // ==========================================
     const { error } = await supabase
-      .from('turmas')
-      .update({ 
+      .from(tabela)
+      .update({
         nome, 
         curso, 
         modalidade, 
@@ -55,8 +59,8 @@ export async function criarTurma(formData: FormData) {
     // MODO CRIAÇÃO (NOVA TURMA)
     // ==========================================
     const { error } = await supabase
-      .from('turmas')
-      .insert({ 
+      .from(tabela)
+      .insert({
         nome, 
         curso, 
         modalidade, 
@@ -74,5 +78,5 @@ export async function criarTurma(formData: FormData) {
   }
 
   // 5. Atualiza o cache da página para mostrar a nova turma instantaneamente
-  revalidatePath('/aplicacao/ibv/admin/turmas')
+  revalidatePath(`/aplicacao/${modulo}/admin/turmas`)
 }

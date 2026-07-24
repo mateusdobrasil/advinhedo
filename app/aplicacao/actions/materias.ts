@@ -13,11 +13,15 @@ export async function salvarMateria(formData: FormData) {
   const curso_id = formData.get('curso_id') as string
   const status = formData.get('status') as string // Captura o novo status
 
+  // A EBD tem tabela própria (ebd_materias); IBV/IBUC continuam na tabela genérica
+  const modulo = formData.get('modulo') as string
+  const tabela = modulo === 'ebd' ? 'ebd_materias' : 'materias'
+
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Não autorizado')
 
   const { error } = await supabase
-    .from('ibv_materias')
+    .from(tabela)
     .upsert({
       ...(id ? { id } : {}),
       nome,
@@ -30,9 +34,9 @@ export async function salvarMateria(formData: FormData) {
   // Registro na Auditoria com a função centralizada
   await logAction(supabase, session.user, {
     action: id ? 'EDIÇÃO DE MATÉRIA' : 'NOVA MATÉRIA',
-    tableName: 'ibv_materias',
+    tableName: tabela,
     details: `${id ? 'Alterou' : 'Cadastrou'} a matéria ${nome} como ${status.toUpperCase()}`
   })
 
-  revalidatePath('/aplicacao/ibv/admin/materias')
+  revalidatePath(`/aplicacao/${modulo}/admin/materias`)
 }

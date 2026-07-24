@@ -39,11 +39,11 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
   const dataFormatada = new Date(dataSelecionada + 'T12:00:00').toLocaleDateString('pt-BR')
 
   // 3. Busca a Turma Atual e os Alunos Dela
-  const { data: turma, error: erroTurma } = await supabase.from('turmas').select('*').eq('id', id).single()
+  const { data: turma, error: erroTurma } = await supabase.from('ebd_turmas').select('*').eq('id', id).single()
   if (erroTurma || !turma) notFound()
 
   const { data: dadosMatriculas } = await supabase
-    .from('matriculas')
+    .from('ebd_matriculas')
     .select(`id, aluno_id, status, revista_entregue, created_at, perfis ( nome_completo )`)
     .eq('turma_id', id)
 
@@ -59,7 +59,7 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
 
   // 4. Buscas Auxiliares
   const { data: todosOsAlunos } = await supabase.from('perfis').select('id, nome_completo, cpf').ilike('tipo_usuario', '%aluno%').order('nome_completo')
-  const { data: cursosRegras } = await supabase.from('cursos').select('nome, valor_mensalidade')
+  const { data: cursosRegras } = await supabase.from('ebd_cursos').select('nome, valor_mensalidade')
 
   // =================================================================
   // 🛑 FILTRO SUPREMO DE ALUNOS (À PROVA DE FALHAS DO BANCO)
@@ -67,13 +67,13 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
   
   // A) Busca TODAS as matrículas ativas (usando ilike para ignorar se está escrito Ativo, ATIVO ou ativo)
   const { data: todasMatriculasAtivas } = await supabase
-    .from('matriculas')
+    .from('ebd_matriculas')
     .select('aluno_id, turma_id')
     .ilike('status', 'Ativo')
 
   // B) Busca os IDs de TODAS as turmas que são especificamente da EBD
   const { data: turmasDaEbd } = await supabase
-    .from('turmas')
+    .from('ebd_turmas')
     .select('id')
     .eq('is_ebd', true)
 
@@ -96,7 +96,7 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
   let frequenciasExistentes: any[] = []
   if (turma.is_ebd) {
     const { data: freqs } = await supabase
-      .from('frequencia_ebd')
+      .from('ebd_frequencia')
       .select('*')
       .eq('turma_id', id)
       .eq('data_aula', dataSelecionada)
@@ -222,12 +222,13 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
             {podeEditar && (
               <div className="w-full sm:w-auto">
                 {/* 👇 ÚNICO BOTÃO DISPONÍVEL AGORA 👇 */}
-                <MatriculaEmLote 
-                  alunos={alunosDisponiveis} 
+                <MatriculaEmLote
+                  alunos={alunosDisponiveis}
                   turmaAtualId={String(turma.id)}
                   turmaAtualNome={String(turma.nome)}
                   cursoAtual={turma.curso ? String(turma.curso) : ''}
-                  cursosRegras={cursosRegras || []} 
+                  cursosRegras={cursosRegras || []}
+                  modulo="ebd"
                 />
               </div>
             )}

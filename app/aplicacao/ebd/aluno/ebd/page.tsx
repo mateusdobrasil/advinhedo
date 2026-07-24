@@ -16,28 +16,23 @@ export default async function AlunoEBDPage() {
 
   // 2. Busca TODAS as matrículas do aluno e traz as turmas junto
   const { data: todasMatriculas, error: erroMatriculas } = await supabase
-    .from('matriculas')
-    .select('*, turmas(*)')
+    .from('ebd_matriculas')
+    .select('*, ebd_turmas(*)')
     .eq('aluno_id', session.user.id)
 
   if (erroMatriculas) {
     console.error("❌ Erro ao buscar matrículas:", erroMatriculas)
   }
 
-  // DEBUG: Veja no terminal o que o banco está retornando
-  console.log("🔎 MATRÍCULAS ENCONTRADAS PARA O ALUNO:", todasMatriculas)
-
   // 3. Filtra a matrícula da EBD no código (muito mais seguro)
   // Ele procura a primeira matrícula onde a turma tem is_ebd == true
   const matriculaEbd = todasMatriculas?.find((m: any) => m.turmas?.is_ebd === true)
-
-  console.log("📖 MATRÍCULA EBD IDENTIFICADA:", matriculaEbd)
 
   // 4. Busca a Frequência APENAS SE encontrou a classe
   let frequencia: any[] = []
   if (matriculaEbd && matriculaEbd.turmas?.id) {
     const { data: dataFreq, error: erroFreq } = await supabase
-      .from('frequencia_ebd')
+      .from('ebd_frequencia')
       .select('*')
       .eq('aluno_id', session.user.id)
       .eq('turma_id', matriculaEbd.turmas.id)

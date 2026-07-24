@@ -12,12 +12,16 @@ export async function salvarCurso(formData: FormData) {
   const nome = formData.get('nome') as string
   const status = formData.get('status') as string // Lendo a sua coluna existente
 
+  // A EBD tem tabela própria (ebd_cursos); IBV/IBUC continuam na tabela genérica
+  const modulo = formData.get('modulo') as string
+  const tabela = modulo === 'ebd' ? 'ebd_cursos' : 'cursos'
+
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Não autorizado')
 
   // 1. Salva ou Atualiza o Curso
   const { error } = await supabase
-    .from('ibv_cursos')
+    .from(tabela)
     .upsert({
       ...(id ? { id } : {}),
       nome,
@@ -33,9 +37,9 @@ export async function salvarCurso(formData: FormData) {
   // 2. Registro na Auditoria com a função centralizada
   await logAction(supabase, session.user, {
     action: id ? 'EDIÇÃO DE CURSO' : 'NOVO CURSO',
-    tableName: 'ibv_cursos',
+    tableName: tabela,
     details: `${id ? 'Alterou' : 'Cadastrou'} o curso ${nome} com status: ${status.toUpperCase()}`
   })
 
-  revalidatePath('/aplicacao/ibv/admin/cursos')
+  revalidatePath(`/aplicacao/${modulo}/admin/cursos`)
 }

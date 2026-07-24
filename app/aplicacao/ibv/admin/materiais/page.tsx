@@ -32,7 +32,7 @@ export default async function AdminMateriaisPage() {
 
   // 4. Busca a lista de materiais já cadastrados
   const { data: materiais } = await supabase
-    .from('materiais')
+    .from('ibv_materiais')
     .select('*')
     .order('created_at', { ascending: false })
 
@@ -56,7 +56,7 @@ export default async function AdminMateriaisPage() {
 
         {/* Formulário de Upload (Só aparece ao clicar) */}
         <div className="mb-8 flex justify-end">
-          <UploaderMaterial />
+          <UploaderMaterial modulo="ibv" />
         </div>
 
         {/* Lista de Materiais Cadastrados */}

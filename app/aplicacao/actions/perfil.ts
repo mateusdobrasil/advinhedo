@@ -45,6 +45,8 @@ export async function atualizarPerfil(formData: FormData) {
   }
 
   // Atualiza as páginas que mostram o nome do usuário
-  revalidatePath('/aplicacao/ibv')
-  revalidatePath('/aplicacao/ibv/perfil')
+  for (const modulo of ['ebd', 'ibv', 'ibuc']) {
+    revalidatePath(`/aplicacao/${modulo}`)
+    revalidatePath(`/aplicacao/${modulo}/perfil`)
+  }
 }

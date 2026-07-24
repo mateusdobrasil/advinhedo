@@ -73,9 +73,10 @@ export default async function TurmasPage() {
 
         {/* BOTÃO CADASTRAR NOVA TURMA */}
         <div className="mb-8 flex justify-end">
-          <CriadorTurma 
-            cursosDisponiveis={cursosAtivos || []} 
+          <CriadorTurma
+            cursosDisponiveis={cursosAtivos || []}
             ebdSalasConfig={ebdSalasConfig || []} // <-- Injetado aqui
+            modulo="ibuc"
           />
         </div>
 

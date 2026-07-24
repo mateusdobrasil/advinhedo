@@ -9,9 +9,10 @@ interface MatriculaEmLoteProps {
   turmaAtualNome: string
   cursoAtual: string
   cursosRegras: any[]
+  modulo: 'ebd' | 'ibv' | 'ibuc'
 }
 
-export default function MatriculaEmLote({ alunos, turmaAtualId, turmaAtualNome, cursoAtual, cursosRegras = [] }: MatriculaEmLoteProps) {
+export default function MatriculaEmLote({ alunos, turmaAtualId, turmaAtualNome, cursoAtual, cursosRegras = [], modulo }: MatriculaEmLoteProps) {
   const [aberto, setAberto] = useState(false)
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
@@ -102,6 +103,7 @@ export default function MatriculaEmLote({ alunos, turmaAtualId, turmaAtualNome, 
           }} className="space-y-6">
             
             <input type="hidden" name="turma_id" value={turmaAtualId} />
+            <input type="hidden" name="modulo" value={modulo} />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               

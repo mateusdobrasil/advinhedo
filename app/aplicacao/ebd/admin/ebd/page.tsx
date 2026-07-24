@@ -36,7 +36,7 @@ export default async function TurmasEBDPage() {
 
   // 4. Busca APENAS as turmas da EBD (is_ebd = true sem aspas)
   const { data: turmas, error } = await supabase
-    .from('turmas')
+    .from('ebd_turmas')
     .select('*')
     .eq('is_ebd', true)
     .order('status', { ascending: true })
@@ -55,7 +55,7 @@ export default async function TurmasEBDPage() {
 
   // 6. Busca os Cursos Ativos para popular o select de criação/edição de turmas
   const { data: cursosAtivos } = await supabase
-    .from('cursos')
+    .from('ebd_cursos')
     .select('id, nome')
     .eq('status', 'Ativo')
     .order('nome', { ascending: true })
@@ -80,9 +80,10 @@ export default async function TurmasEBDPage() {
         {/* BOTÃO CADASTRAR NOVA TURMA - Visível apenas para Admin e Administrativo */}
         {podeEditar && (
           <div className="mb-8 flex justify-end">
-            <CriadorTurma 
-              cursosDisponiveis={cursosAtivos || []} 
-              ebdSalasConfig={ebdSalasConfig || []} 
+            <CriadorTurma
+              cursosDisponiveis={cursosAtivos || []}
+              ebdSalasConfig={ebdSalasConfig || []}
+              modulo="ebd"
             />
           </div>
         )}
@@ -130,10 +131,11 @@ export default async function TurmasEBDPage() {
                     
                     {/* O componente importado atuando como botão de Editar - Visível apenas para Admin e Administrativo */}
                     {podeEditar && (
-                      <CriadorTurma 
-                        turma={turma} 
-                        cursosDisponiveis={cursosAtivos || []} 
-                        ebdSalasConfig={ebdSalasConfig || []} 
+                      <CriadorTurma
+                        turma={turma}
+                        cursosDisponiveis={cursosAtivos || []}
+                        ebdSalasConfig={ebdSalasConfig || []}
+                        modulo="ebd"
                       />
                     )}
                   </div>

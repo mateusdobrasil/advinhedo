@@ -29,10 +29,10 @@ export default async function RelatoriosPage() {
   // DADOS GERAIS DO INSTITUTO
   // =================================================================
   const { count: totalAlunos } = await supabase.from('perfis').select('*', { count: 'exact', head: true }).ilike('tipo_usuario', '%aluno%')
-  const { count: totalTurmas } = await supabase.from('turmas').select('*', { count: 'exact', head: true })
-  const { count: totalMatriculas } = await supabase.from('matriculas').select('*', { count: 'exact', head: true })
+  const { count: totalTurmas } = await supabase.from('ebd_turmas').select('*', { count: 'exact', head: true })
+  const { count: totalMatriculas } = await supabase.from('ebd_matriculas').select('*', { count: 'exact', head: true })
 
-  const { data: financeiro } = await supabase.from('financeiro').select('valor, status')
+  const { data: financeiro } = await supabase.from('ebd_financeiro').select('valor, status')
   let receitaRecebida = 0
   let receitaPendente = 0
 
