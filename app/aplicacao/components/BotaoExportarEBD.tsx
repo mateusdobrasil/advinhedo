@@ -29,7 +29,7 @@ export default function BotaoExportarEBD({ data, resumoGeral, periodoLabel }: Ex
 
     try {
       // Chamar a API do servidor para gerar o PPTX
-      const response = await fetch('/api/exportar-relatorio-ebd', {
+      const response = await fetch('/aplicacao/api/exportar-relatorio-ebd', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
