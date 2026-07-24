@@ -48,14 +48,7 @@ export default async function PerfilAlunoAdminPage({ params }: { params: { id: s
     .select(`*, ebd_turmas ( nome, curso )`)
     .eq('aluno_id', id)
 
-  // 6. Busca o histórico de notas e faltas
-  const { data: boletim } = await supabase
-    .from('ebd_diario_classe')
-    .select(`*, ebd_materias ( nome ), ebd_turmas ( nome )`)
-    .eq('aluno_id', id)
-    .order('created_at', { ascending: false })
-
-  // 7. Busca o financeiro
+  // 6. Busca o financeiro
   const { data: financeiro } = await supabase
     .from('ebd_financeiro')
     .select('*')
@@ -95,7 +88,7 @@ export default async function PerfilAlunoAdminPage({ params }: { params: { id: s
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* COLUNA DA ESQUERDA: Matrículas e Notas */}
+          {/* COLUNA DA ESQUERDA: Matrículas */}
           <div className="lg:col-span-2 space-y-8">
             
             {/* SEÇÃO MATRÍCULAS */}
@@ -118,42 +111,6 @@ export default async function PerfilAlunoAdminPage({ params }: { params: { id: s
                   <p className="text-gray-400 text-sm italic">Nenhuma matrícula encontrada.</p>
                 )}
               </div>
-            </div>
-
-            {/* SEÇÃO BOLETIM */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-5 border-b border-gray-100 bg-gray-50/50">
-                <h3 className="font-bold text-gray-700 flex items-center gap-2">✅ Histórico Acadêmico</h3>
-              </div>
-              <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 text-gray-500">
-                  <tr>
-                    <th className="px-6 py-3 font-medium">Turma / Matéria</th>
-                    <th className="px-6 py-3 text-center">Faltas</th>
-                    <th className="px-6 py-3 text-center">Nota</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {boletim && boletim.length > 0 ? (
-                    boletim.map((b: any, idx: number) => (
-                      <tr key={idx}>
-                        <td className="px-6 py-4">
-                          <span className="block font-bold text-gray-800">{b.materias?.nome}</span>
-                          <span className="text-xs text-gray-400">{b.turmas?.nome}</span>
-                        </td>
-                        <td className="px-6 py-4 text-center font-bold text-red-500">{b.faltas}</td>
-                        <td className="px-6 py-4 text-center">
-                          <span className={`font-black text-lg ${b.nota >= 7 ? 'text-emerald-600' : 'text-red-600'}`}>
-                            {b.nota.toFixed(1)}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr><td colSpan={3} className="px-6 py-8 text-center text-gray-400">Nenhum registro acadêmico.</td></tr>
-                  )}
-                </tbody>
-              </table>
             </div>
           </div>
 

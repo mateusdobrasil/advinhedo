@@ -69,14 +69,8 @@ export default async function AlunoDashboardPage() {
         <Analytics />
         
         {/* ATALHOS RÁPIDOS */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Link href="/aplicacao/ebd/aluno/notas" className="bg-indigo-600 
-              text-white p-4 rounded-2xl shadow-lg shadow-indigo-200 
-              hover:bg-indigo-700 hover:-translate-y-1 transition-all">
-            <span className="text-2xl mb-2 block">📊</span>
-            <span className="font-bold text-sm">Meu Boletim</span>
-          </Link>
-          <Link href="/aplicacao/ebd/aluno/materiais" className="bg-indigo-600 
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <Link href="/aplicacao/ebd/aluno/materiais" className="bg-indigo-600
               text-white p-4 rounded-2xl shadow-lg shadow-indigo-200 
               hover:bg-indigo-700 hover:-translate-y-1 transition-all">
             <span className="text-2xl mb-2 block">📚</span>
