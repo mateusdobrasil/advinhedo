@@ -51,7 +51,7 @@ export default async function TurmasEBDPage() {
   }
 
   const turmas = acessoRestrito
-    ? (todasAsTurmas || []).filter(t => t.professor_id === session.user.id)
+    ? (todasAsTurmas || []).filter(t => (t.professor_id || []).includes(session.user.id))
     : (todasAsTurmas || [])
 
   // 5.1 Busca os usuários que podem ser vinculados como responsáveis de uma sala

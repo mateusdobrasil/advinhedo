@@ -30,7 +30,12 @@ export async function criarTurma(formData: FormData) {
   // O checkbox envia 'on' quando marcado. Convertendo isso para true/false.
   const is_ebd = formData.get('is_ebd') === 'on' || formData.get('is_ebd') === 'true'
   const faixa_etaria = formData.get('faixa_etaria') as string || null
-  const professor_id = formData.get('professor_id') as string || null
+
+  // ebd_turmas aceita múltiplos responsáveis (professor_id é uuid[]); a tabela
+  // genérica "turmas" (IBV/IBUC) continua com um único responsável (uuid).
+  const professor_id = tabela === 'ebd_turmas'
+    ? (formData.getAll('professor_id') as string[]).filter(Boolean)
+    : (formData.get('professor_id') as string || null)
 
   // 4. Verifica se é Criação ou Edição
   const id = formData.get('id') as string 

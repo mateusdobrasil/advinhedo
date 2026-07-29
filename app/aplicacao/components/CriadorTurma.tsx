@@ -125,13 +125,34 @@ export default function CriadorTurma({ turma, cursosDisponiveis = [], ebdSalasCo
             </div>
 
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Responsável pela Turma</label>
-              <select name="professor_id" defaultValue={turma?.professor_id || ''} className="w-full border p-2.5 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500">
-                <option value="">Sem responsável definido</option>
-                {professores.map(p => (
-                  <option key={p.id} value={p.id}>{p.nome_completo}</option>
-                ))}
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Responsáveis pela Turma</label>
+              {modulo === 'ebd' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 max-h-40 overflow-y-auto">
+                  {professores.length === 0 ? (
+                    <p className="text-sm text-gray-400 col-span-2">Nenhum usuário disponível para vincular.</p>
+                  ) : (
+                    professores.map(p => (
+                      <label key={p.id} className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          name="professor_id"
+                          value={p.id}
+                          defaultChecked={(turma?.professor_id || []).includes(p.id)}
+                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
+                        />
+                        <span className="text-sm text-gray-700">{p.nome_completo}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+              ) : (
+                <select name="professor_id" defaultValue={turma?.professor_id || ''} className="w-full border p-2.5 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500">
+                  <option value="">Sem responsável definido</option>
+                  {professores.map(p => (
+                    <option key={p.id} value={p.id}>{p.nome_completo}</option>
+                  ))}
+                </select>
+              )}
             </div>
 
             {isEdicao && (

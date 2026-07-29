@@ -46,7 +46,7 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
   // Quem não pode editar (Professor ou qualquer outro cargo, ex: Secretário de Sala)
   // só pode acessar a sala onde está definido como responsável
   const acessoRestrito = !podeEditar
-  if (acessoRestrito && turma.professor_id !== session.user.id) {
+  if (acessoRestrito && !(turma.professor_id || []).includes(session.user.id)) {
     redirect('/aplicacao/ebd/admin/ebd')
   }
 

@@ -17,7 +17,7 @@ export default async function AlunoEBDPage() {
   // 2. Busca TODAS as matrículas do aluno e traz as turmas junto
   const { data: todasMatriculas, error: erroMatriculas } = await supabase
     .from('ebd_matriculas')
-    .select('*, ebd_turmas(*, professor:professor_id(nome_completo))')
+    .select('*, ebd_turmas(*)')
     .eq('aluno_id', session.user.id)
 
   if (erroMatriculas) {
@@ -27,6 +27,20 @@ export default async function AlunoEBDPage() {
   // 3. Filtra a matrícula da EBD no código (muito mais seguro)
   // Ele procura a primeira matrícula onde a turma tem is_ebd == true
   const matriculaEbd = todasMatriculas?.find((m: any) => m.ebd_turmas?.is_ebd === true)
+
+  // 3.1 professor_id agora é uuid[] (uma turma pode ter mais de um responsável),
+  // então busca os nomes à parte em vez de usar embed de FK.
+  let nomesResponsaveis = 'A definir'
+  const idsResponsaveis: string[] = matriculaEbd?.ebd_turmas?.professor_id || []
+  if (idsResponsaveis.length > 0) {
+    const { data: responsaveis } = await supabase
+      .from('perfis')
+      .select('nome_completo')
+      .in('id', idsResponsaveis)
+    if (responsaveis && responsaveis.length > 0) {
+      nomesResponsaveis = responsaveis.map((r) => r.nome_completo).join(', ')
+    }
+  }
 
   // 4. Busca a Frequência APENAS SE encontrou a classe
   let frequencia: any[] = []
@@ -74,7 +88,7 @@ export default async function AlunoEBDPage() {
                </div>
                <div>
                  <p className="text-[10px] uppercase font-bold text-gray-400">Professor</p>
-                 <p className="font-bold text-gray-800">{matriculaEbd.ebd_turmas?.professor?.nome_completo || 'A definir'}</p>
+                 <p className="font-bold text-gray-800">{nomesResponsaveis}</p>
                </div>
                <div>
                  <p className="text-[10px] uppercase font-bold text-gray-400">Horário</p>
