@@ -12,6 +12,38 @@ interface PageProps {
   searchParams: any
 }
 
+// Paleta usada para cargos customizados (qualquer nome fora dos 4 fixos abaixo).
+const CORES_CARGO_CUSTOM = [
+  'bg-pink-100 text-pink-800 border border-pink-200',
+  'bg-amber-100 text-amber-800 border border-amber-200',
+  'bg-cyan-100 text-cyan-800 border border-cyan-200',
+  'bg-teal-100 text-teal-800 border border-teal-200',
+  'bg-fuchsia-100 text-fuchsia-800 border border-fuchsia-200',
+  'bg-lime-100 text-lime-800 border border-lime-200',
+  'bg-orange-100 text-orange-800 border border-orange-200',
+  'bg-indigo-100 text-indigo-800 border border-indigo-200',
+  'bg-rose-100 text-rose-800 border border-rose-200',
+  'bg-sky-100 text-sky-800 border border-sky-200',
+  'bg-violet-100 text-violet-800 border border-violet-200',
+  'bg-yellow-100 text-yellow-800 border border-yellow-200',
+]
+
+function corDoCargo(cargo: string) {
+  const cargoLower = cargo.toLowerCase()
+  if (cargoLower === 'administrador') return 'bg-purple-100 text-purple-800 border border-purple-200'
+  if (cargoLower === 'administrativo') return 'bg-blue-100 text-blue-800 border border-blue-200'
+  if (cargoLower === 'professor') return 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+  if (cargoLower === 'aluno') return 'bg-gray-100 text-gray-600 border border-gray-200'
+
+  // Cargo customizado (ex: "EBD - Professor"): cor estável escolhida por hash
+  // do nome, pra cada cargo ter sempre a mesma cor em vez de cair tudo em cinza.
+  let hash = 0
+  for (let i = 0; i < cargoLower.length; i++) {
+    hash = (hash * 31 + cargoLower.charCodeAt(i)) % 997
+  }
+  return CORES_CARGO_CUSTOM[hash % CORES_CARGO_CUSTOM.length]
+}
+
 export default async function PermissoesPage({ searchParams }: PageProps) {
   const supabase = createServerComponentClient({ cookies })
 
@@ -136,21 +168,11 @@ export default async function PermissoesPage({ searchParams }: PageProps) {
                         {/* COLUNA DE CARGOS COM NOVAS CORES PADRONIZADAS */}
                         <td className="px-6 py-4 text-center">
                           <div className="flex flex-wrap justify-center gap-1">
-                            {cargos.map((cargo: string) => {
-                              const cargoLower = cargo.toLowerCase()
-                              let cargoColor = "bg-gray-100 text-gray-700" // Cor de fallback
-                              
-                              if (cargoLower === 'administrador') cargoColor = "bg-purple-100 text-purple-800 border border-purple-200"
-                              if (cargoLower === 'administrativo') cargoColor = "bg-blue-100 text-blue-800 border border-blue-200"
-                              if (cargoLower === 'professor') cargoColor = "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                              if (cargoLower === 'aluno') cargoColor = "bg-gray-100 text-gray-600 border border-gray-200"
-
-                              return (
-                                <span key={cargo} className={`text-[9px] font-black px-2 py-1 rounded-full uppercase tracking-widest shadow-sm whitespace-nowrap ${cargoColor}`}>
-                                  {cargo}
-                                </span>
-                              )
-                            })}
+                            {cargos.map((cargo: string) => (
+                              <span key={cargo} className={`text-[9px] font-black px-2 py-1 rounded-full uppercase tracking-widest shadow-sm whitespace-nowrap ${corDoCargo(cargo)}`}>
+                                {cargo}
+                              </span>
+                            ))}
                           </div>
                         </td>
 
