@@ -17,7 +17,7 @@ export default async function AlunoEBDPage() {
   // 2. Busca TODAS as matrículas do aluno e traz as turmas junto
   const { data: todasMatriculas, error: erroMatriculas } = await supabase
     .from('ebd_matriculas')
-    .select('*, ebd_turmas(*)')
+    .select('*, ebd_turmas(*, professor:professor_id(nome_completo))')
     .eq('aluno_id', session.user.id)
 
   if (erroMatriculas) {
@@ -26,16 +26,16 @@ export default async function AlunoEBDPage() {
 
   // 3. Filtra a matrícula da EBD no código (muito mais seguro)
   // Ele procura a primeira matrícula onde a turma tem is_ebd == true
-  const matriculaEbd = todasMatriculas?.find((m: any) => m.turmas?.is_ebd === true)
+  const matriculaEbd = todasMatriculas?.find((m: any) => m.ebd_turmas?.is_ebd === true)
 
   // 4. Busca a Frequência APENAS SE encontrou a classe
   let frequencia: any[] = []
-  if (matriculaEbd && matriculaEbd.turmas?.id) {
+  if (matriculaEbd && matriculaEbd.ebd_turmas?.id) {
     const { data: dataFreq, error: erroFreq } = await supabase
       .from('ebd_frequencia')
       .select('*')
       .eq('aluno_id', session.user.id)
-      .eq('turma_id', matriculaEbd.turmas.id)
+      .eq('turma_id', matriculaEbd.ebd_turmas.id)
       .order('created_at', { ascending: false })
     
     if (erroFreq) {
@@ -70,19 +70,19 @@ export default async function AlunoEBDPage() {
             <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 grid grid-cols-2 md:grid-cols-4 gap-6 hover:shadow-md transition">
                <div>
                  <p className="text-[10px] uppercase font-bold text-gray-400">Classe</p>
-                 <p className="font-bold text-gray-800">{matriculaEbd.turmas?.nome}</p>
+                 <p className="font-bold text-gray-800">{matriculaEbd.ebd_turmas?.nome}</p>
                </div>
                <div>
                  <p className="text-[10px] uppercase font-bold text-gray-400">Professor</p>
-                 <p className="font-bold text-gray-800">{matriculaEbd.turmas?.professor || 'A definir'}</p>
+                 <p className="font-bold text-gray-800">{matriculaEbd.ebd_turmas?.professor?.nome_completo || 'A definir'}</p>
                </div>
                <div>
                  <p className="text-[10px] uppercase font-bold text-gray-400">Horário</p>
-                 <p className="font-bold text-gray-800">{matriculaEbd.turmas?.horario || '--:--'}</p>
+                 <p className="font-bold text-gray-800">{matriculaEbd.ebd_turmas?.horario || '--:--'}</p>
                </div>
                <div>
                  <p className="text-[10px] uppercase font-bold text-gray-400">Local</p>
-                 <p className="font-bold text-gray-800">{matriculaEbd.turmas?.local || 'Sala Principal'}</p>
+                 <p className="font-bold text-gray-800">{matriculaEbd.ebd_turmas?.local || 'Sala Principal'}</p>
                </div>
             </section>
 

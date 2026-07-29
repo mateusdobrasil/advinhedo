@@ -30,6 +30,7 @@ export async function criarTurma(formData: FormData) {
   // O checkbox envia 'on' quando marcado. Convertendo isso para true/false.
   const is_ebd = formData.get('is_ebd') === 'on' || formData.get('is_ebd') === 'true'
   const faixa_etaria = formData.get('faixa_etaria') as string || null
+  const professor_id = formData.get('professor_id') as string || null
 
   // 4. Verifica se é Criação ou Edição
   const id = formData.get('id') as string 
@@ -42,14 +43,15 @@ export async function criarTurma(formData: FormData) {
     const { error } = await supabase
       .from(tabela)
       .update({
-        nome, 
-        curso, 
-        modalidade, 
-        dia_semana, 
-        horario, 
-        is_ebd, 
-        faixa_etaria, 
-        status 
+        nome,
+        curso,
+        modalidade,
+        dia_semana,
+        horario,
+        is_ebd,
+        faixa_etaria,
+        professor_id,
+        status
       })
       .eq('id', id)
       
@@ -65,13 +67,14 @@ export async function criarTurma(formData: FormData) {
     const { error } = await supabase
       .from(tabela)
       .insert({
-        nome, 
-        curso, 
-        modalidade, 
-        dia_semana, 
-        horario, 
-        is_ebd, 
-        faixa_etaria, 
+        nome,
+        curso,
+        modalidade,
+        dia_semana,
+        horario,
+        is_ebd,
+        faixa_etaria,
+        professor_id,
         status: 'Ativa' // Toda turma nova nasce como Ativa por padrão
       })
 
@@ -83,4 +86,6 @@ export async function criarTurma(formData: FormData) {
 
   // 5. Atualiza o cache da página para mostrar a nova turma instantaneamente
   revalidatePath(`/aplicacao/${modulo}/admin/turmas`)
+  revalidatePath(`/aplicacao/${modulo}/admin/ebd`)
+  if (id) revalidatePath(`/aplicacao/${modulo}/admin/ebd/${id}`)
 }

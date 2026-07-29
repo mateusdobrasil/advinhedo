@@ -7,10 +7,11 @@ interface CriadorTurmaProps {
   turma?: any
   cursosDisponiveis?: any[]
   ebdSalasConfig?: any[] // <-- Nova propriedade dinâmica
+  professores?: any[]
   modulo: 'ebd' | 'ibv' | 'ibuc'
 }
 
-export default function CriadorTurma({ turma, cursosDisponiveis = [], ebdSalasConfig = [], modulo }: CriadorTurmaProps) {
+export default function CriadorTurma({ turma, cursosDisponiveis = [], ebdSalasConfig = [], professores = [], modulo }: CriadorTurmaProps) {
   const [aberto, setAberto] = useState(false)
   const [carregando, setCarregando] = useState(false)
   const [isEbd, setIsEbd] = useState(turma?.is_ebd || false)
@@ -121,6 +122,16 @@ export default function CriadorTurma({ turma, cursosDisponiveis = [], ebdSalasCo
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Horário</label>
               <input type="text" name="horario" defaultValue={turma?.horario || (isEbd ? '09:00 às 11:00' : '19:30 às 22:00')} required className="w-full border p-2.5 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Professor Responsável</label>
+              <select name="professor_id" defaultValue={turma?.professor_id || ''} className="w-full border p-2.5 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500">
+                <option value="">Sem professor definido</option>
+                {professores.map(p => (
+                  <option key={p.id} value={p.id}>{p.nome_completo}</option>
+                ))}
+              </select>
             </div>
 
             {isEdicao && (

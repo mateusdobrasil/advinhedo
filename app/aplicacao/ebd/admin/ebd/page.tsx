@@ -34,8 +34,11 @@ export default async function TurmasEBDPage() {
   // 👇 NOVA LÓGICA: Variável que define quem pode criar e editar turmas
   const podeEditar = tipo.includes('administrador') || tipo.includes('administrativo')
 
+  // Professor "puro" (sem cargo de Admin/Administrativo) só enxerga as salas onde é o responsável
+  const souSoProfessor = tipo.includes('professor') && !podeEditar
+
   // 4. Busca APENAS as turmas da EBD (is_ebd = true sem aspas)
-  const { data: turmas, error } = await supabase
+  const { data: todasAsTurmas, error } = await supabase
     .from('ebd_turmas')
     .select('*')
     .eq('is_ebd', true)
@@ -45,6 +48,15 @@ export default async function TurmasEBDPage() {
   if (error) {
     console.error("Erro na leitura das salas da EBD:", error.message)
   }
+
+  const turmas = souSoProfessor
+    ? (todasAsTurmas || []).filter(t => t.professor_id === session.user.id)
+    : (todasAsTurmas || [])
+
+  // 5.1 Busca os usuários com cargo Professor para o dropdown de vínculo (só quem pode editar precisa)
+  const { data: professores } = podeEditar
+    ? await supabase.from('perfis').select('id, nome_completo').ilike('tipo_usuario', '%professor%').order('nome_completo')
+    : { data: [] }
 
   // 5. Procure as salas da EBD configuradas na base de dados
   const { data: ebdSalasConfig } = await supabase
@@ -83,6 +95,7 @@ export default async function TurmasEBDPage() {
             <CriadorTurma
               cursosDisponiveis={cursosAtivos || []}
               ebdSalasConfig={ebdSalasConfig || []}
+              professores={professores || []}
               modulo="ebd"
             />
           </div>
@@ -135,6 +148,7 @@ export default async function TurmasEBDPage() {
                         turma={turma}
                         cursosDisponiveis={cursosAtivos || []}
                         ebdSalasConfig={ebdSalasConfig || []}
+                        professores={professores || []}
                         modulo="ebd"
                       />
                     )}
@@ -145,8 +159,17 @@ export default async function TurmasEBDPage() {
           ) : (
             <div className="col-span-full p-12 text-center bg-white rounded-xl border border-gray-200">
               <span className="text-4xl mb-4 block">📖</span>
-              <p className="text-gray-600 font-medium">Nenhuma sala da EBD cadastrada.</p>
-              <p className="text-gray-400 text-sm mt-1">Clique no botão acima para criar a primeira classe (ex: Jovens, Adultos, etc).</p>
+              {souSoProfessor ? (
+                <>
+                  <p className="text-gray-600 font-medium">Nenhuma sala vinculada ao seu usuário.</p>
+                  <p className="text-gray-400 text-sm mt-1">Fale com a secretaria para vincular você como professor responsável de uma sala.</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-gray-600 font-medium">Nenhuma sala da EBD cadastrada.</p>
+                  <p className="text-gray-400 text-sm mt-1">Clique no botão acima para criar a primeira classe (ex: Jovens, Adultos, etc).</p>
+                </>
+              )}
             </div>
           )}
         </div>

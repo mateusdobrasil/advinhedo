@@ -50,6 +50,9 @@ export default async function PermissoesPage({ searchParams }: PageProps) {
 
   const { data: usuarios } = await query
 
+  // 5. Busca os níveis de acesso cadastrados (Admin > Níveis de Acesso)
+  const { data: niveisAcesso } = await supabase.from('niveis_acesso').select('*').order('nome', { ascending: true })
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 p-6">
       <div className="max-w-6xl mx-auto">
@@ -153,7 +156,7 @@ export default async function PermissoesPage({ searchParams }: PageProps) {
 
                         {/* BOTÃO DE AÇÃO */}
                         <td className="px-6 py-4 text-right">
-                          <EditorPermissao usuario={usr} />
+                          <EditorPermissao usuario={usr} niveisAcesso={niveisAcesso || []} />
                         </td>
                       </tr>
                     )

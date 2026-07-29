@@ -42,6 +42,12 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
   const { data: turma, error: erroTurma } = await supabase.from('ebd_turmas').select('*').eq('id', id).single()
   if (erroTurma || !turma) notFound()
 
+  // Professor "puro" (sem cargo de Admin/Administrativo) só pode acessar a própria sala
+  const souSoProfessor = tipo.includes('professor') && !podeEditar
+  if (souSoProfessor && turma.professor_id !== session.user.id) {
+    redirect('/aplicacao/ebd/admin/ebd')
+  }
+
   const { data: dadosMatriculas } = await supabase
     .from('ebd_matriculas')
     .select(`id, aluno_id, status, revista_entregue, created_at, perfis ( nome_completo )`)

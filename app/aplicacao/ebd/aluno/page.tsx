@@ -118,8 +118,8 @@ export default async function AlunoDashboardPage() {
                 <div key={m.id} className="bg-white p-4 rounded-xl border border-gray-100 
                     flex justify-between items-center shadow-sm">
                   <div>
-                    <h3 className="font-bold text-gray-800">{m.turmas?.nome}</h3>
-                    <p className="text-sm text-gray-500">{m.turmas?.curso}</p>
+                    <h3 className="font-bold text-gray-800">{m.ebd_turmas?.nome}</h3>
+                    <p className="text-sm text-gray-500">{m.ebd_turmas?.curso}</p>
                   </div>
                   <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase ${
                     m.status?.toLowerCase() === 'ativo' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600'

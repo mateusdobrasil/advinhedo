@@ -46,6 +46,7 @@ export default async function AdminPage() {
     { nome: 'Financeiro', icon: '💰', link: '/aplicacao/ibv/admin/financeiro', desc: 'Caixa e mensalidades', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
     { nome: 'Polos', icon: '🏢', link: '/aplicacao/ibv/admin/polos', desc: 'Sedes e Congregações', ativo: true, permissoes: ['Administrador'] },
     { nome: 'Permissões', icon: '🔐', link: '/aplicacao/ibv/admin/permissoes', desc: 'Cargos e acessos', ativo: true, permissoes: ['Administrador'] },
+    { nome: 'Níveis de Acesso', icon: '🔑', link: '/aplicacao/ibv/admin/niveis-acesso', desc: 'Cargos disponíveis no sistema', ativo: true, permissoes: ['Administrador'] },
     { nome: 'Auditoria', icon: '👁️', link: '/aplicacao/ibv/admin/auditoria', desc: 'Logs e rastreamento', ativo: true, permissoes: ['Administrador'] },
     { nome: 'Diplomas', icon: '🎓', link: '/aplicacao/ibv/admin/diplomas', desc: 'Emissão de certificados', ativo: false, permissoes: ['Administrador', 'Administrativo', 'Professor'] },
   ]

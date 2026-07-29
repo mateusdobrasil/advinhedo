@@ -64,7 +64,7 @@ export default async function AvisosPage() {
           {avisos && avisos.length > 0 ? (
             avisos.map((aviso) => {
               const dataPublicacao = new Date(aviso.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
-              const nomeTurma = (aviso.turmas as any)?.nome
+              const nomeTurma = (aviso.ebd_turmas as any)?.nome
 
               return (
                 <div key={aviso.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition flex flex-col relative overflow-hidden">

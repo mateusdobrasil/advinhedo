@@ -60,8 +60,8 @@ export default async function MatriculasPage({ searchParams }: PageProps) {
     const termo = busca.toLowerCase()
     matriculasFiltradas = matriculasFiltradas.filter((mat: any) => {
       const nomeAluno = mat.perfis?.nome_completo?.toLowerCase() || ''
-      const nomeTurma = mat.turmas?.nome?.toLowerCase() || ''
-      const curso = mat.turmas?.curso?.toLowerCase() || ''
+      const nomeTurma = mat.ebd_turmas?.nome?.toLowerCase() || ''
+      const curso = mat.ebd_turmas?.curso?.toLowerCase() || ''
       const status = mat.status?.toLowerCase() || ''
 
       return nomeAluno.includes(termo) || 
@@ -147,9 +147,9 @@ export default async function MatriculasPage({ searchParams }: PageProps) {
                         {mat.perfis?.nome_completo || 'Aluno Desconhecido'}
                       </td>
                       <td className="px-6 py-4 text-gray-600">
-                        <span className="font-medium text-gray-800">{mat.turmas?.nome}</span>
+                        <span className="font-medium text-gray-800">{mat.ebd_turmas?.nome}</span>
                         <br />
-                        <span className="text-xs">{mat.turmas?.curso}</span>
+                        <span className="text-xs">{mat.ebd_turmas?.curso}</span>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider 

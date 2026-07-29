@@ -101,8 +101,8 @@ export default async function PerfilAlunoAdminPage({ params }: { params: { id: s
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {matriculas.map((m: any, idx: number) => (
                       <div key={idx} className="p-4 rounded-lg border border-gray-100 bg-slate-50">
-                        <p className="text-xs text-indigo-600 font-bold uppercase">{m.turmas?.curso}</p>
-                        <h4 className="font-bold text-gray-800">{m.turmas?.nome}</h4>
+                        <p className="text-xs text-indigo-600 font-bold uppercase">{m.ebd_turmas?.curso}</p>
+                        <h4 className="font-bold text-gray-800">{m.ebd_turmas?.nome}</h4>
                         <span className="text-[10px] mt-2 inline-block bg-white px-2 py-1 rounded border font-medium text-gray-500">Status: {m.status}</span>
                       </div>
                     ))}

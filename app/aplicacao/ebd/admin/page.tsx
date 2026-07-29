@@ -41,6 +41,7 @@ export default async function AdminEBDPage() {
     { nome: 'Relatórios da EBD', icon: '📈', link: '/aplicacao/ebd/admin/relatoriosEBD', desc: 'Métricas e frequências', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
     { nome: 'Polos', icon: '🏢', link: '/aplicacao/ebd/admin/polos', desc: 'Sedes e Congregações', ativo: true, permissoes: ['Administrador'] },
     { nome: 'Permissões', icon: '🔐', link: '/aplicacao/ebd/admin/permissoes', desc: 'Cargos e acessos', ativo: true, permissoes: ['Administrador'] },
+    { nome: 'Níveis de Acesso', icon: '🔑', link: '/aplicacao/ebd/admin/niveis-acesso', desc: 'Cargos disponíveis no sistema', ativo: true, permissoes: ['Administrador'] },
     { nome: 'Auditoria', icon: '👁️', link: '/aplicacao/ebd/admin/auditoria', desc: 'Logs e rastreamento', ativo: true, permissoes: ['Administrador'] },
     { nome: 'Diplomas', icon: '🎓', link: '/aplicacao/ebd/admin/diplomas', desc: 'Emissão de certificados', ativo: false, permissoes: ['Administrador', 'Administrativo', 'Professor'] },
         

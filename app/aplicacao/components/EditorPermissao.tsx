@@ -3,27 +3,22 @@
 import { useState } from 'react'
 import { atualizarPermissao } from '../actions/permissoes'
 
-export default function EditorPermissao({ usuario }: { usuario: any }) {
+export default function EditorPermissao({ usuario, niveisAcesso = [] }: { usuario: any, niveisAcesso?: any[] }) {
   const [aberto, setAberto] = useState(false)
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
 
   // 1. Limpa os espaços ao redor de cada cargo e polo para a comparação funcionar
-  const cargosAtuais = usuario.tipo_usuario 
-    ? usuario.tipo_usuario.split(',').map((c: string) => c.trim()) 
+  const cargosAtuais = usuario.tipo_usuario
+    ? usuario.tipo_usuario.split(',').map((c: string) => c.trim())
     : ['Aluno']
-  
-  const polosAtuais = usuario.polo 
-    ? usuario.polo.split(',').map((p: string) => p.trim()) 
+
+  const polosAtuais = usuario.polo
+    ? usuario.polo.split(',').map((p: string) => p.trim())
     : ['IBV']
 
-  // 2. Cargos atualizados para o NOVO PADRÃO
-  const opcoesCargos = [
-    { id: 'Aluno', label: 'Aluno' },
-    { id: 'Professor', label: 'Professor' },
-    { id: 'Administrativo', label: 'Administrativo' },
-    { id: 'Administrador', label: 'Administrador' }
-  ]
+  // 2. Cargos vêm da tabela niveis_acesso (gerenciável em Admin > Níveis de Acesso)
+  const opcoesCargos = niveisAcesso.map(n => ({ id: n.nome, label: n.nome }))
 
   const opcoesPolos = [
     { id: 'IBV', label: 'IBV' },
