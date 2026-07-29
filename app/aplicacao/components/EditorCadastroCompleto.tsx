@@ -48,30 +48,6 @@ export default function EditorCadastroCompleto({ usuario, polos }: EditorCadastr
             
             <form action={handleAcao} className="p-8 space-y-8">
               <input type="hidden" name="id" value={usuario.id} />
-              
-              {/* 0. CONTROLES ADMINISTRATIVOS */}
-              <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                <h3 className="text-lg font-bold text-red-800 border-b pb-2 mb-4">0. Controles Administrativos</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Polo Vinculado</label>
-                    {/* 👇 CORRIGIDO: name alterado para polo_id e value para p.id */}
-                    <select name="polo_id" defaultValue={usuario.polo_id || ''} className="w-full border p-2 rounded-md bg-gray-50">
-                      <option value="">Selecione um polo...</option>
-                      {polos.map((p) => <option key={p.id} 
-                        value={p.id}>{p.nome}{p.tipo ? ` - ${p.tipo}` : ''} {p.cidade ? `(${p.cidade})` : ''}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Nível de Acesso (Cargo)</label>
-                    <select name="tipo_usuario" defaultValue={usuario.tipo_usuario || 'aluno'} className="w-full border p-2 rounded-md bg-gray-50">
-                      <option value="aluno">🎓 Aluno</option>
-                      <option value="professor">👨‍🏫 Administrativo</option>
-                      <option value="administrador">⚙️ Administrador</option>
-                    </select>
-                  </div>
-                </div>
-              </section>
 
               {/* 1. DADOS PESSOAIS */}
               <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">

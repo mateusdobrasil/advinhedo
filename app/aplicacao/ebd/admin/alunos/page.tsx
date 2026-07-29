@@ -4,7 +4,6 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import CriadorUsuario from '../../../components/CriadorUsuario'
 import { sanitizarFiltroBusca } from '@/lib/postgrest'
 import { usuarioTemAcessoPagina } from '@/lib/permissoes'
 
@@ -90,10 +89,6 @@ export default async function CadastroCentralPage({ searchParams }: PageProps) {
               )}
             </div>
           </form>
-          
-          <div className="w-full lg:w-auto flex justify-end">
-            <CriadorUsuario />
-          </div>
         </div>
 
         {/* TABELA DE ALUNOS */}

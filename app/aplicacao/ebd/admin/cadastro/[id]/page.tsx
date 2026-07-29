@@ -4,7 +4,6 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
-import EditorUsuario from '../../../../components/EditorUsuario'
 import EditorCadastroCompleto from '../../../../components/EditorCadastroCompleto'
 import { usuarioTemAcessoPagina } from '@/lib/permissoes'
 
@@ -64,7 +63,6 @@ export default async function DetalhesCadastroPage({ params }: PageProps) {
           </div>
           
           <div className="flex gap-2 w-full md:w-auto">
-            <EditorUsuario usuario={perfil} polos={polos || []} />
             <EditorCadastroCompleto usuario={perfil} polos={polos || []} />
             
             <Link
