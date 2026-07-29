@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import BotaoExportarEBD from '@/app/aplicacao/components/BotaoExportarEBD'
+import { usuarioTemAcessoPagina } from '@/lib/permissoes'
 
 interface PageProps {
   searchParams: any
@@ -23,11 +24,10 @@ export default async function RelatoriosEBDPage({ searchParams }: PageProps) {
     .eq('id', session.user.id)
     .single()
 
-  const tipo = perfil?.tipo_usuario?.toLowerCase() || ''
-  const temAcesso = tipo.includes('administrador') || tipo.includes('administrativo')
+  const temAcesso = await usuarioTemAcessoPagina(supabase, perfil?.tipo_usuario, 'ebd', 'relatoriosEBD')
 
   if (!temAcesso) {
-    redirect('/aplicacao/ebd/admin') 
+    redirect('/aplicacao/ebd/admin')
   }
 
   // =================================================================

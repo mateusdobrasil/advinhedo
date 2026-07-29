@@ -2,25 +2,9 @@
 
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { logAction } from '@/lib/audit'
+import { exigirAdministrador } from '@/lib/auth-admin'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
-
-async function exigirAdministrador(supabase: ReturnType<typeof createServerActionClient>) {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) throw new Error('Não autorizado')
-
-  const { data: perfil } = await supabase
-    .from('perfis')
-    .select('tipo_usuario')
-    .eq('id', session.user.id)
-    .single()
-
-  if (!perfil?.tipo_usuario?.toLowerCase().includes('administrador')) {
-    throw new Error('Acesso negado: apenas administradores podem gerenciar níveis de acesso.')
-  }
-
-  return session
-}
 
 function revalidarTelas() {
   for (const modulo of ['ebd', 'ibv', 'ibuc']) {

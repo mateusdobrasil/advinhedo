@@ -6,6 +6,8 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import CriadorTurma from '../../../components/CriadorTurma'
+import { usuarioTemAcessoPagina } from '@/lib/permissoes'
+import { sanitizarFiltroBusca } from '@/lib/postgrest'
 
 export default async function TurmasEBDPage() {
   const supabase = createServerComponentClient({ cookies })
@@ -23,9 +25,7 @@ export default async function TurmasEBDPage() {
 
   // 3. TRAVA DE SEGURANÇA: Administrador, Administrativo e Professor
   const tipo = perfil?.tipo_usuario?.toLowerCase() || ''
-  const temAcesso = tipo.includes('administrador') || 
-                    tipo.includes('administrativo') || 
-                    tipo.includes('professor')
+  const temAcesso = await usuarioTemAcessoPagina(supabase, perfil?.tipo_usuario, 'ebd', 'ebd')
 
   if (!temAcesso) {
     redirect('/aplicacao/ebd') // Se não tiver permissão, redireciona para fora do admin
@@ -34,8 +34,9 @@ export default async function TurmasEBDPage() {
   // 👇 NOVA LÓGICA: Variável que define quem pode criar e editar turmas
   const podeEditar = tipo.includes('administrador') || tipo.includes('administrativo')
 
-  // Professor "puro" (sem cargo de Admin/Administrativo) só enxerga as salas onde é o responsável
-  const souSoProfessor = tipo.includes('professor') && !podeEditar
+  // Quem não pode editar (Professor ou qualquer outro cargo, ex: Secretário de Sala)
+  // só enxerga as salas onde está definido como responsável (ebd_turmas.professor_id)
+  const acessoRestrito = !podeEditar
 
   // 4. Busca APENAS as turmas da EBD (is_ebd = true sem aspas)
   const { data: todasAsTurmas, error } = await supabase
@@ -49,14 +50,31 @@ export default async function TurmasEBDPage() {
     console.error("Erro na leitura das salas da EBD:", error.message)
   }
 
-  const turmas = souSoProfessor
+  const turmas = acessoRestrito
     ? (todasAsTurmas || []).filter(t => t.professor_id === session.user.id)
     : (todasAsTurmas || [])
 
-  // 5.1 Busca os usuários com cargo Professor para o dropdown de vínculo (só quem pode editar precisa)
-  const { data: professores } = podeEditar
-    ? await supabase.from('perfis').select('id, nome_completo').ilike('tipo_usuario', '%professor%').order('nome_completo')
-    : { data: [] }
+  // 5.1 Busca os usuários que podem ser vinculados como responsáveis de uma sala
+  // (Professor + qualquer cargo que tenha a página "Salas da EBD" liberada em Níveis de Acesso).
+  // Só quem pode editar precisa dessa lista.
+  let professores: { id: string; nome_completo: string }[] = []
+  if (podeEditar) {
+    const { data: cargosComAcessoEbd } = await supabase
+      .from('permissoes_paginas')
+      .select('nivel_acesso')
+      .eq('modulo', 'ebd')
+      .eq('pagina_chave', 'ebd')
+
+    const nomesCargos = Array.from(
+      new Set(['professor', ...(cargosComAcessoEbd || []).map((c) => c.nivel_acesso.toLowerCase())])
+    )
+    const filtroOr = nomesCargos
+      .map((nome) => `tipo_usuario.ilike.%${sanitizarFiltroBusca(nome)}%`)
+      .join(',')
+
+    const { data } = await supabase.from('perfis').select('id, nome_completo').or(filtroOr).order('nome_completo')
+    professores = data || []
+  }
 
   // 5. Procure as salas da EBD configuradas na base de dados
   const { data: ebdSalasConfig } = await supabase
@@ -159,10 +177,10 @@ export default async function TurmasEBDPage() {
           ) : (
             <div className="col-span-full p-12 text-center bg-white rounded-xl border border-gray-200">
               <span className="text-4xl mb-4 block">📖</span>
-              {souSoProfessor ? (
+              {acessoRestrito ? (
                 <>
                   <p className="text-gray-600 font-medium">Nenhuma sala vinculada ao seu usuário.</p>
-                  <p className="text-gray-400 text-sm mt-1">Fale com a secretaria para vincular você como professor responsável de uma sala.</p>
+                  <p className="text-gray-400 text-sm mt-1">Fale com a secretaria para vincular você como responsável de uma sala.</p>
                 </>
               ) : (
                 <>

@@ -125,9 +125,9 @@ export default function CriadorTurma({ turma, cursosDisponiveis = [], ebdSalasCo
             </div>
 
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Professor Responsável</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Responsável pela Turma</label>
               <select name="professor_id" defaultValue={turma?.professor_id || ''} className="w-full border p-2.5 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500">
-                <option value="">Sem professor definido</option>
+                <option value="">Sem responsável definido</option>
                 {professores.map(p => (
                   <option key={p.id} value={p.id}>{p.nome_completo}</option>
                 ))}

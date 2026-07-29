@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import CriadorUsuario from '../../../components/CriadorUsuario'
 import { sanitizarFiltroBusca } from '@/lib/postgrest'
+import { usuarioTemAcessoPagina } from '@/lib/permissoes'
 
 interface PageProps {
   searchParams: any
@@ -26,10 +27,7 @@ export default async function CadastroCentralPage({ searchParams }: PageProps) {
     .single()
 
   // 3. TRAVA DE SEGURANÇA: Administrador, Administrativo e Professor têm acesso.
-  const tipo = perfil?.tipo_usuario?.toLowerCase() || ''
-  const temAcesso = tipo.includes('administrador') || 
-                    tipo.includes('administrativo') || 
-                    tipo.includes('professor')
+  const temAcesso = await usuarioTemAcessoPagina(supabase, perfil?.tipo_usuario, 'ebd', 'alunos')
 
   if (!temAcesso) {
     redirect('/aplicacao/ebd') // Se for Aluno ou visitante, expulsa da página

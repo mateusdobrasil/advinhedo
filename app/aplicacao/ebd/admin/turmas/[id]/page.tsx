@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
 import CriadorMatricula from '../../../../components/CriadorMatricula'
 import AdicionarVisitanteEBD from '../../../../components/AdicionarVisitanteEBD'
+import { usuarioTemAcessoPagina } from '@/lib/permissoes'
 
 interface PageProps {
   params: any
@@ -26,10 +27,7 @@ export default async function DetalhesTurmaPage({ params }: PageProps) {
     .single()
 
   // 3. TRAVA DE SEGURANÇA: Administrador, Administrativo e Professor
-  const tipo = perfil?.tipo_usuario?.toLowerCase() || ''
-  const temAcesso = tipo.includes('administrador') || 
-                    tipo.includes('administrativo') || 
-                    tipo.includes('professor')
+  const temAcesso = await usuarioTemAcessoPagina(supabase, perfil?.tipo_usuario, 'ebd', 'turmas')
 
   if (!temAcesso) {
     redirect('/aplicacao/ebd') // Se não tiver permissão, redireciona para fora do admin

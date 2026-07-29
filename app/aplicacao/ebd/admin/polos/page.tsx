@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import ModalPolo from '../../../components/ModalPolo'
+import { usuarioTemAcessoPagina } from '@/lib/permissoes'
 
 export default async function PolosPage() {
   const supabase = createServerComponentClient({ cookies })
@@ -21,8 +22,7 @@ export default async function PolosPage() {
     .single()
 
   // 3. TRAVA DE SEGURANÇA MÁXIMA: Apenas Administrador tem acesso.
-  const tipo = perfil?.tipo_usuario?.toLowerCase() || ''
-  const temAcesso = tipo.includes('administrador')
+  const temAcesso = await usuarioTemAcessoPagina(supabase, perfil?.tipo_usuario, 'ebd', 'polos')
 
   if (!temAcesso) {
     redirect('/aplicacao/ebd/admin') // Se for Administrativo ou Professor, volta para o Hub

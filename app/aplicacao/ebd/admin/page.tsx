@@ -5,6 +5,7 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { paginasPermitidas, ehAdministrador } from '@/lib/permissoes'
 
 export default async function AdminEBDPage() {
   const supabase = createServerComponentClient({ cookies })
@@ -21,12 +22,13 @@ export default async function AdminEBDPage() {
 
   // Captura o cargo do banco
   const tipoUsuario = perfil?.tipo_usuario || ''
-  
-  // Lista de permissões aceitas para entrar no Hub
-  const cargosAdmin = ['administrador', 'administrativo', 'professor']
-  const temAcessoAdmin = cargosAdmin.some(cargo => 
-    tipoUsuario.toLowerCase().includes(cargo.toLowerCase())
-  )
+
+  // Só entra no Hub quem é Administrador (bypass fixo) ou tem pelo menos uma
+  // página liberada em Admin > Níveis de Acesso — vale para qualquer cargo,
+  // inclusive customizados (ex: "Secretário de Sala").
+  const souAdministrador = ehAdministrador(tipoUsuario)
+  const chavesPermitidas = souAdministrador ? null : await paginasPermitidas(supabase, tipoUsuario, 'ebd')
+  const temAcessoAdmin = souAdministrador || (chavesPermitidas !== null && chavesPermitidas.size > 0)
 
   if (!temAcessoAdmin) {
     redirect('/aplicacao/ebd/aluno') // Redireciona para a área de aluno exclusiva da EBD
@@ -34,23 +36,28 @@ export default async function AdminEBDPage() {
 
   // 2. Lista ENXUTA: Contém apenas os módulos pertencentes à EBD com os links corretos
   const modulos = [
-    { nome: 'Cadastro Central', icon: '📇', link: '/aplicacao/ebd/admin/cadastro', desc: 'Gerencie alunos e dados', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
-    { nome: 'Alunos', icon: '👥', link: '/aplicacao/ebd/admin/alunos', desc: 'Gestão de estudantes', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
-    { nome: 'Matrículas', icon: '📝', link: '/aplicacao/ebd/admin/matriculas', desc: 'Aprovações e inscrições', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
-    { nome: 'Salas da EBD', icon: '📖', link: '/aplicacao/ebd/admin/ebd', desc: 'Gerencie a EBD', ativo: true, permissoes: ['Administrador', 'Administrativo', 'Professor'] },
-    { nome: 'Relatórios da EBD', icon: '📈', link: '/aplicacao/ebd/admin/relatoriosEBD', desc: 'Métricas e frequências', ativo: true, permissoes: ['Administrador', 'Administrativo'] },
-    { nome: 'Polos', icon: '🏢', link: '/aplicacao/ebd/admin/polos', desc: 'Sedes e Congregações', ativo: true, permissoes: ['Administrador'] },
-    { nome: 'Permissões', icon: '🔐', link: '/aplicacao/ebd/admin/permissoes', desc: 'Cargos e acessos', ativo: true, permissoes: ['Administrador'] },
-    { nome: 'Níveis de Acesso', icon: '🔑', link: '/aplicacao/ebd/admin/niveis-acesso', desc: 'Cargos disponíveis no sistema', ativo: true, permissoes: ['Administrador'] },
-    { nome: 'Auditoria', icon: '👁️', link: '/aplicacao/ebd/admin/auditoria', desc: 'Logs e rastreamento', ativo: true, permissoes: ['Administrador'] },
-    { nome: 'Diplomas', icon: '🎓', link: '/aplicacao/ebd/admin/diplomas', desc: 'Emissão de certificados', ativo: false, permissoes: ['Administrador', 'Administrativo', 'Professor'] },
-        
+    { nome: 'Cadastro Central', icon: '📇', link: '/aplicacao/ebd/admin/cadastro', desc: 'Gerencie alunos e dados', ativo: true, chave: 'cadastro' },
+    { nome: 'Alunos', icon: '👥', link: '/aplicacao/ebd/admin/alunos', desc: 'Gestão de estudantes', ativo: true, chave: 'alunos' },
+    { nome: 'Matrículas', icon: '📝', link: '/aplicacao/ebd/admin/matriculas', desc: 'Aprovações e inscrições', ativo: true, chave: 'matriculas' },
+    { nome: 'Turmas', icon: '🧑‍🏫', link: '/aplicacao/ebd/admin/turmas', desc: 'Turmas fora da EBD', ativo: true, chave: 'turmas' },
+    { nome: 'Cursos', icon: '📚', link: '/aplicacao/ebd/admin/cursos', desc: 'Cursos disponíveis', ativo: true, chave: 'cursos' },
+    { nome: 'Salas da EBD', icon: '📖', link: '/aplicacao/ebd/admin/ebd', desc: 'Gerencie a EBD', ativo: true, chave: 'ebd' },
+    { nome: 'Relatórios da EBD', icon: '📈', link: '/aplicacao/ebd/admin/relatoriosEBD', desc: 'Métricas e frequências', ativo: true, chave: 'relatoriosEBD' },
+    { nome: 'Relatórios', icon: '📊', link: '/aplicacao/ebd/admin/relatorios', desc: 'Visão geral do instituto', ativo: true, chave: 'relatorios' },
+    { nome: 'Financeiro', icon: '💰', link: '/aplicacao/ebd/admin/financeiro', desc: 'Mensalidades e cobranças', ativo: true, chave: 'financeiro' },
+    { nome: 'Materiais', icon: '🗂️', link: '/aplicacao/ebd/admin/materiais', desc: 'Materiais de estudo', ativo: true, chave: 'materiais' },
+    { nome: 'Avisos', icon: '📣', link: '/aplicacao/ebd/admin/avisos', desc: 'Comunicados e avisos', ativo: true, chave: 'avisos' },
+    { nome: 'Polos', icon: '🏢', link: '/aplicacao/ebd/admin/polos', desc: 'Sedes e Congregações', ativo: true, chave: 'polos' },
+    { nome: 'Permissões', icon: '🔐', link: '/aplicacao/ebd/admin/permissoes', desc: 'Cargos e acessos', ativo: true, chave: 'permissoes' },
+    { nome: 'Níveis de Acesso', icon: '🔑', link: '/aplicacao/ebd/admin/niveis-acesso', desc: 'Cargos disponíveis no sistema', ativo: true, chave: 'niveis-acesso' },
+    { nome: 'Auditoria', icon: '👁️', link: '/aplicacao/ebd/admin/auditoria', desc: 'Logs e rastreamento', ativo: true, chave: 'auditoria' },
+    { nome: 'Diplomas', icon: '🎓', link: '/aplicacao/ebd/admin/diplomas', desc: 'Emissão de certificados', ativo: false, chave: 'diplomas' },
+
   ]
 
-  // FILTRO ÚNICO: Apenas Permissão de Cargo (O escopo EBD já está garantido pela pasta)
-  const modulosFiltrados = modulos.filter(m => 
-    m.permissoes.some(p => tipoUsuario.toLowerCase().includes(p.toLowerCase()))
-  )
+  // FILTRO ÚNICO: cada cargo só vê os cards das páginas liberadas em Admin > Níveis de Acesso
+  // (Administrador sempre vê tudo — bypass fixo). Reaproveita chavesPermitidas calculado acima.
+  const modulosFiltrados = modulos.filter(m => chavesPermitidas === null || chavesPermitidas.has(m.chave))
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 p-6">

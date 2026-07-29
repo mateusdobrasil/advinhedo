@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Analytics } from "@vercel/analytics/next"
+import { ehAdministrador, paginasPermitidas } from '@/lib/permissoes'
 
 export default async function DashboardPage() {
   const supabase = createServerComponentClient({ cookies })
@@ -23,11 +24,16 @@ export default async function DashboardPage() {
   const cargos = perfil?.tipo_usuario || ''
   const tipoLower = cargos.toLowerCase()
 
-  // 3. Mapeamento estrito de permissões baseando-se nas strings do banco
-  const possuiAdmin = tipoLower.includes('administrador')
-  const possuiAdministrativo = tipoLower.includes('administrativo') || tipoLower.includes('secretario') || tipoLower.includes('tesoureiro') || tipoLower.includes('cadastro')
-  const possuiProfessor = tipoLower.includes('professor')
-  const possuiAluno = tipoLower.includes('aluno') || tipoLower.trim() === '' || (!possuiAdmin && !possuiAdministrativo && !possuiProfessor)
+  // 3. Administrador tem acesso total e fixo. Para os demais cargos — incluindo
+  // cargos customizados criados em Admin > Níveis de Acesso (ex: "Secretário de Sala") —
+  // a entrada no painel depende de ter pelo menos uma página liberada em
+  // Admin > Níveis de Acesso > Gerenciar Páginas, em vez de bater com uma lista fixa de nomes.
+  const possuiAdmin = ehAdministrador(cargos)
+  const possuiProfessor = !possuiAdmin && tipoLower.includes('professor')
+  const paginasDoUsuario = possuiAdmin ? null : await paginasPermitidas(supabase, cargos, 'ebd')
+  const temAcessoPainel = possuiAdmin || (paginasDoUsuario !== null && paginasDoUsuario.size > 0)
+  const possuiAdministrativo = temAcessoPainel && !possuiAdmin && !possuiProfessor
+  const possuiAluno = tipoLower.includes('aluno') || tipoLower.trim() === '' || !temAcessoPainel
 
   // Configuração estendida de metadados dos perfis de acesso
   const modulosAcesso = [

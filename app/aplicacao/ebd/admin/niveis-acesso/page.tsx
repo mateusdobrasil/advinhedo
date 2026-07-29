@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import ModalNivelAcesso from '../../../components/ModalNivelAcesso'
 import BotaoExcluirNivelAcesso from '../../../components/BotaoExcluirNivelAcesso'
+import PaginasDoCargo from '../../../components/PaginasDoCargo'
+import { usuarioTemAcessoPagina, ehAdministrador, PAGINAS_EBD } from '@/lib/permissoes'
 
 export default async function NiveisAcessoPage() {
   const supabase = createServerComponentClient({ cookies })
@@ -22,15 +24,18 @@ export default async function NiveisAcessoPage() {
     .single()
 
   // 3. TRAVA DE SEGURANÇA MÁXIMA: Apenas Administrador tem acesso.
-  const tipo = perfil?.tipo_usuario?.toLowerCase() || ''
-  const temAcesso = tipo.includes('administrador')
+  const temAcesso = await usuarioTemAcessoPagina(supabase, perfil?.tipo_usuario, 'ebd', 'niveis-acesso')
 
   if (!temAcesso) {
     redirect('/aplicacao/ebd/admin') // Se for Administrativo ou Professor, volta para o Hub
   }
 
-  // 4. Busca os níveis de acesso cadastrados
+  // 4. Busca os níveis de acesso cadastrados e as páginas já liberadas por cargo
   const { data: niveis } = await supabase.from('niveis_acesso').select('*').order('nome', { ascending: true })
+  const { data: permissoesPaginas } = await supabase
+    .from('permissoes_paginas')
+    .select('nivel_acesso, pagina_chave')
+    .eq('modulo', 'ebd')
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 p-6">
@@ -46,15 +51,35 @@ export default async function NiveisAcessoPage() {
 
         <div className="grid grid-cols-1 gap-4 mb-8">
           {niveis && niveis.length > 0 ? (
-            niveis.map((n) => (
-              <div key={n.id} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                  <div className="bg-indigo-50 text-indigo-600 p-3 rounded-lg text-xl">🔑</div>
-                  <h3 className="font-bold text-gray-800 text-lg">{n.nome}</h3>
+            niveis.map((n) => {
+              const paginasDoCargo = (permissoesPaginas || [])
+                .filter((p) => p.nivel_acesso === n.nome)
+                .map((p) => p.pagina_chave)
+
+              return (
+                <div key={n.id} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-indigo-50 text-indigo-600 p-3 rounded-lg text-xl">🔑</div>
+                    <h3 className="font-bold text-gray-800 text-lg">{n.nome}</h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {ehAdministrador(n.nome) ? (
+                      <span className="text-[10px] bg-emerald-50 text-emerald-700 px-3 py-2 rounded-lg font-bold uppercase tracking-wider">
+                        Acesso total (fixo)
+                      </span>
+                    ) : (
+                      <PaginasDoCargo
+                        modulo="ebd"
+                        nivelAcesso={n.nome}
+                        paginasDisponiveis={PAGINAS_EBD}
+                        paginasAtuais={paginasDoCargo}
+                      />
+                    )}
+                    <BotaoExcluirNivelAcesso id={n.id} nome={n.nome} />
+                  </div>
                 </div>
-                <BotaoExcluirNivelAcesso id={n.id} nome={n.nome} />
-              </div>
-            ))
+              )
+            })
           ) : (
             <div className="bg-white border-2 border-dashed rounded-2xl p-12 text-center text-gray-400">Nenhum nível de acesso cadastrado.</div>
           )}

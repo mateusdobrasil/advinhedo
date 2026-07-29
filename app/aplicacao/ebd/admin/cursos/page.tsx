@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import CriadorCurso from '../../../components/CriadorCurso'
+import { usuarioTemAcessoPagina } from '@/lib/permissoes'
 
 export default async function CursosPage() {
   const supabase = createServerComponentClient({ cookies })
@@ -21,10 +22,7 @@ export default async function CursosPage() {
     .single()
 
   // 3. TRAVA DE SEGURANÇA: Administrador, Administrativo e Professor
-  const tipo = perfil?.tipo_usuario?.toLowerCase() || ''
-  const temAcesso = tipo.includes('administrador') || 
-                    tipo.includes('administrativo') || 
-                    tipo.includes('professor')
+  const temAcesso = await usuarioTemAcessoPagina(supabase, perfil?.tipo_usuario, 'ebd', 'cursos')
 
   if (!temAcesso) {
     redirect('/aplicacao/ebd') // Se não tiver permissão, redireciona para fora do painel

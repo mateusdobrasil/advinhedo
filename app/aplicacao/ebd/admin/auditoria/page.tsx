@@ -4,6 +4,7 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { usuarioTemAcessoPagina } from '@/lib/permissoes'
 
 export default async function AuditoriaPage() {
   const supabase = createServerComponentClient({ cookies })
@@ -20,8 +21,7 @@ export default async function AuditoriaPage() {
     .single()
 
   // 3. TRAVA DE SEGURANÇA MÁXIMA: Apenas Administrador tem acesso.
-  const tipo = perfil?.tipo_usuario?.toLowerCase() || ''
-  const temAcesso = tipo.includes('administrador')
+  const temAcesso = await usuarioTemAcessoPagina(supabase, perfil?.tipo_usuario, 'ebd', 'auditoria')
 
   if (!temAcesso) {
     // Se for Administrativo ou Professor, volta para o Hub. (Aluno já cai na trava do layout)

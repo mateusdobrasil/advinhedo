@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import EditorPermissao from '../../../components/EditorPermissao'
 import { sanitizarFiltroBusca } from '@/lib/postgrest'
+import { usuarioTemAcessoPagina } from '@/lib/permissoes'
 
 interface PageProps {
   searchParams: any
@@ -26,8 +27,7 @@ export default async function PermissoesPage({ searchParams }: PageProps) {
     .single()
 
   // 3. TRAVA DE SEGURANÇA MÁXIMA: Apenas Administrador tem acesso.
-  const tipo = perfil?.tipo_usuario?.toLowerCase() || ''
-  const temAcesso = tipo.includes('administrador')
+  const temAcesso = await usuarioTemAcessoPagina(supabase, perfil?.tipo_usuario, 'ebd', 'permissoes')
 
   if (!temAcesso) {
     redirect('/aplicacao/ebd/admin') // Se for Administrativo ou Professor, volta para o Hub

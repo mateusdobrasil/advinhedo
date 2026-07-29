@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import CriadorFinanceiro from '../../../components/CriadorFinanceiro'
 import BotaoBaixarCobranca from '../../../components/BotaoBaixarCobranca'
+import { usuarioTemAcessoPagina } from '@/lib/permissoes'
 
 export default async function FinanceiroPage() {
   const supabase = createServerComponentClient({ cookies })
@@ -23,8 +24,7 @@ export default async function FinanceiroPage() {
 
   // 3. TRAVA DE SEGURANÇA: Apenas Administrador e Administrativo
   // O Professor e o Aluno são bloqueados nesta tela
-  const tipo = perfil?.tipo_usuario?.toLowerCase() || ''
-  const temAcesso = tipo.includes('administrador') || tipo.includes('administrativo')
+  const temAcesso = await usuarioTemAcessoPagina(supabase, perfil?.tipo_usuario, 'ebd', 'financeiro')
 
   if (!temAcesso) {
     redirect('/aplicacao/ebd/admin') // Redireciona o Professor de volta para o Hub

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import BotaoStatusMatricula from '../../../components/BotaoStatusMatricula'
 import MatriculaPorTurma from '../../../components/MatriculaPorTurma'
+import { usuarioTemAcessoPagina } from '@/lib/permissoes'
 
 interface PageProps {
   searchParams: any
@@ -26,10 +27,7 @@ export default async function MatriculasPage({ searchParams }: PageProps) {
     .single()
 
   // 3. TRAVA DE SEGURANÇA: Administrador, Administrativo e Professor
-  const tipo = perfil?.tipo_usuario?.toLowerCase() || ''
-  const temAcesso = tipo.includes('administrador') || 
-                    tipo.includes('administrativo') || 
-                    tipo.includes('professor')
+  const temAcesso = await usuarioTemAcessoPagina(supabase, perfil?.tipo_usuario, 'ebd', 'matriculas')
 
   if (!temAcesso) {
     redirect('/aplicacao/ebd') // Se não tiver permissão, redireciona para fora do admin

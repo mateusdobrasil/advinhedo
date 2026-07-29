@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
 import EditorUsuario from '../../../../components/EditorUsuario'
 import EditorCadastroCompleto from '../../../../components/EditorCadastroCompleto'
+import { usuarioTemAcessoPagina } from '@/lib/permissoes'
 
 interface PageProps {
   params: any
@@ -27,10 +28,7 @@ export default async function DetalhesCadastroPage({ params }: PageProps) {
 
   // 2. TRAVA DE SEGURANÇA: Bloqueia Alunos
   // Apenas Administrador, Administrativo e Professor podem ver detalhes de cadastros
-  const tipo = adminPerfil?.tipo_usuario?.toLowerCase() || ''
-  const temAcesso = tipo.includes('administrador') || 
-                    tipo.includes('administrativo') || 
-                    tipo.includes('professor')
+  const temAcesso = await usuarioTemAcessoPagina(supabase, adminPerfil?.tipo_usuario, 'ebd', 'cadastro')
 
   if (!temAcesso) {
     redirect('/aplicacao/ebd/aluno') // Aluno não entra aqui de jeito nenhum

@@ -7,6 +7,7 @@ import { redirect, notFound } from 'next/navigation'
 import MatriculaEmLote from '../../../../components/MatriculaEmLote'
 import FormChamadaEBD from '../../../../components/FormChamadaEBD'
 import BotaoImprimir from '../../../../components/BotaoImprimir'
+import { usuarioTemAcessoPagina } from '@/lib/permissoes'
 
 interface PageProps {
   params: any
@@ -22,7 +23,7 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
 
   const { data: perfil } = await supabase.from('perfis').select('tipo_usuario').eq('id', session.user.id).single()
   const tipo = perfil?.tipo_usuario?.toLowerCase() || ''
-  const temAcesso = tipo.includes('administrador') || tipo.includes('administrativo') || tipo.includes('professor')
+  const temAcesso = await usuarioTemAcessoPagina(supabase, perfil?.tipo_usuario, 'ebd', 'ebd')
   if (!temAcesso) redirect('/aplicacao/ebd')
 
   const podeEditar = tipo.includes('administrador') || tipo.includes('administrativo')
@@ -42,9 +43,10 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
   const { data: turma, error: erroTurma } = await supabase.from('ebd_turmas').select('*').eq('id', id).single()
   if (erroTurma || !turma) notFound()
 
-  // Professor "puro" (sem cargo de Admin/Administrativo) só pode acessar a própria sala
-  const souSoProfessor = tipo.includes('professor') && !podeEditar
-  if (souSoProfessor && turma.professor_id !== session.user.id) {
+  // Quem não pode editar (Professor ou qualquer outro cargo, ex: Secretário de Sala)
+  // só pode acessar a sala onde está definido como responsável
+  const acessoRestrito = !podeEditar
+  if (acessoRestrito && turma.professor_id !== session.user.id) {
     redirect('/aplicacao/ebd/admin/ebd')
   }
 
