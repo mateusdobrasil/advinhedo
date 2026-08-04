@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import CriadorDiario from '../../../components/CriadorDiario'
+import BotaoExcluir from '../../../components/BotaoExcluir'
 
 export default async function DiarioPage() {
   const supabase = createServerComponentClient({ cookies })
@@ -32,8 +33,9 @@ export default async function DiarioPage() {
 
   // 4. Busca os dados para alimentar as caixas de seleção do modal
   const { data: alunos } = await supabase.from('perfis').select('id, nome_completo').ilike('tipo_usuario', '%aluno%').order('nome_completo')
-  const { data: turmas } = await supabase.from('ibuc_turmas').select('id, nome').eq('is_ebd', false).order('nome')
-  const { data: materias } = await supabase.from('ibuc_materias').select('id, nome').eq('status', 'Ativa').order('nome')
+  const { data: turmas } = await supabase.from('ibuc_turmas').select('id, nome, curso').eq('is_ebd', false).order('nome')
+  const { data: materias } = await supabase.from('ibuc_materias').select('id, nome, curso_id').eq('status', 'Ativa').order('nome')
+  const { data: cursos } = await supabase.from('ibuc_cursos').select('id, nome')
 
   // 5. Busca os registros do diário trazendo os nomes usando Join
   const { data: diarios } = await supabase
@@ -61,7 +63,7 @@ export default async function DiarioPage() {
         </div>
 
         <div className="mb-8 flex justify-end">
-          <CriadorDiario alunos={alunos || []} turmas={turmas || []} materias={materias || []} modulo="ibuc" />
+          <CriadorDiario alunos={alunos || []} turmas={turmas || []} materias={materias || []} cursos={cursos || []} modulo="ibuc" />
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -75,6 +77,7 @@ export default async function DiarioPage() {
                   <th className="px-6 py-3 font-medium text-center">Faltas</th>
                   <th className="px-6 py-3 font-medium text-center">Nota</th>
                   <th className="px-6 py-3 font-medium text-center">Status</th>
+                  <th className="px-6 py-3 font-medium text-right">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -82,6 +85,7 @@ export default async function DiarioPage() {
                   diarios.map((reg) => {
                     const dataLancamento = new Date(reg.created_at).toLocaleDateString('pt-BR')
                     const aprovado = reg.nota >= 7 // Regra de aprovação (nota 7)
+                    const notaFormatada = reg.nota != null ? Number(reg.nota).toFixed(1) : '-'
 
                     return (
                       <tr key={reg.id} className="hover:bg-gray-50 transition">
@@ -98,7 +102,7 @@ export default async function DiarioPage() {
                         </td>
                         <td className="px-6 py-4 text-center">
                           <span className={`font-black text-lg ${aprovado ? 'text-emerald-600' : 'text-red-600'}`}>
-                            {reg.nota.toFixed(1)}
+                            {notaFormatada}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-center">
@@ -106,11 +110,17 @@ export default async function DiarioPage() {
                             {aprovado ? 'Aprovado' : 'Recuperação'}
                           </span>
                         </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end items-center gap-1">
+                            <CriadorDiario registro={reg} alunos={alunos || []} turmas={turmas || []} materias={materias || []} cursos={cursos || []} modulo="ibuc" />
+                            <BotaoExcluir id={reg.id} modulo="ibuc" tipo="diario" />
+                          </div>
+                        </td>
                       </tr>
                     )
                   })
                 ) : (
-                  <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">Nenhum registro de aula lançado.</td></tr>
+                  <tr><td colSpan={7} className="px-6 py-8 text-center text-gray-500">Nenhum registro de aula lançado.</td></tr>
                 )}
               </tbody>
             </table>

@@ -1,19 +1,19 @@
 'use client'
 
 import { useTransition } from 'react'
-import { excluirNota, excluirFatura } from '../actions/excluir'
+import { excluirFatura, excluirDiario } from '../actions/excluir'
 
-export default function BotaoExcluir({ id, alunoId, tipo }: { id: string, alunoId: string, tipo: 'nota' | 'fatura' }) {
+export default function BotaoExcluir({ id, modulo, tipo }: { id: string, modulo: 'ebd' | 'ibv' | 'ibuc', tipo: 'fatura' | 'diario' }) {
   const [isPending, startTransition] = useTransition()
 
   const handleExcluir = () => {
     // Alerta de confirmação para evitar cliques acidentais
-    if (window.confirm(`Tem certeza que deseja excluir esta ${tipo}? Esta ação não pode ser desfeita.`)) {
+    if (window.confirm(`Tem certeza que deseja excluir ${tipo === 'fatura' ? 'esta cobrança' : 'este lançamento'}? Esta ação não pode ser desfeita.`)) {
       startTransition(async () => {
-        if (tipo === 'nota') {
-          await excluirNota(id, alunoId)
+        if (tipo === 'fatura') {
+          await excluirFatura(id, modulo)
         } else {
-          await excluirFatura(id, alunoId)
+          await excluirDiario(id, modulo)
         }
       })
     }
@@ -24,7 +24,7 @@ export default function BotaoExcluir({ id, alunoId, tipo }: { id: string, alunoI
       onClick={handleExcluir}
       disabled={isPending}
       className="ml-3 text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-full transition disabled:opacity-50"
-      title={`Excluir ${tipo}`}
+      title={tipo === 'fatura' ? 'Excluir cobrança' : 'Excluir lançamento'}
     >
       {isPending ? '⏳' : '🗑️'}
     </button>

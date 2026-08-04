@@ -5,6 +5,8 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import CriadorFinanceiro from '../../../components/CriadorFinanceiro'
+import BotaoBaixarCobranca from '../../../components/BotaoBaixarCobranca'
+import BotaoExcluir from '../../../components/BotaoExcluir'
 
 export default async function FinanceiroPage() {
   const supabase = createServerComponentClient({ cookies })
@@ -101,11 +103,13 @@ export default async function FinanceiroPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          {cob.status === 'Pendente' && (
-                            <button className="text-green-600 hover:text-green-800 text-sm font-bold bg-green-50 px-3 py-1 rounded-md transition">
-                              Baixar
-                            </button>
-                          )}
+                          <div className="flex justify-end items-center gap-1">
+                            {cob.status === 'Pendente' && (
+                              <BotaoBaixarCobranca cobrancaId={cob.id} modulo="ibv" />
+                            )}
+                            <CriadorFinanceiro cobranca={cob} alunos={alunos || []} modulo="ibv" />
+                            <BotaoExcluir id={cob.id} modulo="ibv" tipo="fatura" />
+                          </div>
                         </td>
                       </tr>
                     )
