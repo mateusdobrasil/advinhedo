@@ -43,7 +43,7 @@ export async function carregarDashboard() {
       .eq('situacao', 'Ativo'),
     supabase
       .from('obreiro_presencas')
-      .select('reuniao_id, obreiro_id, presente'),
+      .select('reuniao_id, obreiro_id, presente, hora_checkin'),
   ])
 
   const erro = reuns.error || obs.error || pres.error

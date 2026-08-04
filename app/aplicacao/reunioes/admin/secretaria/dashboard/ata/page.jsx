@@ -2,8 +2,9 @@
 
 /**
  * /reunioes/admin/secretaria/dashboard/ata/page.jsx
- * Ata de reunião para registro em cartório — texto formal com
- * quórum, pauta e lista de presença dos obreiros para assinatura.
+ * Ata de reunião para registro em cartório — texto formal com pauta
+ * e lista de participação dos membros, validada por data/hora de
+ * check-in (registro digital, sem assinatura manuscrita).
  */
 
 import { useState, useEffect, useMemo } from 'react'
@@ -38,6 +39,13 @@ function fmtHora(hhmmss) {
   return hhmmss.slice(0, 5).replace(':', 'h')
 }
 
+function fmtDataHoraCheckin(iso) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleString('pt-BR', {
+    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  })
+}
+
 function ordenarObreiros(a, b) {
   const ia = ORDEM_CARGO.indexOf(a.obreiro_cargos?.nome ?? 'Membro')
   const ib = ORDEM_CARGO.indexOf(b.obreiro_cargos?.nome ?? 'Membro')
@@ -51,11 +59,12 @@ export default function AtaCartorioPage() {
   const router = useRouter()
   useReuniaoAuth()
 
-  const [reunioes, setReunioes]       = useState([])
-  const [obreiros, setObreiros]       = useState([])
-  const [presencaMap, setPresencaMap] = useState({})
-  const [loading, setLoading]         = useState(true)
-  const [erro, setErro]               = useState(null)
+  const [reunioes, setReunioes]         = useState([])
+  const [obreiros, setObreiros]         = useState([])
+  const [presencaMap, setPresencaMap]   = useState({})
+  const [checkinHoraMap, setCheckinHoraMap] = useState({})
+  const [loading, setLoading]           = useState(true)
+  const [erro, setErro]                 = useState(null)
 
   const [reuniaoSel, setReuniaoSel]   = useState(null)
   const [presidente, setPresidente]   = useState('')
@@ -71,14 +80,18 @@ export default function AtaCartorioPage() {
       if (!res.ok) { setErro(res.error || 'Erro ao carregar os dados.'); setLoading(false); return }
 
       const mapa = {}
+      const horas = {}
       res.presencas.forEach(p => {
         if (!p.presente) return
         if (!mapa[p.reuniao_id]) mapa[p.reuniao_id] = new Set()
         mapa[p.reuniao_id].add(p.obreiro_id)
+        if (!horas[p.reuniao_id]) horas[p.reuniao_id] = {}
+        horas[p.reuniao_id][p.obreiro_id] = p.hora_checkin
       })
       setReunioes(res.reunioes)
       setObreiros(res.obreiros)
       setPresencaMap(mapa)
+      setCheckinHoraMap(horas)
       if (res.reunioes.length) setReuniaoSel(res.reunioes[0])
       setLoading(false)
     }
@@ -87,15 +100,12 @@ export default function AtaCartorioPage() {
   }, [])
 
   const presentesSet = reuniaoSel ? (presencaMap[reuniaoSel.id] || new Set()) : new Set()
+  const horasReuniao  = reuniaoSel ? (checkinHoraMap[reuniaoSel.id] || {}) : {}
 
   const presentes = useMemo(
     () => obreiros.filter(o => presentesSet.has(o.id)).sort(ordenarObreiros),
     [obreiros, presentesSet]
   )
-
-  const totalGeral     = obreiros.length
-  const presentesGeral = presentes.length
-  const pctGeral       = totalGeral ? Math.round(presentesGeral / totalGeral * 100) : 0
 
   const dp = reuniaoSel ? partesData(reuniaoSel.data_reuniao) : null
   const horaInicio = reuniaoSel ? fmtHora(reuniaoSel.hora_inicio) : null
@@ -158,7 +168,7 @@ export default function AtaCartorioPage() {
                 placeholder="Nome de quem secretariou" />
             </div>
           </div>
-          <p style={s.dica}>Preencha os nomes acima antes de imprimir — eles aparecem nas linhas de assinatura ao final da ata.</p>
+          <p style={s.dica}>Preencha os nomes acima antes de imprimir — eles aparecem no texto e no registro final da ata.</p>
         </div>
 
         {!reuniaoSel ? (
@@ -176,7 +186,7 @@ export default function AtaCartorioPage() {
               </p>
             </div>
 
-            <h1 style={s.titulo}>Ata de Reunião de Obreiros</h1>
+            <h1 style={s.titulo}>Ata de Reunião de Membros</h1>
             <p style={s.subtitulo}>Participação e aprovação de pauta</p>
 
             {/* Corpo da ata — texto corrido formal */}
@@ -184,17 +194,11 @@ export default function AtaCartorioPage() {
               <p style={s.paragrafo}>
                 Aos {dp?.dia} dias do mês de {dp?.mes} de {dp?.ano}
                 {horaInicio ? `, às ${horaInicio}${horaFim ? ` horas, encerrando-se às ${horaFim}` : ' horas'}` : ''},
-                reuniram-se os obreiros da {igreja.nomeCompleto}, CNPJ {CNPJ_IGREJA}, em {local}, por
+                reuniram-se os membros da {igreja.nomeCompleto}, CNPJ {CNPJ_IGREJA}, em {local}, por
                 ocasião da reunião "{reuniaoSel.titulo}", registrada em sistema próprio de controle de
-                presença por check-in individual.
-              </p>
-
-              <p style={s.paragrafo}>
-                Verificado o quórum, foi constatada a presença de {presentesGeral} ({presentesGeral === 1 ? 'um obreiro' : `${presentesGeral} obreiros`}) de um total de {totalGeral} obreiros ativos ({pctGeral}% de presença),
-                conforme lista nominal de presença que integra esta ata.
-                {presidente ? ` A reunião foi presidida por ${presidente}` : ''}
-                {presidente && secretario ? ', com secretariado de ' : (secretario ? ' Secretariou a reunião ' : '')}
-                {secretario ? `${secretario}.` : (presidente ? '.' : '')}
+                presença por check-in individual
+                {presidente ? `, presidida por ${presidente}` : ''}
+                {secretario ? `${presidente ? ', com secretariado de' : ', secretariada por'} ${secretario}` : ''}.
               </p>
 
               <p style={s.paragrafo}>
@@ -203,25 +207,26 @@ export default function AtaCartorioPage() {
                   : <>Foi apresentada e colocada em discussão a pauta do dia.</>
                 }{' '}
                 Após as considerações cabíveis, a pauta foi submetida à apreciação dos presentes e
-                aprovada por unanimidade pelos obreiros relacionados nesta ata, que firmam sua
-                participação e anuência mediante assinatura na lista abaixo.
+                aprovada por unanimidade pelos membros relacionados nesta ata, que firmam sua
+                participação e anuência mediante lista abaixo.
               </p>
 
               <p style={s.paragrafo}>
                 Nada mais havendo a tratar, foi encerrada a reunião, da qual se lavrou a presente ata,
-                que vai assinada pelo presidente, pelo secretário e pelos obreiros presentes.
+                com registro digital da participação de cada membro presente, identificada por data e
+                hora do check-in na lista abaixo — dispensando-se assinatura manuscrita.
               </p>
             </div>
 
-            {/* Lista nominal de presença — para assinatura */}
-            <h2 style={s.secaoTitulo}>Lista de presença e assinaturas</h2>
+            {/* Lista nominal de presença — data e hora do check-in comprovam a participação */}
+            <h2 style={s.secaoTitulo}>Lista de participação e registro digital</h2>
             <table style={s.tabela}>
               <thead>
                 <tr>
                   <th style={{ ...s.th, width: 28 }}>#</th>
                   <th style={s.th}>Nome</th>
                   <th style={{ ...s.th, width: 100 }}>Cargo</th>
-                  <th style={{ ...s.th, width: 140 }}>Assinatura</th>
+                  <th style={{ ...s.th, width: 140 }}>Data/hora do check-in</th>
                 </tr>
               </thead>
               <tbody>
@@ -230,27 +235,19 @@ export default function AtaCartorioPage() {
                     <td style={s.td}>{i + 1}</td>
                     <td style={s.td}>{o.nome}</td>
                     <td style={s.td}>{o.obreiro_cargos?.nome || 'Membro'}</td>
-                    <td style={{ ...s.td, ...s.tdAssinatura }}></td>
+                    <td style={s.td}>{fmtDataHoraCheckin(horasReuniao[o.id])}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
             {presentes.length === 0 && (
-              <p style={s.vazio}>Nenhum obreiro presente registrado nesta reunião.</p>
+              <p style={s.vazio}>Nenhum membro presente registrado nesta reunião.</p>
             )}
 
-            {/* Assinaturas da mesa */}
+            {/* Identificação da mesa — sem assinatura, apenas registro nominal */}
             <div style={s.mesaWrap}>
-              <div style={s.mesaAssinatura}>
-                <div style={s.mesaLinha} />
-                <p style={s.mesaNome}>{presidente || 'Presidente'}</p>
-                <p style={s.mesaCargo}>Presidente da reunião</p>
-              </div>
-              <div style={s.mesaAssinatura}>
-                <div style={s.mesaLinha} />
-                <p style={s.mesaNome}>{secretario || 'Secretário(a)'}</p>
-                <p style={s.mesaCargo}>Secretário(a)</p>
-              </div>
+              <p style={s.mesaLinha}><strong>Presidente da reunião:</strong> {presidente || '—'}</p>
+              <p style={s.mesaLinha}><strong>Secretário(a):</strong> {secretario || '—'}</p>
             </div>
 
             <p style={s.localData}>
@@ -308,13 +305,9 @@ const s = {
   tabela:         { width: '100%', borderCollapse: 'collapse', background: '#fff', border: '1px solid #E5E7EB', borderRadius: 10, overflow: 'hidden', marginBottom: 24 },
   th:             { textAlign: 'left', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.4, color: '#6B7280', padding: '8px 10px', borderBottom: '2px solid #E5E7EB', background: '#F9FAFB' },
   td:             { fontSize: 12.5, color: '#111827', padding: '9px 10px', borderBottom: '1px solid #F3F4F6' },
-  tdAssinatura:   { borderLeft: '1px solid #F3F4F6' },
   vazio:          { fontSize: 13, color: '#9CA3AF', textAlign: 'center', padding: '16px', marginBottom: 24 },
-  mesaWrap:       { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, marginTop: 40, marginBottom: 24 },
-  mesaAssinatura: { textAlign: 'center' },
-  mesaLinha:      { borderTop: '1px solid #111827', marginBottom: 6 },
-  mesaNome:       { fontSize: 13, fontWeight: 600, color: '#111827', margin: 0 },
-  mesaCargo:      { fontSize: 11, color: '#9CA3AF', margin: '2px 0 0' },
+  mesaWrap:       { display: 'flex', flexDirection: 'column', gap: 6, marginTop: 28, marginBottom: 24 },
+  mesaLinha:      { fontSize: 13, color: '#1F2937', margin: 0 },
   localData:      { fontSize: 13, color: '#374151', textAlign: 'right', margin: '0 0 8px' },
   rodape:         { fontSize: 11, color: '#9CA3AF', textAlign: 'center', marginTop: 20 },
 }
