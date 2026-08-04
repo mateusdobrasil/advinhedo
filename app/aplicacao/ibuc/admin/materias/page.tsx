@@ -32,7 +32,7 @@ export default async function MateriasPage() {
 
   // 4. Busca os Cursos Ativos (para alimentar o Select do CriadorMateria)
   const { data: cursosAtivos } = await supabase
-    .from('cursos')
+    .from('ibuc_cursos')
     .select('id, nome')
     .eq('status', 'Ativo')
     .order('nome', { ascending: true })
@@ -40,10 +40,10 @@ export default async function MateriasPage() {
   // 5. Busca todas as Matérias com o nome do Curso relacionado
   // Ordena por Status (Ativa antes de Inativa no alfabeto) e depois por Nome
   const { data: materias, error } = await supabase
-    .from('materias')
+    .from('ibuc_materias')
     .select(`
       *,
-      cursos ( nome )
+      ibuc_cursos ( nome )
     `)
     .order('status', { ascending: true })
     .order('nome', { ascending: true })
@@ -109,7 +109,7 @@ export default async function MateriasPage() {
                         {m.nome}
                       </h3>
                       <p className="text-gray-400 text-xs mt-0.5">
-                        Curso: { (m.cursos as any)?.nome || 'Sem curso vinculado' }
+                        Curso: { (m.ibuc_cursos as any)?.nome || 'Sem curso vinculado' }
                       </p>
                     </div>
                   </div>

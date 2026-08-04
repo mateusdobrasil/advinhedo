@@ -12,9 +12,9 @@ export async function lancarDiario(formData: FormData) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Usuário não autenticado.')
 
-  // A EBD tem tabela própria (ebd_diario_classe); IBV/IBUC continuam na tabela genérica
+  // Cada módulo tem sua própria tabela isolada: ebd_diario_classe, ibv_diario_classe, ibuc_diario_classe
   const modulo = formData.get('modulo') as string
-  const tabela = modulo === 'ebd' ? 'ebd_diario_classe' : 'diario_classe'
+  const tabela = `${modulo}_diario_classe`
 
   // 2. Pega os dados do formulário
   const aluno_id = formData.get('aluno_id') as string

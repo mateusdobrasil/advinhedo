@@ -32,7 +32,7 @@ export default async function CursosPage() {
 
   // 4. BUSCA COM ORDENAÇÃO DUPLA: 'Ativo' vem antes de 'Inativo' no alfabeto
   const { data: cursos } = await supabase
-    .from('cursos')
+    .from('ibv_cursos')
     .select('*')
     .order('status', { ascending: true }) 
     .order('nome', { ascending: true })

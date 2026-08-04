@@ -12,9 +12,9 @@ export async function criarTurma(formData: FormData) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Não autorizado')
 
-  // A EBD tem tabela própria (ebd_turmas); IBV/IBUC continuam na tabela genérica
+  // Cada módulo tem sua própria tabela isolada: ebd_turmas, ibv_turmas, ibuc_turmas
   const modulo = formData.get('modulo') as string
-  const tabela = modulo === 'ebd' ? 'ebd_turmas' : 'turmas'
+  const tabela = `${modulo}_turmas`
 
   // 2. Captura os dados básicos do formulário
   // Obs: "curso" não é maiuscularizado aqui de propósito — ele guarda o texto de

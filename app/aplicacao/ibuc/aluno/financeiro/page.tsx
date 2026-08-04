@@ -16,7 +16,7 @@ export default async function FinanceiroAlunoPage() {
 
   // 2. Busca as faturas do aluno
   const { data: faturas, error } = await supabase
-    .from('financeiro')
+    .from('ibuc_financeiro')
     .select('*')
     .eq('aluno_id', session.user.id)
     .order('data_vencimento', { ascending: true })

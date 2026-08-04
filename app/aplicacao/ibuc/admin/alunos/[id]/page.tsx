@@ -44,20 +44,20 @@ export default async function PerfilAlunoAdminPage({ params }: { params: { id: s
 
   // 5. Busca as matrículas dele (com nome da turma)
   const { data: matriculas } = await supabase
-    .from('matriculas')
-    .select(`*, turmas ( nome, curso )`)
+    .from('ibuc_matriculas')
+    .select(`*, ibuc_turmas ( nome, curso )`)
     .eq('aluno_id', id)
 
   // 6. Busca o histórico de notas e faltas
   const { data: boletim } = await supabase
-    .from('diario_classe')
-    .select(`*, materias ( nome ), turmas ( nome )`)
+    .from('ibuc_diario_classe')
+    .select(`*, ibuc_materias ( nome ), ibuc_turmas ( nome )`)
     .eq('aluno_id', id)
     .order('created_at', { ascending: false })
 
   // 7. Busca o financeiro
   const { data: financeiro } = await supabase
-    .from('financeiro')
+    .from('ibuc_financeiro')
     .select('*')
     .eq('aluno_id', id)
     .order('data_vencimento', { ascending: true })
@@ -108,8 +108,8 @@ export default async function PerfilAlunoAdminPage({ params }: { params: { id: s
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {matriculas.map((m: any, idx: number) => (
                       <div key={idx} className="p-4 rounded-lg border border-gray-100 bg-slate-50">
-                        <p className="text-xs text-indigo-600 font-bold uppercase">{m.turmas?.curso}</p>
-                        <h4 className="font-bold text-gray-800">{m.turmas?.nome}</h4>
+                        <p className="text-xs text-indigo-600 font-bold uppercase">{m.ibuc_turmas?.curso}</p>
+                        <h4 className="font-bold text-gray-800">{m.ibuc_turmas?.nome}</h4>
                         <span className="text-[10px] mt-2 inline-block bg-white px-2 py-1 rounded border font-medium text-gray-500">Status: {m.status}</span>
                       </div>
                     ))}
@@ -138,8 +138,8 @@ export default async function PerfilAlunoAdminPage({ params }: { params: { id: s
                     boletim.map((b: any, idx: number) => (
                       <tr key={idx}>
                         <td className="px-6 py-4">
-                          <span className="block font-bold text-gray-800">{b.materias?.nome}</span>
-                          <span className="text-xs text-gray-400">{b.turmas?.nome}</span>
+                          <span className="block font-bold text-gray-800">{b.ibuc_materias?.nome}</span>
+                          <span className="text-xs text-gray-400">{b.ibuc_turmas?.nome}</span>
                         </td>
                         <td className="px-6 py-4 text-center font-bold text-red-500">{b.faltas}</td>
                         <td className="px-6 py-4 text-center">

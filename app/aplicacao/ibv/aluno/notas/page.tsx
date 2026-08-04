@@ -20,7 +20,7 @@ export default async function NotasAlunoPage() {
     .select(`
       *,
       ibv_materias!inner(nome),
-      turmas!inner(nome)
+      ibv_turmas!inner(nome)
     `)
     .eq('aluno_id', session.user.id)
     .order('created_at', { ascending: false })
@@ -96,7 +96,7 @@ export default async function NotasAlunoPage() {
                           {item.materias?.nome || 'Não informada'}
                         </td>
                         <td className="px-6 py-4 text-gray-500 font-medium">
-                          {item.turmas?.nome || '-'}
+                          {item.ibv_turmas?.nome || '-'}
                         </td>
                         <td className="px-6 py-4 text-center text-gray-600 font-bold">
                           {item.faltas || 0}

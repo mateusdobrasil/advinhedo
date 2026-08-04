@@ -41,7 +41,7 @@ export default async function DetalhesTurmaPage({ params }: PageProps) {
 
   // 2. Busca os dados da Turma atual (Já traz a coluna is_ebd pelo select '*')
   const { data: turma, error: erroTurma } = await supabase
-    .from('turmas')
+    .from('ibv_turmas')
     .select('*')
     .eq('id', id)
     .single()
@@ -50,7 +50,7 @@ export default async function DetalhesTurmaPage({ params }: PageProps) {
 
   // 3. Busca as Matrículas desta turma
   const { data: dadosMatriculas, error: erroAlunos } = await supabase
-    .from('matriculas')
+    .from('ibv_matriculas')
     .select(`
       id,
       aluno_id,
@@ -58,7 +58,7 @@ export default async function DetalhesTurmaPage({ params }: PageProps) {
       revista_entregue,
       created_at,
       perfis ( nome_completo ),
-      turmas ( nome, curso )
+      ibv_turmas ( nome, curso )
     `)
     .eq('turma_id', id)
 
@@ -91,7 +91,7 @@ export default async function DetalhesTurmaPage({ params }: PageProps) {
 
   // 3. Buscas para alimentar o botão "+ Nova Matrícula"
   const { data: todasAsTurmas } = await supabase
-    .from('turmas')
+    .from('ibv_turmas')
     .select('id, nome, curso')
     .eq('status', 'Ativa')
     .order('nome')
@@ -103,14 +103,14 @@ export default async function DetalhesTurmaPage({ params }: PageProps) {
     .order('nome_completo')
 
   const { data: cursosRegras } = await supabase
-    .from('cursos')
+    .from('ibv_cursos')
     .select('nome, valor_mensalidade')
 
   // Só busca as frequências se for realmente uma turma da EBD, para poupar o banco de dados
   let frequenciasExistentes: any[] = []
   if (turma.is_ebd) {
     const { data: freqs } = await supabase
-      .from('frequencia_ebd')
+      .from('ebd_frequencia')
       .select('*')
       .eq('turma_id', id)
     frequenciasExistentes = freqs || []

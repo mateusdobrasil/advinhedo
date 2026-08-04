@@ -4,13 +4,12 @@ import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 
-// A EBD tem tabelas próprias (ebd_matriculas, ebd_financeiro); IBV/IBUC continuam
-// compartilhando as tabelas genéricas até serem migradas também.
+// Cada módulo tem suas próprias tabelas isoladas: ebd_*, ibv_*, ibuc_*
 function tabelaMatriculas(modulo: string) {
-  return modulo === 'ebd' ? 'ebd_matriculas' : 'matriculas'
+  return `${modulo}_matriculas`
 }
 function tabelaFinanceiro(modulo: string) {
-  return modulo === 'ebd' ? 'ebd_financeiro' : 'financeiro'
+  return `${modulo}_financeiro`
 }
 
 export async function matricularAluno(formData: FormData) {
@@ -62,16 +61,16 @@ export async function matricularAluno(formData: FormData) {
   const lancamentosFinanceiros = []
 
   // A) Lança a Taxa de Matrícula (se houver valor)
+  // Nota: a tabela financeiro não tem colunas matricula_id/turma_id/tipo/parcela,
+  // então essa informação vai embutida em "descricao" (revisão mais profunda do
+  // modelo financeiro fica para a próxima etapa).
   if (valorMatricula > 0) {
     lancamentosFinanceiros.push({
       aluno_id,
-      matricula_id: novaMatricula.id,
-      turma_id,
-      tipo: 'Taxa de Matrícula',
+      descricao: 'Taxa de Matrícula',
       valor: valorMatricula,
       data_vencimento: dataVencimentoInicial || new Date().toISOString().split('T')[0],
-      status: 'Pendente',
-      parcela: 'Única'
+      status: 'Pendente'
     })
   }
 
@@ -88,13 +87,10 @@ export async function matricularAluno(formData: FormData) {
 
       lancamentosFinanceiros.push({
         aluno_id,
-        matricula_id: novaMatricula.id,
-        turma_id,
-        tipo: 'Mensalidade',
+        descricao: `Mensalidade ${i + 1}/${qtdeParcelas}`,
         valor: valorMensalidade,
         data_vencimento: dataFormatada,
-        status: 'Pendente',
-        parcela: `${i + 1}/${qtdeParcelas}`
+        status: 'Pendente'
       })
     }
   }
@@ -205,13 +201,10 @@ export async function matricularEmLote(formData: FormData) {
     if (valorMatricula > 0) {
       lancamentosFinanceiros.push({
         aluno_id,
-        matricula_id: novaMatricula.id,
-        turma_id,
-        tipo: 'Taxa de Matrícula',
+        descricao: 'Taxa de Matrícula',
         valor: valorMatricula,
         data_vencimento: dataVencimentoInicial || new Date().toISOString().split('T')[0],
-        status: 'Pendente',
-        parcela: 'Única'
+        status: 'Pendente'
       })
     }
 
@@ -227,13 +220,10 @@ export async function matricularEmLote(formData: FormData) {
 
         lancamentosFinanceiros.push({
           aluno_id,
-          matricula_id: novaMatricula.id,
-          turma_id,
-          tipo: 'Mensalidade',
+          descricao: `Mensalidade ${i + 1}/${qtdeParcelas}`,
           valor: valorMensalidade,
           data_vencimento: dataFormatada,
-          status: 'Pendente',
-          parcela: `${i + 1}/${qtdeParcelas}`
+          status: 'Pendente'
         })
       }
     }

@@ -43,14 +43,14 @@ export default async function MatriculasPage({ searchParams }: PageProps) {
 
   // Busca TODAS as matrículas com os relacionamentos
   const { data: dadosMatriculas } = await supabase
-    .from('matriculas')
+    .from('ibv_matriculas')
     .select(`
       id,
       aluno_id,
       status,
       created_at,
       perfis ( nome_completo ),
-      turmas ( nome, curso )
+      ibv_turmas ( nome, curso )
     `)
     .order('created_at', { ascending: false })
 
@@ -60,8 +60,8 @@ export default async function MatriculasPage({ searchParams }: PageProps) {
     const termo = busca.toLowerCase()
     matriculasFiltradas = matriculasFiltradas.filter((mat: any) => {
       const nomeAluno = mat.perfis?.nome_completo?.toLowerCase() || ''
-      const nomeTurma = mat.turmas?.nome?.toLowerCase() || ''
-      const curso = mat.turmas?.curso?.toLowerCase() || ''
+      const nomeTurma = mat.ibv_turmas?.nome?.toLowerCase() || ''
+      const curso = mat.ibv_turmas?.curso?.toLowerCase() || ''
       const status = mat.status?.toLowerCase() || ''
 
       return nomeAluno.includes(termo) || 
@@ -75,7 +75,7 @@ export default async function MatriculasPage({ searchParams }: PageProps) {
   // 5. Busca as turmas para alimentar o botão de Matrícula
   // =================================================================
   const { data: todasAsTurmas } = await supabase
-    .from('turmas')
+    .from('ibv_turmas')
     .select('id, nome, curso')
     .eq('status', 'Ativa')
     .order('nome')
@@ -147,9 +147,9 @@ export default async function MatriculasPage({ searchParams }: PageProps) {
                         {mat.perfis?.nome_completo || 'Aluno Desconhecido'}
                       </td>
                       <td className="px-6 py-4 text-gray-600">
-                        <span className="font-medium text-gray-800">{mat.turmas?.nome}</span>
+                        <span className="font-medium text-gray-800">{mat.ibv_turmas?.nome}</span>
                         <br />
-                        <span className="text-xs">{mat.turmas?.curso}</span>
+                        <span className="text-xs">{mat.ibv_turmas?.curso}</span>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider 

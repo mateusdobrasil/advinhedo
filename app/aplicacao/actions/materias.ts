@@ -14,9 +14,9 @@ export async function salvarMateria(formData: FormData) {
   const curso_id = formData.get('curso_id') as string
   const status = formData.get('status') as string // Captura o novo status
 
-  // A EBD tem tabela própria (ebd_materias); IBV/IBUC continuam na tabela genérica
+  // Cada módulo tem sua própria tabela isolada: ebd_materias, ibv_materias, ibuc_materias
   const modulo = formData.get('modulo') as string
-  const tabela = modulo === 'ebd' ? 'ebd_materias' : 'materias'
+  const tabela = `${modulo}_materias`
 
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Não autorizado')

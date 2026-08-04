@@ -31,15 +31,14 @@ export default async function AvisosPage() {
   }
 
   // 4. Busca as turmas para o formulário
-  const { data: turmas } = await supabase.from('turmas').select('id, nome').order('nome')
+  const { data: turmas } = await supabase.from('ibv_turmas').select('id, nome').order('nome')
 
-  // 5. Busca os avisos e faz um Join para pegar o nome da turma (se houver)
+  // 5. Busca os avisos. "avisos" é uma tabela compartilhada entre módulos e não
+  // tem uma FK própria para ibv_turmas, então o nome da turma é resolvido aqui
+  // em memória a partir da lista de turmas do IBV já carregada acima.
   const { data: avisos } = await supabase
     .from('avisos')
-    .select(`
-      *,
-      turmas ( nome )
-    `)
+    .select('*')
     .order('created_at', { ascending: false })
 
   return (
@@ -64,7 +63,7 @@ export default async function AvisosPage() {
           {avisos && avisos.length > 0 ? (
             avisos.map((aviso) => {
               const dataPublicacao = new Date(aviso.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
-              const nomeTurma = (aviso.turmas as any)?.nome
+              const nomeTurma = turmas?.find((t) => t.id === aviso.turma_id)?.nome
 
               return (
                 <div key={aviso.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition flex flex-col relative overflow-hidden">

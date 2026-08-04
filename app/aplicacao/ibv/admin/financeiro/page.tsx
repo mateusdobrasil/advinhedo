@@ -38,7 +38,7 @@ export default async function FinanceiroPage() {
 
   // 5. Busca o financeiro puxando o nome do aluno
   const { data: cobrancas } = await supabase
-    .from('financeiro')
+    .from('ibv_financeiro')
     .select(`
       *,
       perfis ( nome_completo )

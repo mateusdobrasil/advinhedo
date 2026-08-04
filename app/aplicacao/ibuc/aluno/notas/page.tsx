@@ -16,11 +16,11 @@ export default async function NotasAlunoPage() {
 
   // 2. INNER JOIN com as tabelas de matérias e turmas
   const { data: boletim, error } = await supabase
-    .from('diario_classe')
+    .from('ibuc_diario_classe')
     .select(`
       *,
-      materias!inner(nome),
-      turmas!inner(nome)
+      ibuc_materias!inner(nome),
+      ibuc_turmas!inner(nome)
     `)
     .eq('aluno_id', session.user.id)
     .order('created_at', { ascending: false })
@@ -93,10 +93,10 @@ export default async function NotasAlunoPage() {
                     return (
                       <tr key={item.id} className="hover:bg-gray-50 transition">
                         <td className="px-6 py-4 font-bold text-gray-800">
-                          {item.materias?.nome || 'Não informada'}
+                          {item.ibuc_materias?.nome || 'Não informada'}
                         </td>
                         <td className="px-6 py-4 text-gray-500 font-medium">
-                          {item.turmas?.nome || '-'}
+                          {item.ibuc_turmas?.nome || '-'}
                         </td>
                         <td className="px-6 py-4 text-center text-gray-600 font-bold">
                           {item.faltas || 0}

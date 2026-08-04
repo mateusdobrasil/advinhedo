@@ -13,9 +13,9 @@ export async function salvarCurso(formData: FormData) {
   const nome = paraMaiusculo(formData.get('nome'))
   const status = formData.get('status') as string // Lendo a sua coluna existente
 
-  // A EBD tem tabela própria (ebd_cursos); IBV/IBUC continuam na tabela genérica
+  // Cada módulo tem sua própria tabela isolada: ebd_cursos, ibv_cursos, ibuc_cursos
   const modulo = formData.get('modulo') as string
-  const tabela = modulo === 'ebd' ? 'ebd_cursos' : 'cursos'
+  const tabela = `${modulo}_cursos`
 
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Não autorizado')

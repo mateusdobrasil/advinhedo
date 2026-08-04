@@ -9,9 +9,9 @@ import { revalidatePath } from 'next/cache'
 export async function criarCobranca(formData: FormData) {
   const supabase = createServerActionClient({ cookies })
 
-  // A EBD tem tabela própria (ebd_financeiro); IBV/IBUC continuam na tabela genérica
+  // Cada módulo tem sua própria tabela isolada: ebd_financeiro, ibv_financeiro, ibuc_financeiro
   const modulo = formData.get('modulo') as string
-  const tabela = modulo === 'ebd' ? 'ebd_financeiro' : 'financeiro'
+  const tabela = `${modulo}_financeiro`
 
   const aluno_id = formData.get('aluno_id') as string
   const descricao = paraMaiusculo(formData.get('descricao'))
@@ -51,7 +51,7 @@ export async function marcarComoPago(cobrancaId: string, modulo: string) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Não autorizado')
 
-  const tabela = modulo === 'ebd' ? 'ebd_financeiro' : 'financeiro'
+  const tabela = `${modulo}_financeiro`
 
   const { data: cobranca, error } = await supabase
     .from(tabela)

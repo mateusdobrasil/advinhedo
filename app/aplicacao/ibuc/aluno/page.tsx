@@ -23,8 +23,8 @@ export default async function AlunoDashboardPage() {
 
   // 2. Busca matrículas e turmas associadas
   const { data: matriculas } = await supabase
-    .from('matriculas')
-    .select('*, turmas(id, nome, curso)')
+    .from('ibuc_matriculas')
+    .select('*, ibuc_turmas(id, nome, curso)')
     .eq('aluno_id', session.user.id)
 
   // 3. Busca Avisos filtrados (Contexto do aluno)
@@ -69,30 +69,24 @@ export default async function AlunoDashboardPage() {
         <Analytics />
         
         {/* ATALHOS RÁPIDOS */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Link href="/aplicacao/ibuc/aluno/notas" className="bg-indigo-600 
-              text-white p-4 rounded-2xl shadow-lg shadow-indigo-200 
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <Link href="/aplicacao/ibuc/aluno/notas" className="bg-indigo-600
+              text-white p-4 rounded-2xl shadow-lg shadow-indigo-200
               hover:bg-indigo-700 hover:-translate-y-1 transition-all">
             <span className="text-2xl mb-2 block">📊</span>
             <span className="font-bold text-sm">Meu Boletim</span>
           </Link>
-          <Link href="/aplicacao/ibuc/aluno/materiais" className="bg-indigo-600 
-              text-white p-4 rounded-2xl shadow-lg shadow-indigo-200 
+          <Link href="/aplicacao/ibuc/aluno/materiais" className="bg-indigo-600
+              text-white p-4 rounded-2xl shadow-lg shadow-indigo-200
               hover:bg-indigo-700 hover:-translate-y-1 transition-all">
             <span className="text-2xl mb-2 block">📚</span>
             <span className="font-bold text-sm">Materiais</span>
           </Link>
-          <Link href="/aplicacao/ibuc/aluno/financeiro" className="bg-indigo-600 
-              text-white p-4 rounded-2xl shadow-lg shadow-indigo-200 
+          <Link href="/aplicacao/ibuc/aluno/financeiro" className="bg-indigo-600
+              text-white p-4 rounded-2xl shadow-lg shadow-indigo-200
               hover:bg-indigo-700 hover:-translate-y-1 transition-all">
             <span className="text-2xl mb-2 block">💰</span>
             <span className="font-bold text-sm">Financeiro</span>
-          </Link>
-          <Link href="/aplicacao/ibuc/aluno/ebd" className="bg-indigo-600 
-              text-white p-4 rounded-2xl shadow-lg shadow-indigo-200 
-              hover:bg-indigo-700 hover:-translate-y-1 transition-all">
-            <span className="text-2xl mb-2 block">📖</span>
-            <span className="font-bold text-sm">EBD</span>
           </Link>
         </div>
 
@@ -124,8 +118,8 @@ export default async function AlunoDashboardPage() {
                 <div key={m.id} className="bg-white p-4 rounded-xl border border-gray-100 
                     flex justify-between items-center shadow-sm">
                   <div>
-                    <h3 className="font-bold text-gray-800">{m.turmas?.nome}</h3>
-                    <p className="text-sm text-gray-500">{m.turmas?.curso}</p>
+                    <h3 className="font-bold text-gray-800">{m.ibuc_turmas?.nome}</h3>
+                    <p className="text-sm text-gray-500">{m.ibuc_turmas?.curso}</p>
                   </div>
                   <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase ${
                     m.status?.toLowerCase() === 'ativo' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600'
