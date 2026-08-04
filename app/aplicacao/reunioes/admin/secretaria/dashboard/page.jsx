@@ -255,6 +255,16 @@ export default function Dashboard() {
           <span style={s.relatorioBtnSeta}>›</span>
         </button>
 
+        {/* Ata para cartório — participação e aprovação de pauta */}
+        <button style={s.relatorioBtn} onClick={() => router.push('/aplicacao/reunioes/admin/secretaria/dashboard/ata')}>
+          <div style={s.relatorioBtnIcone}>🖋️</div>
+          <div style={{ flex: 1, textAlign: 'left' }}>
+            <div style={s.relatorioBtnTitulo}>Ata para cartório</div>
+            <div style={s.relatorioBtnSub}>Participação e aprovação de pauta — para registro</div>
+          </div>
+          <span style={s.relatorioBtnSeta}>›</span>
+        </button>
+
         <div style={s.secao}>
           <div style={s.filtroTabs}>
             {[

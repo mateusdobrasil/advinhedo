@@ -33,7 +33,7 @@ export async function carregarDashboard() {
   const [reuns, obs, pres] = await Promise.all([
     supabase
       .from('obreiro_reunioes')
-      .select('id, titulo, data_reuniao, aberta')
+      .select('id, titulo, data_reuniao, hora_inicio, hora_fim, local, descricao, aberta')
       .eq('ativa', true)
       .order('data_reuniao', { ascending: false }),
     supabase
