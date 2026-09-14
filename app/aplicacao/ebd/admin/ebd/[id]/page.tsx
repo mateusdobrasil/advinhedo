@@ -208,7 +208,7 @@ export default async function DetalhesTurmaPage({ params, searchParams }: PagePr
               </div>
               <div className="col-span-2 lg:col-span-1 bg-green-50 p-3 sm:p-4 rounded-xl border border-green-200 flex flex-col">
                 <span className="text-[9px] sm:text-[12px] font-bold text-green-700 uppercase tracking-wider mb-1 truncate">Ofertas</span>
-                <span className="text-xl sm:text-[20px] font-black text-green-700">R$ {ofertaDia.toFixed(2)}</span>
+                <span className="text-xl sm:text-[20px] font-black text-green-700">{ofertaDia.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
               </div>
             </div>
           </div>

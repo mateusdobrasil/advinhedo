@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { matricularEmLote } from '../actions/matriculas'
+import CampoValorMonetario from './CampoValorMonetario'
 
 interface MatriculaEmLoteProps {
   alunos: any[]
@@ -114,11 +115,11 @@ export default function MatriculaEmLote({ alunos, turmaAtualId, turmaAtualNome, 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wider">Taxa Matrícula</label>
-                    <input type="number" step="0.01" name="valor_matricula" defaultValue="0" className="w-full border border-gray-300 p-3 rounded-lg text-gray-900 bg-white font-bold outline-none focus:ring-2 focus:ring-blue-500" />
+                    <CampoValorMonetario name="valor_matricula" defaultValue={0} className="w-full border border-gray-300 p-3 rounded-lg text-gray-900 bg-white font-bold outline-none focus:ring-2 focus:ring-blue-500" />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wider">Mensalidade</label>
-                    <input type="number" name="valor_mensalidade" value={valorMensalidade} readOnly required className="w-full border border-gray-200 p-3 rounded-lg bg-gray-50 text-gray-500 font-bold outline-none cursor-not-allowed" />
+                    <CampoValorMonetario name="valor_mensalidade" value={valorMensalidade} readOnly required className="w-full border border-gray-200 p-3 rounded-lg bg-gray-50 text-gray-500 font-bold outline-none cursor-not-allowed" />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wider">Meses</label>

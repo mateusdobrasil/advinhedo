@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from 'react' // 👈 Importado o useTransition
 import { useRouter } from 'next/navigation' 
-import { salvarChamadaUnificada } from '../actions/ebd' 
+import { salvarChamadaUnificada } from '../actions/ebd'
+import CampoValorMonetario from './CampoValorMonetario'
 
 export default function FormChamadaEBD({ 
   turmaId, 
@@ -107,16 +108,12 @@ export default function FormChamadaEBD({
 
             <div>
               <label className="block text-xs font-bold text-green-700 uppercase tracking-wider mb-2">Oferta do Dia (R$)</label>
-              <input 
-                type="number" 
+              <CampoValorMonetario
                 name="oferta"
-                key={`ofe-${dataSelecionada}`} 
-                defaultValue={ofertaAtual.toFixed(2)} // Formata para 2 casas decimais no input
-                step="0.01"
-                min="0"
+                key={`ofe-${dataSelecionada}`}
+                defaultValue={ofertaAtual}
                 disabled={isPending}
                 className="bg-white border border-gray-300 text-gray-900 text-lg font-bold rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-3 disabled:opacity-50"
-                placeholder="0.00"
               />
             </div>
           </div>
