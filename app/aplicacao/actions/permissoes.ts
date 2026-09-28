@@ -5,6 +5,7 @@ import { paraMaiusculo } from '@/lib/texto'
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
+import { ehAdministrador, usuarioTemAcessoPagina } from '@/lib/permissoes'
 
 // Retorna { ok, error } em vez de lançar exceção: em produção o Next.js
 // substitui a mensagem de qualquer erro lançado (throw) dentro de uma Server
@@ -29,9 +30,22 @@ export async function atualizarPermissao(formData: FormData): Promise<{ ok: bool
       .eq('id', session.user.id)
       .single()
 
-    // Bloqueia a ação se quem clicou não for um Administrador
-    if (!adminLogado?.tipo_usuario?.toLowerCase().includes('administrador')) {
-      return { ok: false, error: 'Acesso negado: Apenas administradores podem alterar permissões.' }
+    // Libera quem for Administrador (acesso total fixo) OU quem tiver acesso
+    // liberado à página "permissoes" em algum dos módulos — mesma checagem
+    // usada pra exibir a própria página. Antes essa ação exigia literalmente
+    // o cargo "Administrador", ignorando cargos customizados (ex: TI EBD) que
+    // já tinham acesso à página via tabela permissoes_paginas — por isso um
+    // TI EBD conseguia abrir a tela mas levava "Acesso negado" ao salvar.
+    const podeAlterar =
+      ehAdministrador(adminLogado?.tipo_usuario) ||
+      (await Promise.all(
+        ['ebd', 'ibv', 'ibuc'].map((modulo) =>
+          usuarioTemAcessoPagina(supabase, adminLogado?.tipo_usuario, modulo, 'permissoes')
+        )
+      )).some(Boolean)
+
+    if (!podeAlterar) {
+      return { ok: false, error: 'Acesso negado: você não tem permissão para alterar acessos.' }
     }
 
     // 2. PREPARAÇÃO DOS DADOS
