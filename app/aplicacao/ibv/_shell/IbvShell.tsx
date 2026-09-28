@@ -3,6 +3,8 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import BotaoSair from '../../components/BotaoSair'
+import VerificadorVersao from '../../components/VerificadorVersao'
+import { obterVersaoApp } from '@/lib/versaoApp'
 
 export default async function IbvShell({ children }: { children: React.ReactNode }) {
   const supabase = createServerComponentClient({ cookies })
@@ -19,6 +21,7 @@ export default async function IbvShell({ children }: { children: React.ReactNode
     .single()
 
   const tipoUsuario = perfil?.tipo_usuario || 'ALUNO'
+  const versaoApp = obterVersaoApp()
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
@@ -43,6 +46,9 @@ export default async function IbvShell({ children }: { children: React.ReactNode
                 <p className="text-[10px] uppercase font-bold text-gray-400 tracking-widest leading-none">
                     {tipoUsuario}
                 </p>
+                <p className="text-[9px] font-mono text-gray-300 leading-none mt-1" title={versaoApp}>
+                    v{versaoApp.slice(0, 7)}
+                </p>
             </div>
             <div className="bg-gray-100 p-2 rounded-full group-hover:bg-blue-50 transition">
                 <span className="text-xl" aria-hidden="true">⚙️</span>
@@ -59,6 +65,8 @@ export default async function IbvShell({ children }: { children: React.ReactNode
       <div className="flex-1">
         {children}
       </div>
+
+      <VerificadorVersao versaoAtual={versaoApp} />
 
     </div>
   )
