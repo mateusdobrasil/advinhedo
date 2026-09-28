@@ -6,6 +6,9 @@ import { logAction } from '@/lib/audit'
 import { paraMaiusculo } from '@/lib/texto'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
+import { ehAdministrador, usuarioTemAcessoPagina } from '@/lib/permissoes'
+
+const MODULOS = ['ebd', 'ibv', 'ibuc'] as const
 
 // Função auxiliar para evitar enviar strings vazias pro banco
 const limparTexto = (texto: FormDataEntryValue | null) => {
@@ -123,5 +126,90 @@ export async function atualizarUsuario(formData: FormData) {
   for (const modulo of ['ebd', 'ibv', 'ibuc']) {
     revalidatePath(`/aplicacao/${modulo}/admin/cadastro/${id}`)
     revalidatePath(`/aplicacao/${modulo}/admin/cadastro`)
+  }
+}
+
+// ============================================================================
+// BLOCO 3: DESATIVAR / REATIVAR ALUNO (BotaoStatusAluno)
+// ============================================================================
+// Ao desativar (ex: cadastro duplicado), cancela em cascata qualquer matrícula
+// ativa da pessoa nos 3 módulos (ebd/ibv/turmas = "sala"; a matéria em si é
+// vinculada à turma, não existe matrícula por matéria separada). Reativar só
+// devolve o acesso da pessoa — não recria matrículas antigas automaticamente,
+// isso é uma decisão manual do admin.
+export async function alterarStatusAluno(
+  id: string,
+  novoStatus: 'Ativo' | 'Inativo'
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const supabase = createServerActionClient({ cookies })
+
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return { ok: false, error: 'Não autorizado.' }
+
+    const { data: adminLogado } = await supabase
+      .from('perfis')
+      .select('tipo_usuario')
+      .eq('id', session.user.id)
+      .single()
+
+    const podeAlterar =
+      ehAdministrador(adminLogado?.tipo_usuario) ||
+      (await Promise.all(
+        MODULOS.map((modulo) => usuarioTemAcessoPagina(supabase, adminLogado?.tipo_usuario, modulo, 'cadastro'))
+      )).some(Boolean)
+
+    if (!podeAlterar) {
+      return { ok: false, error: 'Acesso negado: você não tem permissão para desativar/reativar cadastros.' }
+    }
+
+    const { data: alunoAlvo } = await supabase
+      .from('perfis')
+      .select('nome_completo')
+      .eq('id', id)
+      .single()
+
+    const { error } = await supabase
+      .from('perfis')
+      .update({ status: novoStatus })
+      .eq('id', id)
+
+    if (error) {
+      console.error('ERRO AO ALTERAR STATUS DO ALUNO:', error)
+      return { ok: false, error: `Erro ao atualizar status: ${error.message}` }
+    }
+
+    // Ao desativar, cancela a matrícula em qualquer sala/turma dos 3 módulos
+    if (novoStatus === 'Inativo') {
+      for (const modulo of MODULOS) {
+        const { error: erroMatricula } = await supabase
+          .from(`${modulo}_matriculas`)
+          .update({ status: 'Cancelada' })
+          .eq('aluno_id', id)
+          .neq('status', 'Cancelada')
+
+        if (erroMatricula) {
+          console.error(`ERRO AO CANCELAR MATRÍCULAS (${modulo}) do aluno ${id}:`, erroMatricula)
+        }
+      }
+    }
+
+    await logAction(supabase, session.user, {
+      action: novoStatus === 'Inativo' ? 'DESATIVAÇÃO DE CADASTRO' : 'REATIVAÇÃO DE CADASTRO',
+      tableName: 'perfis',
+      details: `${novoStatus === 'Inativo' ? 'Desativou' : 'Reativou'} o cadastro de ${alunoAlvo?.nome_completo || id}${novoStatus === 'Inativo' ? ' e cancelou suas matrículas ativas' : ''}.`
+    })
+
+    for (const modulo of MODULOS) {
+      revalidatePath(`/aplicacao/${modulo}/admin/cadastro/${id}`)
+      revalidatePath(`/aplicacao/${modulo}/admin/cadastro`)
+      revalidatePath(`/aplicacao/${modulo}/admin/matriculas`)
+      revalidatePath(`/aplicacao/${modulo}/admin/turmas`)
+    }
+
+    return { ok: true }
+  } catch (erroInesperado: any) {
+    console.error('ERRO INESPERADO EM alterarStatusAluno:', erroInesperado)
+    return { ok: false, error: erroInesperado?.message || 'Erro inesperado ao atualizar status.' }
   }
 }

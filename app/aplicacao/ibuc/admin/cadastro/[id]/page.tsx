@@ -8,6 +8,7 @@ import { usuarioTemAcessoPagina } from '@/lib/permissoes'
 import EditorUsuario from '../../../../components/EditorUsuario'
 import EditorCadastroCompleto from '../../../../components/EditorCadastroCompleto'
 import BotaoResetSenha from '../../../../components/BotaoResetSenha'
+import BotaoStatusAluno from '../../../../components/BotaoStatusAluno'
 
 interface PageProps {
   params: any
@@ -57,16 +58,24 @@ export default async function DetalhesCadastroPage({ params }: PageProps) {
         {/* CABEÇALHO COM O BOTÃO DE EDIÇÃO */}
         <div className="bg-slate-900 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <span className="text-[10px] font-black uppercase tracking-widest bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full border border-blue-500/30">
-              {perfil.tipo_usuario || 'Aluno'}
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-widest bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full border border-blue-500/30">
+                {perfil.tipo_usuario || 'Aluno'}
+              </span>
+              {(perfil.status || 'Ativo').toLowerCase() === 'inativo' && (
+                <span className="text-[10px] font-black uppercase tracking-widest bg-red-500/20 text-red-300 px-3 py-1 rounded-full border border-red-500/30">
+                  Inativo
+                </span>
+              )}
+            </div>
             <h1 className="text-2xl font-bold mt-3 text-white">{perfil.nome_completo}</h1>
           </div>
-          
+
           <div className="flex gap-2 w-full md:w-auto">
             <EditorUsuario usuario={perfil} polos={polos || []} />
             <EditorCadastroCompleto usuario={perfil} polos={polos || []} />
             <BotaoResetSenha email={perfil.email} modulo="ibuc" />
+            <BotaoStatusAluno id={perfil.id} nome={perfil.nome_completo} statusAtual={perfil.status} />
 
             <Link
               href="/aplicacao/ibuc/admin/cadastro"

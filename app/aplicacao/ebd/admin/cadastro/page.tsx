@@ -111,7 +111,14 @@ export default async function CadastroCentralPage({ searchParams }: PageProps) {
                     
                     return (
                       <tr key={user.id} className="hover:bg-gray-50 transition">
-                        <td className="px-6 py-4 font-semibold text-gray-800">{user.nome_completo}</td>
+                        <td className="px-6 py-4 font-semibold text-gray-800">
+                          {user.nome_completo}
+                          {(user.status || 'Ativo').toLowerCase() === 'inativo' && (
+                            <span className="ml-2 text-[9px] font-black px-2 py-0.5 rounded uppercase bg-red-100 text-red-700 align-middle">
+                              Inativo
+                            </span>
+                          )}
+                        </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-wrap gap-1">
                             {cargos.map((cargo: string) => (
