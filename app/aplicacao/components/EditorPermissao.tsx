@@ -49,12 +49,16 @@ export default function EditorPermissao({ usuario, niveisAcesso = [] }: { usuari
           setCarregando(true)
           setErro('') // Limpa o erro anterior, se houver
           try {
-            await atualizarPermissao(formData)
-            setAberto(false)
-          } catch (e: any) { 
-            setErro(e.message) 
-          } finally { 
-            setCarregando(false) 
+            const resultado = await atualizarPermissao(formData)
+            if (resultado?.ok) {
+              setAberto(false)
+            } else {
+              setErro(resultado?.error || 'Não foi possível salvar as alterações.')
+            }
+          } catch (e: any) {
+            setErro(e.message)
+          } finally {
+            setCarregando(false)
           }
         }} className="space-y-6">
           
