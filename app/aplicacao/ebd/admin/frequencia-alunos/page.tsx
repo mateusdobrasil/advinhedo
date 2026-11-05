@@ -9,8 +9,23 @@ import BotaoExportarCSV from '@/app/aplicacao/components/BotaoExportarCSV'
 import { usuarioTemAcessoPagina } from '@/lib/permissoes'
 
 interface PageProps {
-  searchParams: Promise<{ ano?: string; turma?: string }> | { ano?: string; turma?: string }
+  searchParams: Promise<FiltrosBusca> | FiltrosBusca
 }
+
+interface FiltrosBusca {
+  ano?: string
+  turma?: string
+  ordem?: string
+}
+
+const OPCOES_ORDEM = [
+  { valor: 'classe', rotulo: 'Classe e nome (A-Z)' },
+  { valor: 'nome', rotulo: 'Nome do aluno (A-Z)' },
+  { valor: 'presencas', rotulo: 'Mais presenças' },
+  { valor: 'frequencia', rotulo: 'Maior frequência (%)' },
+] as const
+
+type Ordem = (typeof OPCOES_ORDEM)[number]['valor']
 
 interface LinhaRelatorio {
   aluno_id: string
@@ -65,6 +80,9 @@ export default async function FrequenciaAlunosPage({ searchParams }: PageProps) 
   const anoParam = Number(resolvedSearch?.ano)
   const ano = Number.isInteger(anoParam) && anoParam >= 2000 && anoParam <= anoAtual ? anoParam : anoAtual
   const turmaFiltro: string = resolvedSearch?.turma || ''
+  const ordem: Ordem = OPCOES_ORDEM.some((o) => o.valor === resolvedSearch?.ordem)
+    ? (resolvedSearch?.ordem as Ordem)
+    : 'classe'
 
   // Do início do ano até hoje (ou até 31/12 se for um ano já encerrado)
   const inicio = `${ano}-01-01`
@@ -153,7 +171,16 @@ export default async function FrequenciaAlunosPage({ searchParams }: PageProps) 
       })
     }
 
-    linhas = linhas.sort((a, b) => a.turma.localeCompare(b.turma) || a.nome.localeCompare(b.nome))
+    // Empates sempre desempatam pelo nome do aluno. Quem não tem aula registrada
+    // (frequência "—") vai para o fim na ordenação por frequência.
+    const porNome = (a: LinhaRelatorio, b: LinhaRelatorio) => a.nome.localeCompare(b.nome, 'pt-BR')
+    const comparadores: Record<Ordem, (a: LinhaRelatorio, b: LinhaRelatorio) => number> = {
+      classe: (a, b) => a.turma.localeCompare(b.turma, 'pt-BR') || porNome(a, b),
+      nome: (a, b) => porNome(a, b) || a.turma.localeCompare(b.turma, 'pt-BR'),
+      presencas: (a, b) => b.presencas - a.presencas || porNome(a, b),
+      frequencia: (a, b) => (b.percentual ?? -1) - (a.percentual ?? -1) || b.presencas - a.presencas || porNome(a, b),
+    }
+    linhas = linhas.sort(comparadores[ordem])
   }
 
   // 8. Resumo
@@ -182,6 +209,7 @@ export default async function FrequenciaAlunosPage({ searchParams }: PageProps) 
             <p className="text-gray-500 text-sm mt-1">
               Período: <strong>{periodoLabel}</strong>
               {nomeTurmaFiltro && <> · Classe: <strong>{nomeTurmaFiltro}</strong></>}
+              {' '}· Ordenado por: <strong>{OPCOES_ORDEM.find((o) => o.valor === ordem)?.rotulo}</strong>
             </p>
             <p className="hidden print:block text-xs text-gray-400 mt-1">Gerado em {formatarData(hoje)}</p>
           </div>
@@ -208,6 +236,14 @@ export default async function FrequenciaAlunosPage({ searchParams }: PageProps) 
                   <option key={t.id} value={t.id}>{t.nome}</option>
                 ))}
               </select>
+              <label className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider pl-1">
+                Ordenar por
+                <select name="ordem" defaultValue={ordem} className="bg-white border border-gray-200 text-gray-700 text-sm normal-case tracking-normal rounded-lg px-3 py-2 font-medium outline-none cursor-pointer">
+                  {OPCOES_ORDEM.map((o) => (
+                    <option key={o.valor} value={o.valor}>{o.rotulo}</option>
+                  ))}
+                </select>
+              </label>
               <button type="submit" className="bg-indigo-600 text-white px-5 py-2 rounded-lg font-bold text-sm hover:bg-indigo-700 transition">
                 Filtrar
               </button>
