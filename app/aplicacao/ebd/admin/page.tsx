@@ -43,6 +43,7 @@ export default async function AdminEBDPage() {
     { nome: 'Cursos', icon: '📚', link: '/aplicacao/ebd/admin/cursos', desc: 'Cursos disponíveis', ativo: true, chave: 'cursos' },
     { nome: 'Salas da EBD', icon: '📖', link: '/aplicacao/ebd/admin/ebd', desc: 'Gerencie a EBD', ativo: true, chave: 'ebd' },
     { nome: 'Relatórios da EBD', icon: '📈', link: '/aplicacao/ebd/admin/relatoriosEBD', desc: 'Métricas e frequências', ativo: true, chave: 'relatoriosEBD' },
+    { nome: 'Frequência dos Alunos', icon: '📋', link: '/aplicacao/ebd/admin/frequencia-alunos', desc: 'Presenças e % no ano', ativo: true, chave: 'relatoriosEBD' },
     { nome: 'Relatórios', icon: '📊', link: '/aplicacao/ebd/admin/relatorios', desc: 'Visão geral do instituto', ativo: true, chave: 'relatorios' },
     { nome: 'Financeiro', icon: '💰', link: '/aplicacao/ebd/admin/financeiro', desc: 'Mensalidades e cobranças', ativo: true, chave: 'financeiro' },
     { nome: 'Materiais', icon: '🗂️', link: '/aplicacao/ebd/admin/materiais', desc: 'Materiais de estudo', ativo: true, chave: 'materiais' },

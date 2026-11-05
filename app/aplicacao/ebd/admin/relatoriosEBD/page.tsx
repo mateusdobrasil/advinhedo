@@ -251,9 +251,14 @@ export default async function RelatoriosEBDPage({ searchParams }: PageProps) {
             </h1>
             <p className="text-gray-500 text-sm mt-1">Desempenho e frequência das turmas da Escola Bíblica.</p>
           </div>
-          <Link href="/aplicacao/ebd/admin" className="text-sm bg-white border border-gray-200 text-gray-700 px-5 py-2.5 rounded-xl font-bold hover:bg-gray-50 transition shadow-sm">
-            Voltar ao Hub
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/aplicacao/ebd/admin/frequencia-alunos" className="text-sm bg-indigo-50 border border-indigo-100 text-indigo-700 px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-100 transition shadow-sm">
+              📋 Frequência Anual dos Alunos
+            </Link>
+            <Link href="/aplicacao/ebd/admin" className="text-sm bg-white border border-gray-200 text-gray-700 px-5 py-2.5 rounded-xl font-bold hover:bg-gray-50 transition shadow-sm">
+              Voltar ao Hub
+            </Link>
+          </div>
         </div>
 
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-indigo-100">

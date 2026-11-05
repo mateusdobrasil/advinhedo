@@ -27,7 +27,7 @@ export default async function EbdShell({ children }: { children: React.ReactNode
     <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
 
       {/* Navbar Global (Ficará visível em TODAS as páginas do Dashboard) */}
-      <nav className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center shadow-sm sticky top-0 z-50">
+      <nav className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center shadow-sm sticky top-0 z-50 print:hidden">
         <Link href="/aplicacao/ebd" className="font-black text-xl text-blue-700 tracking-tight hover:text-blue-800 transition">
           Portal EBD
         </Link>
