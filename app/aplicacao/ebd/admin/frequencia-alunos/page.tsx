@@ -70,7 +70,7 @@ export default async function FrequenciaAlunosPage({ searchParams }: PageProps) 
     .eq('id', session.user.id)
     .single()
 
-  const temAcesso = await usuarioTemAcessoPagina(supabase, perfil?.tipo_usuario, 'ebd', 'relatoriosEBD')
+  const temAcesso = await usuarioTemAcessoPagina(supabase, perfil?.tipo_usuario, 'ebd', 'frequencia-alunos')
   if (!temAcesso) redirect('/aplicacao/ebd/admin')
 
   // 2. Filtros: ano (padrão = ano atual) e classe (opcional)

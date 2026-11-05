@@ -24,6 +24,7 @@ export const PAGINAS_EBD: PaginaDef[] = [
   { chave: 'auditoria', nome: 'Auditoria', rota: '/aplicacao/ebd/admin/auditoria' },
   { chave: 'relatorios', nome: 'Relatórios', rota: '/aplicacao/ebd/admin/relatorios' },
   { chave: 'relatoriosEBD', nome: 'Relatórios da EBD', rota: '/aplicacao/ebd/admin/relatoriosEBD' },
+  { chave: 'frequencia-alunos', nome: 'Frequência dos Alunos', rota: '/aplicacao/ebd/admin/frequencia-alunos' },
 ]
 
 // Catálogo das páginas administrativas do IBV.
